@@ -12,6 +12,7 @@ Topical is an educational platform that helps users create, manage, and study st
 
 ## Prerequisites
 
+- [Python 3.10+](https://python.org/)
 - [Bun](https://bun.sh/)
 - PostgreSQL database
 
@@ -47,15 +48,17 @@ Topical is an educational platform that helps users create, manage, and study st
 
 ## Running Locally
 
-Start the backend and frontend simultaneously:
+Start all three services simultaneously:
 
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-- **Frontend:** `http://localhost:5173`
-- **Backend API:** `http://localhost:3000`
+This starts:
+- **AI Content Service (FastAPI):** `http://localhost:8000`
+- **Backend API (Bun/Hono):** `http://localhost:3000`
+- **Frontend (Vite):** `http://localhost:5173`
 
 *Note: For authentication to work locally, ensure your Kinde application settings have `http://localhost:5173/api/callback` as an Allowed Callback URL and `http://localhost:5173` as an Allowed Logout Redirect URL.*
 
