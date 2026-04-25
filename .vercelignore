@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+**/node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Git and IDE
+.git/
+.vscode/
+*.log
+
+# Ignore ALL TypeScript source files in api/ (we use the bundled index.js)
+api/**/*.ts
+api/server/**
+
+# Also ignore root server directory
+server/**
+
+# Ignore drizzle directory
+drizzle/**

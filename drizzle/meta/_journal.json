@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1709104233669,
+      "tag": "0000_uneven_spot",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1709104771653,
+      "tag": "0001_useful_loki",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1711923696442,
+      "tag": "0002_past_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1746659111186,
+      "tag": "0003_absurd_jimmy_woo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1746659174808,
+      "tag": "0004_ambiguous_umar",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1746661098054,
+      "tag": "0005_perpetual_cyclops",
+      "breakpoints": true
+    }
+  ]
+}
