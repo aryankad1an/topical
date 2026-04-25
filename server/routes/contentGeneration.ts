@@ -211,8 +211,12 @@ Rules:
         status: "success",
         data: { topics: "```json\n" + clean + "\n```" },
       });
-    } catch (err) {
-      console.error("search-topics error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for search-topics. Returning placeholder content.`);
+      } else {
+        console.error("search-topics error:", err);
+      }
       const hierarchy = placeholderHierarchy(query);
       return c.json({
         status: "success",
@@ -233,8 +237,12 @@ Rules:
       const optimizedTopic = await optimizePrompt(selected_topic);
       const mdx = await generateMdxContent(optimizedTopic, main_topic, "");
       return c.json({ status: "success", data: { mdx_content: mdx } });
-    } catch (err) {
-      console.error("generate-mdx-llm-only error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-llm-only. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-llm-only error:", err);
+      }
       return c.json({ status: "success", data: { mdx_content: placeholderMdx(selected_topic, main_topic) } });
     }
   })
@@ -251,8 +259,12 @@ Rules:
       const optimizedTopic = await optimizePrompt(selected_topic);
       const mdx = await generateMdxContent(optimizedTopic, main_topic, "");
       return c.text(mdx);
-    } catch (err) {
-      console.error("generate-mdx-llm-only-raw error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-llm-only-raw. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-llm-only-raw error:", err);
+      }
       return c.text(placeholderMdx(selected_topic, main_topic));
     }
   })
@@ -266,8 +278,12 @@ Rules:
     try {
       const mdx = await generateMdxContent(selected_topic, main_topic, "");
       return c.json({ status: "success", data: { mdx_content: mdx } });
-    } catch (err) {
-      console.error("single-topic error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for single-topic. Returning placeholder content.`);
+      } else {
+        console.error("single-topic error:", err);
+      }
       return c.json({ status: "success", data: { mdx_content: placeholderMdx(selected_topic, main_topic) } });
     }
   })
@@ -279,8 +295,12 @@ Rules:
     try {
       const mdx = await generateMdxContent(selected_topic, main_topic, "");
       return c.text(mdx);
-    } catch (err) {
-      console.error("single-topic-raw error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for single-topic-raw. Returning placeholder content.`);
+      } else {
+        console.error("single-topic-raw error:", err);
+      }
       return c.text(placeholderMdx(selected_topic, main_topic));
     }
   })
@@ -293,8 +313,12 @@ Rules:
       const context = await fetchUrlContent(url);
       const mdx = await generateMdxContent(selected_topic, main_topic, context);
       return c.json({ status: "success", data: { mdx_content: mdx } });
-    } catch (err) {
-      console.error("generate-mdx-from-url error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-from-url. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-from-url error:", err);
+      }
       return c.json({ status: "success", data: { mdx_content: placeholderMdx(selected_topic, main_topic) } });
     }
   })
@@ -307,8 +331,12 @@ Rules:
       const context = await fetchUrlContent(url);
       const mdx = await generateMdxContent(selected_topic, main_topic, context);
       return c.text(mdx);
-    } catch (err) {
-      console.error("generate-mdx-from-url-raw error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-from-url-raw. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-from-url-raw error:", err);
+      }
       return c.text(placeholderMdx(selected_topic, main_topic));
     }
   })
@@ -322,8 +350,12 @@ Rules:
       const context = contents.filter(Boolean).join("\n\n---\n\n").slice(0, 20000);
       const mdx = await generateMdxContent(selected_topic, main_topic, context);
       return c.json({ status: "success", data: { mdx_content: mdx } });
-    } catch (err) {
-      console.error("generate-mdx-from-urls error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-from-urls. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-from-urls error:", err);
+      }
       return c.json({ status: "success", data: { mdx_content: placeholderMdx(selected_topic, main_topic) } });
     }
   })
@@ -337,8 +369,12 @@ Rules:
       const context = contents.filter(Boolean).join("\n\n---\n\n").slice(0, 20000);
       const mdx = await generateMdxContent(selected_topic, main_topic, context);
       return c.text(mdx);
-    } catch (err) {
-      console.error("generate-mdx-from-urls-raw error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for generate-mdx-from-urls-raw. Returning placeholder content.`);
+      } else {
+        console.error("generate-mdx-from-urls-raw error:", err);
+      }
       return c.text(placeholderMdx(selected_topic, main_topic));
     }
   })
@@ -350,8 +386,12 @@ Rules:
     try {
       const refined = await refineMdxContent(mdx, "", question, "");
       return c.json({ status: "success", data: { mdx_content: refined } });
-    } catch (err) {
-      console.error("refine error:", err);
+    } catch (err: any) {
+      if (err.status === 429) {
+        console.warn(`[Gemini API] Rate limit/quota exceeded for refine. Returning placeholder content.`);
+      } else {
+        console.error("refine error:", err);
+      }
       return c.json({ status: "success", data: { mdx_content: mdx } });
     }
   })
