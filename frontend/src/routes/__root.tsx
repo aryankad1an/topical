@@ -19,62 +19,78 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: Root,
 });
 
-// ─── Sleek Inverted Custom Cursor ───
+// ─── Liquid Glass Custom Cursor ───
 function CustomCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
+  const cursorDotRef = useRef<HTMLDivElement>(null);
+  const cursorGlowRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return;
+    const dot = cursorDotRef.current;
+    const glow = cursorGlowRef.current;
+    if (!dot || !glow) return;
 
     let mouseX = 0;
     let mouseY = 0;
-    let cursorX = 0;
-    let cursorY = 0;
+    let dotX = 0;
+    let dotY = 0;
+    let glowX = 0;
+    let glowY = 0;
+    let lastTime = performance.now();
+    let lastMouseX = 0;
+    let lastMouseY = 0;
 
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
     };
 
-    let lastTime = performance.now();
-    let lastMouseX = 0;
-    let lastMouseY = 0;
-
-    // Smooth cursor follow with velocity-based stretch and size increase
     const animateCursor = () => {
       const now = performance.now();
       const dt = Math.max(now - lastTime, 1);
       lastTime = now;
 
-      cursorX += (mouseX - cursorX) * 0.25;
-      cursorY += (mouseY - cursorY) * 0.25;
+      // Dot follows faster
+      dotX += (mouseX - dotX) * 0.3;
+      dotY += (mouseY - dotY) * 0.3;
+
+      // Glow ring follows slower for a trailing effect
+      glowX += (mouseX - glowX) * 0.15;
+      glowY += (mouseY - glowY) * 0.15;
 
       const dx = mouseX - lastMouseX;
       const dy = mouseY - lastMouseY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const velocity = Math.min(distance / dt, 5); // cap velocity
+      const velocity = Math.min(distance / dt, 5);
 
       lastMouseX = mouseX;
       lastMouseY = mouseY;
 
-      const angle = Math.atan2(mouseY - cursorY, mouseX - cursorX) * (180 / Math.PI);
+      const angle = Math.atan2(mouseY - dotY, mouseX - dotX) * (180 / Math.PI);
 
-      // Increase overall size based on speed, and stretch it along the movement axis
-      const scaleX = 1 + velocity * 0.15;
-      const scaleY = 1 - velocity * 0.05;
-      const baseScale = 1 + velocity * 0.1;
+      // Dot: stretch along movement axis
+      const dotScaleX = 1 + velocity * 0.12;
+      const dotScaleY = 1 - velocity * 0.04;
+      const dotBase = 1 + velocity * 0.08;
 
-      cursor.style.left = `${cursorX}px`;
-      cursor.style.top = `${cursorY}px`;
-      
+      dot.style.left = `${dotX}px`;
+      dot.style.top = `${dotY}px`;
+
       if (distance > 1) {
-        cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${baseScale}) scaleX(${scaleX}) scaleY(${scaleY})`;
+        dot.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${dotBase}) scaleX(${dotScaleX}) scaleY(${dotScaleY})`;
       } else {
-        cursor.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(1) scaleX(1) scaleY(1)`;
+        dot.style.transform = `translate(-50%, -50%) scale(1)`;
       }
-      
+
+      // Glow ring: grows with velocity
+      const glowScale = 1 + velocity * 0.3;
+      const glowOpacity = 0.5 + velocity * 0.1;
+
+      glow.style.left = `${glowX}px`;
+      glow.style.top = `${glowY}px`;
+      glow.style.transform = `translate(-50%, -50%) scale(${glowScale})`;
+      glow.style.opacity = `${Math.min(glowOpacity, 1)}`;
+
       requestAnimationFrame(animateCursor);
     };
 
@@ -98,10 +114,18 @@ function CustomCursor() {
   }, []);
 
   return (
-    <div
-      ref={cursorRef}
-      className={`custom-inverted-cursor ${isHovering ? "hovering" : ""}`}
-    />
+    <>
+      {/* Glow ring — the liquid glass trail */}
+      <div
+        ref={cursorGlowRef}
+        className={`cursor-glow ${isHovering ? "hovering" : ""}`}
+      />
+      {/* Inner dot */}
+      <div
+        ref={cursorDotRef}
+        className={`cursor-dot ${isHovering ? "hovering" : ""}`}
+      />
+    </>
   );
 }
 
@@ -135,16 +159,13 @@ function NavBar() {
           <Link to="/mdx" className={linkClass}>
             MDX Editor
           </Link>
-          <Link to="/public-lessons" className={linkClass}>
-            Public Lessons
-          </Link>
           {!isMobile && <span className="hidden md:block w-px h-4 bg-white/10 mx-1" />}
           {isMobile && <hr className="border-white/5 my-2" />}
         </>
       )}
 
-      <Link to="/mdxPublic" className={linkClass}>
-        MDX Public
+      <Link to="/public-lessons" className={linkClass}>
+        Public Lessons
       </Link>
       <Link to="/about" className={linkClass}>
         About

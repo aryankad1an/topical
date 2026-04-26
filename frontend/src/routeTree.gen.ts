@@ -9,17 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PublicLessonsRouteImport } from './routes/public-lessons'
 import { Route as MdxPublicRouteImport } from './routes/mdxPublic'
 import { Route as CombinedMdxRouteImport } from './routes/combined-mdx'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedPublicLessonsRouteImport } from './routes/_authenticated/public-lessons'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedMdxRouteImport } from './routes/_authenticated/mdx'
 import { Route as AuthenticatedLessonPlanRouteImport } from './routes/_authenticated/lesson-plan'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
+const PublicLessonsRoute = PublicLessonsRouteImport.update({
+  id: '/public-lessons',
+  path: '/public-lessons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MdxPublicRoute = MdxPublicRouteImport.update({
   id: '/mdxPublic',
   path: '/mdxPublic',
@@ -44,12 +49,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPublicLessonsRoute =
-  AuthenticatedPublicLessonsRouteImport.update({
-    id: '/public-lessons',
-    path: '/public-lessons',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -76,22 +75,22 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/combined-mdx': typeof CombinedMdxRoute
   '/mdxPublic': typeof MdxPublicRoute
+  '/public-lessons': typeof PublicLessonsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lesson-plan': typeof AuthenticatedLessonPlanRoute
   '/mdx': typeof AuthenticatedMdxRoute
   '/profile': typeof AuthenticatedProfileRoute
-  '/public-lessons': typeof AuthenticatedPublicLessonsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/combined-mdx': typeof CombinedMdxRoute
   '/mdxPublic': typeof MdxPublicRoute
+  '/public-lessons': typeof PublicLessonsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lesson-plan': typeof AuthenticatedLessonPlanRoute
   '/mdx': typeof AuthenticatedMdxRoute
   '/profile': typeof AuthenticatedProfileRoute
-  '/public-lessons': typeof AuthenticatedPublicLessonsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,11 +99,11 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/combined-mdx': typeof CombinedMdxRoute
   '/mdxPublic': typeof MdxPublicRoute
+  '/public-lessons': typeof PublicLessonsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lesson-plan': typeof AuthenticatedLessonPlanRoute
   '/_authenticated/mdx': typeof AuthenticatedMdxRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
-  '/_authenticated/public-lessons': typeof AuthenticatedPublicLessonsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,22 +112,22 @@ export interface FileRouteTypes {
     | '/about'
     | '/combined-mdx'
     | '/mdxPublic'
+    | '/public-lessons'
     | '/dashboard'
     | '/lesson-plan'
     | '/mdx'
     | '/profile'
-    | '/public-lessons'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/combined-mdx'
     | '/mdxPublic'
+    | '/public-lessons'
     | '/dashboard'
     | '/lesson-plan'
     | '/mdx'
     | '/profile'
-    | '/public-lessons'
   id:
     | '__root__'
     | '/'
@@ -136,11 +135,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/combined-mdx'
     | '/mdxPublic'
+    | '/public-lessons'
     | '/_authenticated/dashboard'
     | '/_authenticated/lesson-plan'
     | '/_authenticated/mdx'
     | '/_authenticated/profile'
-    | '/_authenticated/public-lessons'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -149,10 +148,18 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CombinedMdxRoute: typeof CombinedMdxRoute
   MdxPublicRoute: typeof MdxPublicRoute
+  PublicLessonsRoute: typeof PublicLessonsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/public-lessons': {
+      id: '/public-lessons'
+      path: '/public-lessons'
+      fullPath: '/public-lessons'
+      preLoaderRoute: typeof PublicLessonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mdxPublic': {
       id: '/mdxPublic'
       path: '/mdxPublic'
@@ -187,13 +194,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/public-lessons': {
-      id: '/_authenticated/public-lessons'
-      path: '/public-lessons'
-      fullPath: '/public-lessons'
-      preLoaderRoute: typeof AuthenticatedPublicLessonsRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
@@ -231,7 +231,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLessonPlanRoute: typeof AuthenticatedLessonPlanRoute
   AuthenticatedMdxRoute: typeof AuthenticatedMdxRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
-  AuthenticatedPublicLessonsRoute: typeof AuthenticatedPublicLessonsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -239,7 +238,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLessonPlanRoute: AuthenticatedLessonPlanRoute,
   AuthenticatedMdxRoute: AuthenticatedMdxRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
-  AuthenticatedPublicLessonsRoute: AuthenticatedPublicLessonsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -252,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CombinedMdxRoute: CombinedMdxRoute,
   MdxPublicRoute: MdxPublicRoute,
+  PublicLessonsRoute: PublicLessonsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

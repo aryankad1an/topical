@@ -344,10 +344,10 @@ function Home() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                   <a
-                    href="/mdxPublic"
+                    href="/public-lessons"
                     className="glass-btn inline-flex items-center justify-center h-12 px-8 text-base font-medium"
                   >
-                    Explore Public Content
+                    Explore Public Lessons
                     <ChevronRight className="ml-1 h-5 w-5" />
                   </a>
                 </>
@@ -367,7 +367,7 @@ function Home() {
             </div>
             <div className="flex gap-6 items-center">
               <a href="/about" className="text-xs text-white/30 hover:text-white/60 transition-colors">About</a>
-              <a href="/mdxPublic" className="text-xs text-white/30 hover:text-white/60 transition-colors">Public Content</a>
+              <a href="/public-lessons" className="text-xs text-white/30 hover:text-white/60 transition-colors">Public Lessons</a>
               <div className="text-xs text-white/20">© {new Date().getFullYear()} Topical</div>
             </div>
           </div>

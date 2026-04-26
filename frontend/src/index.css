@@ -123,24 +123,56 @@
   66% { opacity: 0.7; filter: hue-rotate(-5deg); }
 }
 
-/* ─── Inverted Custom Cursor ─── */
-.custom-inverted-cursor {
+/* ─── Liquid Glass Cursor ─── */
+.cursor-dot {
   position: fixed;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: white;
   pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
+  z-index: 10000;
   mix-blend-mode: difference;
-  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: width 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.custom-inverted-cursor.hovering {
-  width: 14px;
-  height: 14px;
+.cursor-dot.hovering {
+  width: 10px;
+  height: 10px;
+}
+
+.cursor-glow {
+  position: fixed;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  border: 1px solid rgba(96, 165, 250, 0.15);
+  background: radial-gradient(
+    circle,
+    rgba(96, 165, 250, 0.06) 0%,
+    rgba(167, 139, 250, 0.03) 50%,
+    transparent 70%
+  );
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              border-color 0.3s ease;
+}
+
+.cursor-glow.hovering {
+  width: 52px;
+  height: 52px;
+  border-color: rgba(167, 139, 250, 0.25);
+  background: radial-gradient(
+    circle,
+    rgba(167, 139, 250, 0.08) 0%,
+    rgba(96, 165, 250, 0.04) 50%,
+    transparent 70%
+  );
 }
 
 /* ─── Liquid Glass Surface ─── */
