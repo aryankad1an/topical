@@ -8,38 +8,45 @@
 
 @layer base {
   :root {
-    --background: 240 6% 6%;
-    --foreground: 0 0% 95%;
+    --background: 220 15% 5%;
+    --foreground: 210 20% 95%;
 
-    --card: 240 5% 8%;
-    --card-foreground: 0 0% 95%;
+    --card: 220 15% 8%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 240 5% 8%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 220 15% 8%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 270 80% 65%;
+    --primary: 210 100% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 14%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 220 12% 12%;
+    --secondary-foreground: 210 20% 95%;
 
-    --muted: 240 5% 14%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 220 12% 14%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 270 60% 20%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 210 60% 15%;
+    --accent-foreground: 210 20% 95%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5% 16%;
-    --input: 240 5% 16%;
-    --ring: 270 80% 65%;
+    --border: 220 15% 15%;
+    --input: 220 15% 15%;
+    --ring: 210 100% 65%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --grid-color: rgba(139, 92, 246, 0.06);
-    --glow-color: rgba(139, 92, 246, 0.15);
+    /* Liquid Glass Tokens */
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.12);
+    --glass-blur: 24px;
+    --glass-glow: rgba(100, 180, 255, 0.08);
+    --iridescent-1: #60a5fa;
+    --iridescent-2: #a78bfa;
+    --iridescent-3: #34d399;
   }
 }
 
@@ -92,29 +99,28 @@
   }
 
   ::selection {
-    background: hsl(270 80% 65% / 0.3);
+    background: rgba(96, 165, 250, 0.3);
     color: white;
   }
 }
 
-/* ─── Animated Grid Background ─── */
+/* ─── Ambient Mesh Background ─── */
 .grid-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 40%, transparent 100%);
-  animation: gridPulse 8s ease-in-out infinite;
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 10%, rgba(96, 165, 250, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 60% at 80% 90%, rgba(167, 139, 250, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(52, 211, 153, 0.03) 0%, transparent 60%);
+  animation: ambientShift 20s ease-in-out infinite;
 }
 
-@keyframes gridPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+@keyframes ambientShift {
+  0%, 100% { opacity: 0.6; filter: hue-rotate(0deg); }
+  33% { opacity: 0.8; filter: hue-rotate(10deg); }
+  66% { opacity: 0.7; filter: hue-rotate(-5deg); }
 }
 
 /* ─── Inverted Custom Cursor ─── */
@@ -128,7 +134,7 @@
   z-index: 9999;
   transform: translate(-50%, -50%);
   mix-blend-mode: difference;
-  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
               height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -137,35 +143,63 @@
   height: 14px;
 }
 
-
-
-/* ─── Glassmorphism Card ─── */
+/* ─── Liquid Glass Surface ─── */
 .glass-card {
-  background: hsl(240 5% 8% / 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid hsl(240 5% 16% / 0.5);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  pointer-events: none;
 }
 
 .glass-card:hover {
-  border-color: hsl(270 80% 65% / 0.3);
-  box-shadow: 0 0 30px hsl(270 80% 65% / 0.08);
-  transform: translateY(-2px);
+  border-color: rgba(96, 165, 250, 0.15);
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.08) inset,
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(96, 165, 250, 0.06);
+  transform: translateY(-1px);
 }
 
-/* ─── Gradient Text ─── */
+/* ─── Iridescent Gradient Text ─── */
 .gradient-text {
-  background: linear-gradient(135deg, hsl(270 80% 65%), hsl(220 90% 70%), hsl(270 80% 75%));
-  background-size: 200% auto;
+  background: linear-gradient(
+    135deg,
+    var(--iridescent-1),
+    var(--iridescent-2),
+    var(--iridescent-3),
+    var(--iridescent-1)
+  );
+  background-size: 300% 300%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer 4s ease-in-out infinite;
+  animation: iridescent 8s ease-in-out infinite;
 }
 
-@keyframes shimmer {
+@keyframes iridescent {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
@@ -211,18 +245,95 @@
   opacity: 0;
 }
 
-/* ─── Navbar glassmorphism ─── */
+/* ─── Glass Navbar ─── */
 .nav-glass {
-  background: hsl(240 6% 6% / 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid hsl(240 5% 16% / 0.4);
+  background: rgba(10, 14, 20, 0.6);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Liquid Glass Button ─── */
+.glass-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: calc(var(--radius) - 0.25rem);
+  color: hsl(var(--foreground));
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glass-btn:hover {
+  border-color: rgba(96, 165, 250, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.08);
+}
+
+.glass-btn:hover::after {
+  opacity: 1;
+}
+
+/* ─── Glass Input ─── */
+.glass-input {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: calc(var(--radius) - 0.25rem);
+  color: hsl(var(--foreground));
+  transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.08), 0 0 20px rgba(96, 165, 250, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Liquid Glow Indicator ─── */
+.liquid-glow {
+  position: relative;
+}
+
+.liquid-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--iridescent-1),
+    var(--iridescent-2),
+    var(--iridescent-3)
+  );
+  opacity: 0;
+  z-index: -1;
+  filter: blur(12px);
+  transition: opacity 0.4s ease;
+}
+
+.liquid-glow:hover::before {
+  opacity: 0.15;
 }
 
 /* ─── Scrollbar Styling ─── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -230,15 +341,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(270 80% 65% / 0.3);
+  background: rgba(96, 165, 250, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(270 80% 65% / 0.5);
+  background: rgba(96, 165, 250, 0.35);
 }
 
-/* Prose styles for MDX content */
+/* ─── Prose styles for MDX content ─── */
 @layer components {
   .prose {
     @apply text-slate-300;
@@ -273,19 +384,34 @@
   }
 
   .prose a {
-    @apply text-violet-400 underline;
+    color: var(--iridescent-1);
+    text-decoration: underline;
+    text-decoration-color: rgba(96, 165, 250, 0.3);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.3s;
+  }
+
+  .prose a:hover {
+    text-decoration-color: var(--iridescent-1);
   }
 
   .prose blockquote {
-    @apply pl-4 border-l-4 border-violet-500/40 italic;
+    @apply pl-4 italic;
+    border-left: 3px solid var(--iridescent-2);
+    background: rgba(167, 139, 250, 0.05);
+    padding: 0.75rem 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
   }
 
   .prose code:not(pre code) {
-    @apply px-1.5 py-0.5 bg-slate-800 rounded text-sm;
+    @apply px-1.5 py-0.5 rounded text-sm;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .prose pre {
     @apply p-4 mb-4 rounded-lg overflow-x-auto;
+    border: 1px solid var(--glass-border);
   }
 
   .prose img {
@@ -297,15 +423,17 @@
   }
 
   .prose table th, .prose table td {
-    @apply border border-slate-700 p-2;
+    @apply p-2;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .prose table th {
-    @apply bg-slate-800;
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .prose hr {
-    @apply my-6 border-t border-slate-700;
+    @apply my-6;
+    border-top: 1px solid var(--glass-border);
   }
 
   .prose strong {
@@ -315,4 +443,23 @@
   .prose em {
     @apply italic;
   }
+}
+
+/* ─── Liquid Shimmer Loader ─── */
+@keyframes liquidShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.liquid-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(96, 165, 250, 0.08) 25%,
+    rgba(167, 139, 250, 0.08) 50%,
+    rgba(96, 165, 250, 0.08) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: liquidShimmer 2s ease-in-out infinite;
 }
