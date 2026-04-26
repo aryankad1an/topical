@@ -183,7 +183,7 @@ function Dashboard() {
     setLessonPlanToLoad(lessonPlanId);
 
     // Navigate to the lesson plan page
-    navigate({ to: '/lesson-plan' });
+    navigate({ to: '/lesson-plan' } as any);
   };
 
   // Handle toggling the public status of a lesson plan

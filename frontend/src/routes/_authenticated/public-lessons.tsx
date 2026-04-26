@@ -172,12 +172,13 @@ function PublicLessons() {
     setLessonPlanToLoad(id);
     navigate({
       to: '/lesson-plan',
+      search: {},
       state: {
         lessonPlanId: id,
         isPublic: isPublic,
         fromDashboard: true
-      } as any
-    });
+      }
+    } as any);
   };
 
   // Handle opening the make private confirmation dialog

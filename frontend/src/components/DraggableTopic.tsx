@@ -121,7 +121,7 @@ export function DraggableTopic({
             savedTopics={savedTopics}
             selectedSubtopic={selectedSubtopic}
             isReadOnly={isReadOnly}
-            onSubtopicSelect={onSubtopicSelect}
+            onSubtopicSelect={onSubtopicSelect ?? (() => {})}
             onDeleteSubtopic={(subtopic, isSubtopic, parentTopic) => {
               if (onSubtopicsReordered) {
                 // Update the subtopics list after deletion
