@@ -613,6 +613,24 @@ function LessonPlan() {
       // Keep showing generation options
       setShowGenerationOptions(true);
 
+      // Auto-save the generated content
+      const isSubtopic = !!selectedSubtopic;
+      let parentTopicValue = selectedTopicValue;
+      
+      if (isSubtopic) {
+        const parentTopicObj = topicsHierarchy.find(t => 
+          t.subtopics && t.subtopics.includes(selectedTopicValue)
+        );
+        parentTopicValue = parentTopicObj ? parentTopicObj.topic : mainTopicValue;
+      }
+      
+      saveMdxToCurrentLesson(
+        selectedTopicValue,
+        cleanedMdx,
+        isSubtopic,
+        parentTopicValue
+      );
+
       // State is automatically persisted by Zustand
     } catch (error) {
       console.error('Error generating MDX from crawling:', error);
@@ -655,6 +673,24 @@ function LessonPlan() {
       // Keep showing generation options
       setShowGenerationOptions(true);
 
+      // Auto-save the generated content
+      const isSubtopic = !!selectedSubtopic;
+      let parentTopicValue = selectedTopicValue;
+      
+      if (isSubtopic) {
+        const parentTopicObj = topicsHierarchy.find(t => 
+          t.subtopics && t.subtopics.includes(selectedTopicValue)
+        );
+        parentTopicValue = parentTopicObj ? parentTopicObj.topic : mainTopicValue;
+      }
+      
+      saveMdxToCurrentLesson(
+        selectedTopicValue,
+        cleanedMdx,
+        isSubtopic,
+        parentTopicValue
+      );
+
       // State is automatically persisted by Zustand
     } catch (error) {
       console.error('Error generating MDX from URLs:', error);
@@ -689,6 +725,24 @@ function LessonPlan() {
       setLastUsedGenerationMethod('llm');
       // Keep showing generation options
       setShowGenerationOptions(true);
+
+      // Auto-save the generated content
+      const isSubtopic = !!selectedSubtopic;
+      let parentTopicValue = selectedTopicValue;
+      
+      if (isSubtopic) {
+        const parentTopicObj = topicsHierarchy.find(t => 
+          t.subtopics && t.subtopics.includes(selectedTopicValue)
+        );
+        parentTopicValue = parentTopicObj ? parentTopicObj.topic : mainTopicValue;
+      }
+      
+      saveMdxToCurrentLesson(
+        selectedTopicValue,
+        cleanedMdx,
+        isSubtopic,
+        parentTopicValue
+      );
 
       // State is automatically persisted by Zustand
     } catch (error) {
@@ -1276,6 +1330,29 @@ function LessonPlan() {
     }
   }, [selectedTopic, selectedSubtopic, checkForSavedContent]);
 
+  // Helper to auto-save the current content to the lesson plan
+  const autoSaveContent = (contentToSave: string) => {
+    const currentTopic = selectedTopic || selectedSubtopic || '';
+    if (!currentTopic) return;
+
+    const isSubtopic = !!selectedSubtopic;
+    let parentTopicValue = currentTopic;
+    
+    if (isSubtopic) {
+      const parentTopicObj = topicsHierarchy.find(t => 
+        t.subtopics && t.subtopics.includes(currentTopic)
+      );
+      parentTopicValue = parentTopicObj ? parentTopicObj.topic : (mainTopic || '');
+    }
+    
+    saveMdxToCurrentLesson(
+      currentTopic,
+      contentToSave,
+      isSubtopic,
+      parentTopicValue
+    );
+  };
+
   // Handle content changes
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
@@ -1303,6 +1380,9 @@ function LessonPlan() {
       setSelectionStart(null);
       setSelectionEnd(null);
     }
+
+    // Auto-save any manual typing to the lesson plan
+    autoSaveContent(newContent);
 
     // State is automatically persisted by Zustand
   };
@@ -1409,6 +1489,9 @@ function LessonPlan() {
 
       setMdxContent(newContent);
       setIsTextRefined(true);
+      
+      // Auto-save the refined content
+      autoSaveContent(newContent);
 
       // Update the selection end to account for the new text length
       setSelectionEnd(selectionStart + refinedText.length);
@@ -1445,6 +1528,9 @@ function LessonPlan() {
       setMdxContent(newContent);
       setIsTextRefined(false);
       setRefinedText('');
+      
+      // Auto-save the reverted content
+      autoSaveContent(newContent);
 
       // Restore the selection
       if (editorRef.current) {
