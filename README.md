@@ -30,12 +30,14 @@ Topical is an educational platform that helps users create, manage, and study st
    ```bash
    bun install
    cd frontend && bun install
+   cd ..
    ```
 
 3. **Environment Setup:**
    Copy the example environment file:
    ```bash
    cp .env.example .env
+   cd ..
    ```
    Open `.env` and fill in your PostgreSQL connection string, Kinde credentials, and Google Gemini API key.
 
