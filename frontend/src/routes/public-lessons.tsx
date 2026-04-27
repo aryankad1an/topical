@@ -134,90 +134,88 @@ function PublicLessonsPage() {
   return (
     <div className="flex flex-col min-h-screen w-full">
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
-        <div className="container mx-auto max-w-6xl relative z-10">
+      <section className="relative py-16 px-4 overflow-hidden">
+        <div className="container mx-auto max-w-4xl relative z-10">
           <div className="text-center">
-            <div
-              className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs mb-6"
+            <h1
+              className="font-brand text-4xl md:text-5xl tracking-tight mb-4"
               style={{
-                background: 'rgba(96, 165, 250, 0.06)',
-                border: '1px solid rgba(96, 165, 250, 0.15)',
-                color: 'var(--iridescent-1)',
+                background: 'linear-gradient(135deg, #22c55e, #4ade80, #86efac, #22c55e)',
+                backgroundSize: '300% 300%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'iridescent 8s ease-in-out infinite',
               }}
             >
-              <BookMarked className="h-3 w-3 mr-1.5" />
-              Community Knowledge
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 gradient-text">
-              Public Lessons
+              Explore
             </h1>
-            <p className="text-lg text-white/40 max-w-2xl mx-auto mb-8">
-              Browse and learn from lesson plans shared by the Topical community
+            <p className="text-sm text-white/35 max-w-md mx-auto mb-8">
+              Lesson plans shared by the community
             </p>
 
             {/* Search */}
-            <div className="max-w-xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+            <div className="max-w-md mx-auto relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
               <input
                 type="text"
-                placeholder="Search public lesson plans..."
+                placeholder="Search lessons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-input w-full h-12 pl-11 pr-4 text-sm"
+                className="glass-input w-full h-11 pl-11 pr-4 text-sm"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="px-4 pb-6">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center justify-center gap-8 text-sm text-white/40">
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4" style={{ color: 'var(--iridescent-1)' }} />
-              <span className="text-white/70 font-medium">{publicLessonPlans.length}</span>
-              <span>Lessons Available</span>
+      {/* Stats */}
+      <section className="px-4 pb-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="flex items-center justify-center gap-6 text-xs text-white/30">
+            <div className="flex items-center gap-1.5">
+              <Layers className="h-3 w-3" style={{ color: '#22c55e' }} />
+              <span className="text-white/50 font-medium">{publicLessonPlans.length}</span>
+              <span>lessons</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Lesson Plans Grid */}
-      <section className="px-4 pb-24">
-        <div className="container mx-auto max-w-6xl">
+      <section className="px-4 pb-20">
+        <div className="container mx-auto max-w-4xl">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="glass-card p-6 animate-pulse">
-                  <div className="h-5 bg-white/[0.06] rounded w-3/4 mb-3" />
-                  <div className="h-3 bg-white/[0.04] rounded w-1/2 mb-2" />
-                  <div className="h-3 bg-white/[0.04] rounded w-2/3" />
+                <div key={i} className="glass-card p-5 animate-pulse">
+                  <div className="h-4 bg-white/[0.04] rounded w-3/4 mb-3" />
+                  <div className="h-3 bg-white/[0.03] rounded w-1/2 mb-2" />
+                  <div className="h-3 bg-white/[0.03] rounded w-2/3" />
                 </div>
               ))}
             </div>
           ) : filteredLessonPlans.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {visibleLessonPlans.map((plan) => {
                   const isOwnPlan = user?.id && plan.userId === user.id;
                   return (
                     <div
                       key={plan.id}
-                      className="glass-card liquid-glow p-6 group flex flex-col"
+                      className="glass-card liquid-glow p-5 group flex flex-col"
                     >
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="text-base font-semibold text-white/85 group-hover:text-white transition-colors leading-tight flex-1 mr-2">
+                        <div className="flex items-start justify-between mb-2.5">
+                          <h3 className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors leading-tight flex-1 mr-2">
                             {plan.name}
                           </h3>
                           {isOwnPlan && (
                             <span
                               className="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
                               style={{
-                                background: 'rgba(96, 165, 250, 0.1)',
-                                border: '1px solid rgba(96, 165, 250, 0.2)',
-                                color: 'var(--iridescent-1)',
+                                background: 'rgba(34, 197, 94, 0.08)',
+                                border: '1px solid rgba(34, 197, 94, 0.15)',
+                                color: '#22c55e',
                               }}
                             >
                               Yours
@@ -225,23 +223,23 @@ function PublicLessonsPage() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-white/35 mb-4">
+                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/25 mb-3">
                           <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
+                            <User className="h-2.5 w-2.5" />
                             <span>{isOwnPlan ? 'You' : userMap[plan.userId] || 'Community Member'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
+                            <Calendar className="h-2.5 w-2.5" />
                             <span>{formatDate(plan.createdAt)}</span>
                           </div>
                         </div>
 
                         <div
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] mb-4"
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] mb-3"
                           style={{
-                            background: 'rgba(52, 211, 153, 0.06)',
-                            border: '1px solid rgba(52, 211, 153, 0.12)',
-                            color: 'var(--iridescent-3)',
+                            background: 'rgba(34, 197, 94, 0.04)',
+                            border: '1px solid rgba(34, 197, 94, 0.08)',
+                            color: 'rgba(34, 197, 94, 0.7)',
                           }}
                         >
                           <Layers className="h-2.5 w-2.5 mr-1" />
@@ -249,19 +247,19 @@ function PublicLessonsPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-3" style={{ borderTop: '1px solid var(--glass-border)' }}>
+                      <div className="flex items-center gap-2 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                         <button
                           onClick={() => handleViewCombinedMdx(plan.id)}
-                          className="glass-btn flex-1 h-9 text-xs font-medium flex items-center justify-center gap-1.5"
+                          className="glass-btn flex-1 h-8 text-xs font-medium flex items-center justify-center gap-1.5"
                         >
-                          <FileCode className="h-3.5 w-3.5" />
+                          <FileCode className="h-3 w-3" />
                           Read
                         </button>
                         <button
                           onClick={() => handleViewLessonPlan(plan.id, plan.userId, plan.isPublic ?? false)}
-                          className="flex-1 h-9 text-xs font-medium rounded-xl flex items-center justify-center gap-1.5 text-white transition-all duration-300 hover:scale-[1.02]"
+                          className="flex-1 h-8 text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 text-black transition-all duration-300 hover:scale-[1.02]"
                           style={{
-                            background: 'linear-gradient(135deg, var(--iridescent-1), var(--iridescent-2))',
+                            background: 'linear-gradient(135deg, #22c55e, #4ade80)',
                           }}
                         >
                           {isAuthenticated ? (isOwnPlan ? 'Edit' : 'View') : 'Read'}
@@ -275,15 +273,15 @@ function PublicLessonsPage() {
               {/* Load More */}
               {hasMoreLessons && (
                 <div className="flex flex-col items-center justify-center pt-10">
-                  <p className="text-xs text-white/30 mb-3">
+                  <p className="text-[11px] text-white/20 mb-3">
                     Showing {visibleLessonPlans.length} of {filteredLessonPlans.length}
                   </p>
                   <button
                     onClick={handleLoadMore}
-                    className="glass-btn h-10 px-6 text-sm font-medium flex items-center gap-2"
+                    className="glass-btn h-9 px-5 text-xs font-medium flex items-center gap-2"
                   >
-                    <ChevronDown className="h-4 w-4" />
-                    View More ({remainingCount} remaining)
+                    <ChevronDown className="h-3.5 w-3.5" />
+                    More ({remainingCount})
                   </button>
                 </div>
               )}
@@ -292,21 +290,21 @@ function PublicLessonsPage() {
             <div className="text-center py-20">
               {searchQuery.trim() ? (
                 <div>
-                  <Search className="h-12 w-12 mx-auto mb-4 text-white/10" />
-                  <p className="text-white/40 mb-4 text-sm">No lessons found matching "{searchQuery}"</p>
+                  <Search className="h-10 w-10 mx-auto mb-4 text-white/8" />
+                  <p className="text-white/30 mb-4 text-sm">No results for "{searchQuery}"</p>
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="glass-btn h-9 px-4 text-xs font-medium"
+                    className="glass-btn h-8 px-4 text-xs font-medium"
                   >
-                    Clear Search
+                    Clear
                   </button>
                 </div>
               ) : (
                 <div>
-                  <BookMarked className="h-12 w-12 mx-auto mb-4 text-white/10" />
-                  <p className="text-white/40 text-sm">No public lesson plans available yet</p>
+                  <BookMarked className="h-10 w-10 mx-auto mb-4 text-white/8" />
+                  <p className="text-white/30 text-sm">No public lessons yet</p>
                   {isAuthenticated && (
-                    <p className="text-white/25 text-xs mt-2">Create a lesson plan and make it public to see it here</p>
+                    <p className="text-white/20 text-xs mt-2">Create one and make it public</p>
                   )}
                 </div>
               )}
