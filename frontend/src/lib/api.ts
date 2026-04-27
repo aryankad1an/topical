@@ -33,17 +33,23 @@ export const api = client.api;
 
 async function getCurrentUser() {
   const res = await api.me.$get();
-  if (!res.ok) {
-    throw new Error("server error");
+  // 401 is expected when the visitor isn't logged in.
+  // Treat it as an anonymous session so we don't trigger react-query retries.
+  if (res.status === 401) {
+    return { user: null };
   }
-  const data = await res.json();
-  return data;
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "");
+    throw new Error(errorText || `Failed to fetch current user (${res.status})`);
+  }
+  return res.json();
 }
 
 export const userQueryOptions = queryOptions({
   queryKey: ["get-current-user"],
   queryFn: getCurrentUser,
   staleTime: Infinity,
+  retry: false,
 });
 
 // AI Content API functions

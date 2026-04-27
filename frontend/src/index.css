@@ -71,13 +71,20 @@
     @apply bg-background text-foreground;
     font-size: 1rem;
     line-height: 1.6;
-    cursor: none;
+    cursor: auto;
     overflow-x: hidden;
     background: #050505;
   }
 
-  a, button, input, textarea, select, [role="button"], label {
-    cursor: none;
+  a,
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  input,
+  textarea {
+    cursor: text;
   }
 
   h1 {
@@ -131,12 +138,7 @@
 }
 
 .grid-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle 800px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(34, 197, 94, 0.03) 0%, transparent 60%);
-  transition: background 0.3s ease;
+  content: none;
 }
 
 @keyframes ambientShift {
@@ -162,12 +164,6 @@
   will-change: transform;
 }
 
-.cursor-dot.hovering {
-  width: 4px;
-  height: 4px;
-  background: #22c55e;
-}
-
 .cursor-dot.clicking {
   width: 8px;
   height: 8px;
@@ -189,13 +185,6 @@
               height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.3s ease;
   will-change: transform;
-}
-
-.cursor-glow.hovering {
-  width: 48px;
-  height: 48px;
-  border-color: rgba(34, 197, 94, 0.6);
-  background: transparent;
 }
 
 .cursor-glow.clicking {
@@ -224,7 +213,7 @@
 }
 
 .nav-pill:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Sliding highlight that follows hovered item */
@@ -254,7 +243,7 @@
 }
 
 .nav-pill-section:hover {
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .nav-pill-section.active {
@@ -267,7 +256,7 @@
 }
 
 .nav-pill-accent:hover {
-  color: #4ade80;
+  color: #22c55e;
 }
 
 /* Thin divider between sections */
@@ -288,7 +277,7 @@
 }
 
 .mobile-nav-link:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* ─── Liquid Glass Surface — cursor-reactive glow ─── */
@@ -320,19 +309,6 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.4s ease;
-}
-
-.glass-card:hover::before {
-  opacity: 1;
-}
-
-.glass-card:hover {
-  border-color: rgba(34, 197, 94, 0.12);
-  box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.06) inset,
-    0 2px 4px rgba(0, 0, 0, 0.4),
-    0 8px 32px rgba(34, 197, 94, 0.05);
-  transform: translateY(-2px);
 }
 
 /* ─── Gradient Text — Green Spectrum ─── */
@@ -421,13 +397,13 @@
 }
 
 .glass-btn:hover {
-  border-color: rgba(34, 197, 94, 0.2);
-  background: rgba(34, 197, 94, 0.06);
-  box-shadow: 0 0 24px rgba(34, 197, 94, 0.08);
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: none;
 }
 
 .glass-btn:hover::after {
-  opacity: 1;
+  opacity: 0;
 }
 
 /* ─── CTA Button — Green Glow ─── */
@@ -463,11 +439,11 @@
 }
 
 .cta-btn:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: none;
   box-shadow:
-    0 0 30px rgba(34, 197, 94, 0.45),
-    0 0 80px rgba(34, 197, 94, 0.2),
-    0 8px 24px rgba(0, 0, 0, 0.3);
+    0 0 20px rgba(34, 197, 94, 0.3),
+    0 0 60px rgba(34, 197, 94, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .cta-btn:hover .cta-arrow {
@@ -529,7 +505,7 @@
 }
 
 .liquid-glow:hover::before {
-  opacity: 0.12;
+  opacity: 0;
 }
 
 /* ─── Green glowing orb ─── */
@@ -564,7 +540,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.15);
 }
 
 /* ─── Prose styles for MDX content ─── */
@@ -610,7 +586,7 @@
   }
 
   .prose a:hover {
-    text-decoration-color: var(--iridescent-1);
+    text-decoration-color: rgba(34, 197, 94, 0.3);
   }
 
   .prose blockquote {

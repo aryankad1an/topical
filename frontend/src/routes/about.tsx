@@ -156,7 +156,7 @@ function About() {
               <p className="font-brand text-base gradient-text">Topical</p>
             </div>
             <div className="flex gap-6 items-center">
-              <a href="/public-lessons" className="text-xs text-white/25 hover:text-white/50 transition-colors">Explore</a>
+              <a href="/public-lessons" className="text-xs text-white/25 transition-colors">Explore</a>
               <div className="text-xs text-white/15">© {new Date().getFullYear()}</div>
             </div>
           </div>

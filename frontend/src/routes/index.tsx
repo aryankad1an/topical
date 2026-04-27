@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth-context';
 import {
-  Loader2,
   ArrowRight,
   Layers,
   Globe,
@@ -14,16 +13,7 @@ export const Route = createFileRoute('/')({
 });
 
 function Home() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-10 w-10 animate-spin mb-4" style={{ color: '#22c55e' }} />
-        <p className="text-white/30 text-sm">Loading...</p>
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen w-full">
@@ -90,7 +80,7 @@ function Home() {
               <div className="animate-fade-in-delay-3">
                 <a
                   href="/public-lessons"
-                  className="text-sm text-white/25 hover:text-white/50 transition-colors duration-300"
+                  className="text-sm text-white/25 transition-colors duration-300"
                 >
                   or explore public lessons →
                 </a>
@@ -200,8 +190,8 @@ function Home() {
               <p className="font-brand text-base gradient-text">Topical</p>
             </div>
             <div className="flex gap-6 items-center">
-              <a href="/about" className="text-xs text-white/25 hover:text-white/50 transition-colors">About</a>
-              <a href="/public-lessons" className="text-xs text-white/25 hover:text-white/50 transition-colors">Explore</a>
+              <a href="/about" className="text-xs text-white/25 transition-colors">About</a>
+              <a href="/public-lessons" className="text-xs text-white/25 transition-colors">Explore</a>
               <div className="text-xs text-white/15">© {new Date().getFullYear()}</div>
             </div>
           </div>
