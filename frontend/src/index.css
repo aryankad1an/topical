@@ -145,140 +145,185 @@
   66% { opacity: 0.6; filter: hue-rotate(-3deg); }
 }
 
-/* ─── Liquid Glass Cursor — Green Glow ─── */
+/* ─── Liquid Glass Cursor (Transparent) ─── */
 .cursor-dot {
   position: fixed;
-  width: 5px;
-  height: 5px;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #22c55e;
+  background: rgba(255, 255, 255, 0.9);
   pointer-events: none;
   z-index: 10000;
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6), 0 0 12px rgba(34, 197, 94, 0.3);
-  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              box-shadow 0.3s ease;
+  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease;
+  will-change: transform;
 }
 
 .cursor-dot.hovering {
+  width: 4px;
+  height: 4px;
+  background: #22c55e;
+}
+
+.cursor-dot.clicking {
   width: 8px;
   height: 8px;
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.8), 0 0 20px rgba(34, 197, 94, 0.4);
+  background: #4ade80;
 }
 
 .cursor-glow {
   position: fixed;
-  width: 40px;
-  height: 40px;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
-  border: 1px solid rgba(34, 197, 94, 0.12);
-  background: radial-gradient(
-    circle,
-    rgba(34, 197, 94, 0.06) 0%,
-    rgba(74, 222, 128, 0.02) 50%,
-    transparent 70%
-  );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  transition: width 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              height 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-              border-color 0.3s ease,
-              background 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s ease;
+  will-change: transform;
 }
 
 .cursor-glow.hovering {
-  width: 56px;
-  height: 56px;
-  border-color: rgba(34, 197, 94, 0.25);
-  background: radial-gradient(
-    circle,
-    rgba(34, 197, 94, 0.1) 0%,
-    rgba(74, 222, 128, 0.04) 50%,
-    transparent 70%
-  );
+  width: 48px;
+  height: 48px;
+  border-color: rgba(34, 197, 94, 0.6);
+  background: transparent;
 }
 
-/* ─── Pill Navbar ─── */
+.cursor-glow.clicking {
+  width: 24px;
+  height: 24px;
+  border-color: rgba(34, 197, 94, 0.9);
+}
+
+/* ─── Pill Navbar — 4 equispaced sections ─── */
 .nav-pill {
   position: fixed;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
-  background: rgba(10, 10, 10, 0.55);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 10, 10, 0.4);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 100px;
-  padding: 6px 8px;
+  padding: 4px 6px;
   box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.04) inset,
-    0 4px 24px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(34, 197, 94, 0.03);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: 95vw;
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 .nav-pill:hover {
-  border-color: rgba(34, 197, 94, 0.12);
-  box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.06) inset,
-    0 4px 32px rgba(0, 0, 0, 0.5),
-    0 0 60px rgba(34, 197, 94, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.nav-pill-link {
+/* Sliding highlight that follows hovered item */
+.nav-highlight {
+  position: absolute;
+  border-radius: 100px;
+  background: rgba(34, 197, 94, 0.15);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 0;
+}
+
+/* Each nav section — equispaced */
+.nav-pill-section {
   color: rgba(255, 255, 255, 0.45);
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 14px;
+  padding: 8px 18px;
   border-radius: 100px;
-  transition: all 0.25s ease;
+  transition: color 0.25s ease;
   white-space: nowrap;
   position: relative;
+  z-index: 1;
+  text-decoration: none;
 }
 
-.nav-pill-link:hover,
-.nav-pill-link.active {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(34, 197, 94, 0.08);
+.nav-pill-section:hover {
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.nav-pill-link.active {
+.nav-pill-section.active {
   color: #22c55e;
 }
 
-/* ─── Liquid Glass Surface ─── */
+.nav-pill-accent {
+  color: #22c55e;
+  font-size: 13px;
+}
+
+.nav-pill-accent:hover {
+  color: #4ade80;
+}
+
+/* Thin divider between sections */
+.nav-pill-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+/* Mobile nav links */
+.mobile-nav-link {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 0;
+  transition: color 0.2s ease;
+}
+
+.mobile-nav-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ─── Liquid Glass Surface — cursor-reactive glow ─── */
 .glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 4px 16px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
 
+/* Cursor-tracking inner glow */
 .glass-card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    transparent 40%,
-    transparent 60%,
-    rgba(255, 255, 255, 0.015) 100%
-  );
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  left: var(--card-mouse-x, 50%);
+  top: var(--card-mouse-y, 50%);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.06) 0%, transparent 70%);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.glass-card:hover::before {
+  opacity: 1;
 }
 
 .glass-card:hover {
@@ -287,7 +332,7 @@
     0 0 0 1px rgba(34, 197, 94, 0.06) inset,
     0 2px 4px rgba(0, 0, 0, 0.4),
     0 8px 32px rgba(34, 197, 94, 0.05);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 /* ─── Gradient Text — Green Spectrum ─── */
