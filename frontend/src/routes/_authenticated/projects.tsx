@@ -19,6 +19,9 @@ export const Route = createFileRoute('/_authenticated/projects')({ component: Pr
 
 /* ─── Custom animated pill toggle ─── */
 function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  // track: 52×22, padding: 3px each side, thumb: 20×16
+  // safe travel = track_width - thumb_width - 2*padding = 52 - 20 - 6 = 26px
+  const TRAVEL = 26;
   return (
     <button
       role="switch"
@@ -27,8 +30,8 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        width: 72,
-        height: 28,
+        width: 52,
+        height: 22,
         borderRadius: 100,
         padding: '3px',
         cursor: 'none',
@@ -36,7 +39,7 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
         background: checked
           ? 'linear-gradient(135deg, rgba(180,200,220,0.18) 0%, rgba(200,215,230,0.10) 100%)'
           : 'rgba(255,255,255,0.04)',
-        boxShadow: checked ? '0 0 12px rgba(180,200,220,0.12), inset 0 1px 1px rgba(255,255,255,0.08)' : 'none',
+        boxShadow: checked ? '0 0 10px rgba(180,200,220,0.10), inset 0 1px 1px rgba(255,255,255,0.07)' : 'none',
         transition: 'background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease',
         flexShrink: 0,
         position: 'relative',
@@ -53,25 +56,23 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
       }} />
       {/* Sliding thumb pill */}
       <span style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 30,
-        height: 20,
+        width: 20,
+        height: 14,
         borderRadius: 100,
+        flexShrink: 0,
         background: checked
           ? 'linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 100%)'
-          : 'rgba(255,255,255,0.12)',
+          : 'rgba(255,255,255,0.14)',
         boxShadow: checked
-          ? '0 2px 8px rgba(148,163,184,0.35), inset 0 1px 1px rgba(255,255,255,0.5)'
-          : '0 1px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.08)',
-        transform: checked ? 'translateX(40px)' : 'translateX(0px)',
-        transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), background 0.35s ease, box-shadow 0.35s ease',
-        flexShrink: 0,
+          ? '0 1px 6px rgba(148,163,184,0.3), inset 0 1px 1px rgba(255,255,255,0.5)'
+          : '0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.08)',
+        transform: checked ? `translateX(${TRAVEL}px)` : 'translateX(0px)',
+        transition: 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), background 0.32s ease, box-shadow 0.32s ease',
       }} />
     </button>
   );
 }
+
 
 function ProjectsPage() {
   const { user } = useAuth();

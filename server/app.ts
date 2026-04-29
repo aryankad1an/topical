@@ -6,6 +6,7 @@ import { topicsRoute } from "./routes/topics";
 import { contentGenerationRoute } from "./routes/contentGeneration";
 import { lessonPlansRoute } from "./routes/lessonPlans";
 import { filesRoute } from "./routes/files";
+import { postsRoute } from "./routes/posts";
 
 const app = new Hono();
 
@@ -16,6 +17,7 @@ const apiRoutes = app.basePath("/api")
   .route("/ai", contentGenerationRoute)         // AI content generation (FastAPI proxy)
   .route("/lessonPlans", lessonPlansRoute)
   .route("/files", filesRoute)                 // secure file storage
+  .route("/posts", postsRoute)
   .route("/", authRoute);
 
 app.get("*", serveStatic({ root: "./frontend/dist" }));
