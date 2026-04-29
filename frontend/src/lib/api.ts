@@ -279,6 +279,38 @@ export async function generateMdxFromUrlsRaw(urls: string[], selectedTopic: stri
   }
 }
 
+// --- LaTeX generation API functions ---
+
+export async function generateLatexLlmOnlyRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
+  const res = await fetch('/api/ai/generate-latex-llm-only-raw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
+  });
+  if (!res.ok) throw new Error(`Failed to generate LaTeX: ${res.status}`);
+  return res.text();
+}
+
+export async function generateLatexCrawlRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
+  const res = await fetch('/api/ai/generate-latex-crawl-raw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
+  });
+  if (!res.ok) throw new Error(`Failed to generate LaTeX: ${res.status}`);
+  return res.text();
+}
+
+export async function generateLatexFromUrlsRaw(urls: string[], selectedTopic: string, mainTopic: string, hierarchy?: string) {
+  const res = await fetch('/api/ai/generate-latex-from-urls-raw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ urls, selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
+  });
+  if (!res.ok) throw new Error(`Failed to generate LaTeX: ${res.status}`);
+  return res.text();
+}
+
 // Refine content
 export async function refineContent(mdx: string, question: string) {
   const res = await fetch('/api/ai/refine', {

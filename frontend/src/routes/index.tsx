@@ -57,19 +57,21 @@ function Home() {
             </div>
 
             {/* Subtitle — concise, no buzzwords */}
-            <p className="text-lg md:text-xl text-white/40 max-w-lg leading-relaxed animate-fade-in-delay-1">
-              Build lesson plans with AI. Search a topic, generate content, share with anyone.
+            <p className="text-xl md:text-2xl font-semibold text-white/80 max-w-2xl leading-relaxed">
+              <span className="inline-block animate-fade-in-delay-1">Create high quality</span>{' '}
+              <span className="inline-block animate-fade-in-delay-2 text-white">information documents</span>{' '}
+              <span className="inline-block animate-fade-in-delay-3">like lesson plans, project documentation, and detailed research papers.</span>
             </p>
 
-            {/* CTA — "Create your first lesson plan" */}
+            {/* CTA — "Start your first project" */}
             <div className="animate-fade-in-delay-2">
               <a
-                href={isAuthenticated ? "/lesson-plan" : registerUrl}
+                href={isAuthenticated ? "/projects" : registerUrl}
                 onClick={isAuthenticated ? undefined : registerAction}
                 className="cta-btn group"
-                id="cta-create-lesson"
+                id="cta-create-project"
               >
-                <span>{isAuthenticated ? "Create a lesson plan" : "Create your first lesson plan"}</span>
+                <span>{isAuthenticated ? "Go to Projects" : "Start your first project"}</span>
                 <span className="cta-arrow cta-arrow-animated">
                   <ArrowRight className="h-5 w-5" />
                 </span>
@@ -80,10 +82,10 @@ function Home() {
             {!isAuthenticated && (
               <div className="animate-fade-in-delay-3">
                 <a
-                  href="/public-lessons"
+                  href="/community"
                   className="text-sm text-white/25 transition-colors duration-300"
                 >
-                  or explore public lessons →
+                  or explore community projects →
                 </a>
               </div>
             )}
@@ -171,7 +173,7 @@ function Home() {
                 : "Sign up and create your first structured lesson plan in minutes."}
             </p>
             <a
-              href={isAuthenticated ? "/lesson-plan" : registerUrl}
+              href={isAuthenticated ? "/projects" : registerUrl}
               onClick={isAuthenticated ? undefined : registerAction}
               className="cta-btn group"
             >
@@ -193,7 +195,7 @@ function Home() {
             </div>
             <div className="flex gap-6 items-center">
               <a href="/about" className="text-xs text-white/25 transition-colors">About</a>
-              <a href="/public-lessons" className="text-xs text-white/25 transition-colors">Explore</a>
+              <a href="/community" className="text-xs text-white/25 transition-colors">Explore</a>
               <div className="text-xs text-white/15">© {new Date().getFullYear()}</div>
             </div>
           </div>

@@ -89,25 +89,13 @@ function NavBar() {
         </Link>
         <div className="nav-pill-divider" />
 
-        {isAuthenticated && (
-          <>
-            <Link to="/dashboard" className={`nav-pill-section ${isActive('/dashboard') ? 'active' : ''}`}>
-              Dashboard
-            </Link>
-            <div className="nav-pill-divider" />
-            <Link to="/lesson-plan" className={`nav-pill-section ${isActive('/lesson-plan') ? 'active' : ''}`}>
-              Lesson Plan
-            </Link>
-            <div className="nav-pill-divider" />
-          </>
-        )}
-
-        <Link to="/public-lessons" className={`nav-pill-section ${isActive('/public-lessons') ? 'active' : ''}`}>
-          Explore
+        <Link to="/projects" className={`nav-pill-section ${isActive('/projects') ? 'active' : ''}`}>
+          Projects
         </Link>
         <div className="nav-pill-divider" />
-        <Link to="/about" className={`nav-pill-section ${isActive('/about') ? 'active' : ''}`}>
-          About
+
+        <Link to="/community" className={`nav-pill-section ${isActive('/community') ? 'active' : ''}`}>
+          Community
         </Link>
         <div className="nav-pill-divider" />
 
@@ -144,15 +132,8 @@ function NavBar() {
               </button>
             </div>
             <div className="flex flex-col gap-1 p-6">
-              <Link to="/public-lessons" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link>
-              <Link to="/about" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>About</Link>
-              <hr className="border-white/5 my-3" />
-              {isAuthenticated && (
-                <>
-                  <Link to="/dashboard" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
-                  <Link to="/lesson-plan" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Lesson Plan</Link>
-                </>
-              )}
+              <Link to="/projects" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Projects</Link>
+              <Link to="/community" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Community</Link>
               <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>Profile</Link>
             </div>
           </div>

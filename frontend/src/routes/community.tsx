@@ -17,7 +17,7 @@ import {
   Layers,
 } from 'lucide-react';
 
-export const Route = createFileRoute('/public-lessons')({
+export const Route = createFileRoute('/community')({
   component: PublicLessonsPage,
 });
 

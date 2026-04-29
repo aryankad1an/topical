@@ -221,6 +221,30 @@ async def refine_mdx_content(
     return text.strip()
 
 
+async def generate_latex_content(topic: str, main_topic: str, context: str = "", hierarchy: str = "") -> str:
+    """Generate LaTeX content instead of MDX."""
+    ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
+    hier_ctx = f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\nStrictly focus ONLY on the topic '{topic}' and do not explain other topics from the hierarchy to avoid redundant content." if hierarchy else ""
+    prompt = (
+        f"You are an expert technical writer creating educational LaTeX content.\n\n"
+        f"Generate comprehensive LaTeX content for: \"{topic}\"\n"
+        f"Part of a document about: \"{main_topic}\"\n"
+        f"{hier_ctx}\n"
+        f"{ctx}\n"
+        f"Requirements:\n"
+        f"- Pure LaTeX format (NOT a full document — no \\documentclass, \\begin{{document}}, etc.)\n"
+        f"- Start with \\section{{{topic}}}\n"
+        f"- 3-5 subsections with \\subsection{{}}\n"
+        f"- STRICTLY relevant to \"{topic}\". Do not overlap with or redundantly cover other subtopics.\n"
+        f"- Use itemize/enumerate, equations, tables where appropriate\n"
+        f"- Educational, clear, well-structured\n"
+        f"- 400-800 words\n"
+        f"- Return ONLY the LaTeX content (no preamble, no \\begin{{document}})\n"
+    )
+    text = generate_content(prompt)
+    return text.strip()
+
+
 # ---------------------------------------------------------------------------
 # API Routes — mounted under /ai/
 # ---------------------------------------------------------------------------
@@ -448,6 +472,47 @@ async def refine_with_urls_raw(req: RefineWithUrlsRequest):
         context = await crawl_urls(req.urls)
         refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context[:15000])
         return refined
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+
+
+# --- LaTeX generation endpoints ---
+
+@app.post("/ai/generate-latex-llm-only-raw", response_class=PlainTextResponse)
+async def generate_latex_llm_only_raw(req: GenerateMdxRequest):
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+    try:
+        t = req.topic or req.selected_topic
+        text = await generate_latex_content(t, req.main_topic, "", req.hierarchy or "")
+        return PlainTextResponse(content=text)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+
+
+@app.post("/ai/generate-latex-crawl-raw", response_class=PlainTextResponse)
+async def generate_latex_crawl_raw(req: GenerateMdxRequest):
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+    try:
+        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
+        text = await generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "")
+        return PlainTextResponse(content=text)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+
+
+@app.post("/ai/generate-latex-from-urls-raw", response_class=PlainTextResponse)
+async def generate_latex_from_urls_raw(req: UrlsMdxRequest):
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
+    try:
+        context = await crawl_urls(req.urls)
+        text = await generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "")
+        return PlainTextResponse(content=text)
     except Exception as e:
         logger.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
