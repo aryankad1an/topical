@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner"
 import { type QueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -19,22 +19,44 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function NavBar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, loginUrl, logout, loginAction, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
   const navRef = useRef<HTMLElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
+  
+  const authLabel = isLoading 
+    ? <span className="opacity-0">Loading</span>
+    : isAuthenticated ? (user?.given_name || "Account") : "Sign in";
+
+  const authAction = isAuthenticated ? () => { logout(); } : undefined;
+  const authHref = isAuthenticated ? undefined : loginUrl;
+
+  const updateNavItemWidth = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const items = Array.from(nav.querySelectorAll<HTMLElement>(".nav-pill-section"));
+    if (items.length === 0) return;
+    const maxWidth = Math.max(...items.map((item) => item.scrollWidth));
+    nav.style.setProperty("--nav-pill-item-width", `${Math.ceil(maxWidth)}px`);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setIsMobileMenuOpen(false);
       }
+      updateNavItemWidth();
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [updateNavItemWidth]);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => updateNavItemWidth());
+    return () => cancelAnimationFrame(raf);
+  }, [currentPath, isAuthenticated, authLabel, updateNavItemWidth]);
 
   // Position highlight over active element by default
   useEffect(() => {
@@ -59,10 +81,6 @@ function NavBar() {
   }, [currentPath]);
 
   const isActive = (path: string) => currentPath === path;
-
-  const authLabel = isAuthenticated ? (user?.given_name || "Account") : "Sign in";
-  const authAction = isAuthenticated ? () => { logout(); } : undefined;
-  const authHref = isAuthenticated ? undefined : "/api/login";
 
   return (
     <>
@@ -109,7 +127,7 @@ function NavBar() {
             Sign out
           </button>
         ) : (
-          <a href={authHref} className="nav-pill-section nav-pill-accent">
+          <a href={authHref} onClick={loginAction} className="nav-pill-section nav-pill-accent">
             {authLabel}
           </a>
         )}
@@ -154,8 +172,10 @@ function NavBar() {
                   <hr className="border-white/5 my-3" />
                   <button className="mobile-nav-link text-left" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>Sign out</button>
                 </>
+              ) : isLoading ? (
+                <span className="mobile-nav-link text-white/20">Sign in</span>
               ) : (
-                <a href="/api/login" className="mobile-nav-link" style={{ color: '#22c55e' }}>Sign in</a>
+                <a href={loginUrl} onClick={loginAction} className="mobile-nav-link" style={{ color: '#22c55e' }}>Sign in</a>
               )}
             </div>
           </div>

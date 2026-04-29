@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function Profile() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, loginUrl, logout, loginAction } = useAuth();
 
   if (isLoading) {
     return (
@@ -27,7 +27,7 @@ function Profile() {
         <h2 className="text-2xl font-bold mb-2">Authentication Error</h2>
         <p className="text-muted-foreground mb-4">Unable to load user profile</p>
         <Button asChild>
-          <a href="/api/login">Login Again</a>
+          <a href={loginUrl} onClick={loginAction}>Login Again</a>
         </Button>
       </div>
     );
@@ -116,7 +116,7 @@ function Profile() {
               Your account is managed through Kinde authentication service.
             </p>
             <Button asChild variant="outline" className="w-full">
-              <a href="/api/login" target="_blank" rel="noopener noreferrer">
+              <a href={loginUrl} target="_blank" rel="noopener noreferrer">
                 Manage Account Settings
               </a>
             </Button>

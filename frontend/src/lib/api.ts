@@ -48,7 +48,7 @@ async function getCurrentUser() {
 export const userQueryOptions = queryOptions({
   queryKey: ["get-current-user"],
   queryFn: getCurrentUser,
-  staleTime: Infinity,
+  staleTime: 1000 * 60 * 5, // 5 minutes instead of Infinity to allow auto-heal
   retry: false,
 });
 

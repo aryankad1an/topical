@@ -5,16 +5,17 @@ import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
 const Login = () => {
+  const { loginUrl, registerUrl, loginAction, registerAction } = useAuth();
   return (
     <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60vh]">
       <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
       <p className="text-muted-foreground mb-6">Please login or register to access this content</p>
       <div className="flex gap-4">
         <Button asChild size="lg">
-          <a href="/api/login">Login</a>
+          <a href={loginUrl} onClick={loginAction}>Login</a>
         </Button>
         <Button asChild variant="outline" size="lg">
-          <a href="/api/register">Register</a>
+          <a href={registerUrl} onClick={registerAction}>Register</a>
         </Button>
       </div>
     </div>

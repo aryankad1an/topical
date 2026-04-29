@@ -18,7 +18,7 @@ export const Route = createFileRoute('/about')({
 });
 
 function About() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, registerUrl, registerAction } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen w-full">
@@ -136,7 +136,8 @@ function About() {
                 : "Sign up and make your first lesson plan in a couple of minutes."}
             </p>
             <a
-              href={isAuthenticated ? "/lesson-plan" : "/api/register"}
+              href={isAuthenticated ? "/lesson-plan" : registerUrl}
+              onClick={isAuthenticated ? undefined : registerAction}
               className="cta-btn group"
             >
               <span>{isAuthenticated ? "New lesson plan" : "Get started"}</span>
