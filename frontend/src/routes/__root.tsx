@@ -170,11 +170,13 @@ function Root() {
     );
   }
 
+  const isEditorRoute = window.location.pathname.startsWith('/editor');
+
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div className="grid-bg" />
-      <NavBar />
-      <main className="flex-1 px-4 py-6 w-full mx-auto relative z-10 mt-16 md:mt-20">
+      {!isEditorRoute && <div className="grid-bg" />}
+      {!isEditorRoute && <NavBar />}
+      <main className={`flex-1 w-full mx-auto relative z-10 ${isEditorRoute ? '' : 'px-4 py-6 mt-16 md:mt-20'}`}>
         <Outlet />
       </main>
       <Toaster

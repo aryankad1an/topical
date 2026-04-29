@@ -693,3 +693,27 @@
   border-bottom: 1px solid var(--glass-border);
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
 }
+
+/* ── LaTeX Preview ── */
+.latex-preview { color: rgba(255,255,255,0.8); font-family: 'CMU Serif', Georgia, serif; line-height: 1.7; }
+.latex-preview .lx-title { font-size: 1.75rem; font-weight: 700; margin: 0 0 0.25rem; color: rgba(255,255,255,0.9); }
+.latex-preview .lx-author { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin: 0 0 1.5rem; }
+.latex-preview .lx-section { font-size: 1.4rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: rgba(255,255,255,0.9); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.3rem; }
+.latex-preview .lx-subsection { font-size: 1.15rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: rgba(255,255,255,0.85); }
+.latex-preview .lx-subsubsection { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.4rem; color: rgba(255,255,255,0.8); }
+.latex-preview .lx-paragraph { font-size: 0.95rem; font-weight: 600; margin: 0.8rem 0 0.3rem; display: inline; }
+.latex-preview .lx-p { margin: 0.5rem 0; font-size: 0.9rem; }
+.latex-preview .lx-list { margin: 0.5rem 0 0.5rem 1.5rem; font-size: 0.9rem; }
+.latex-preview .lx-list li { margin: 0.25rem 0; }
+.latex-preview .lx-quote { border-left: 3px solid rgba(255,255,255,0.1); padding: 0.5rem 1rem; margin: 0.75rem 0; color: rgba(255,255,255,0.6); font-style: italic; }
+.latex-preview .lx-verbatim { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre; }
+.latex-preview .lx-code { background: rgba(255,255,255,0.05); padding: 0.1rem 0.3rem; border-radius: 3px; font-family: monospace; font-size: 0.85em; }
+.latex-preview .lx-link { color: #22c55e; text-decoration: underline; }
+.latex-preview .lx-math-block { margin: 1rem 0; overflow-x: auto; }
+.latex-preview .lx-hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 1.5rem 0; }
+.latex-preview .lx-figure { margin: 1rem 0; text-align: center; }
+.latex-preview .lx-img { max-width: 100%; border-radius: 6px; }
+.latex-preview .lx-caption { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 0.3rem; }
+.latex-preview .lx-table { border-collapse: collapse; margin: 0.75rem 0; width: 100%; }
+.latex-preview .lx-td { border: 1px solid rgba(255,255,255,0.08); padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+.latex-preview .lx-err { color: #f87171; font-family: monospace; font-size: 0.85rem; }
