@@ -11,10 +11,8 @@
     "vercel-build": "cd frontend && npm run build"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "latest",
     "@types/bun": "latest",
     "@types/pg": "^8.20.0",
-    "@vercel/node": "^3.2.29",
     "drizzle-kit": "^0.31.10",
     "esbuild": "^0.28.0",
     "typescript": "^5.9.3"
@@ -23,13 +21,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@hono/zod-validator": "^0.7.6",
     "@kinde-oss/kinde-typescript-sdk": "^2.13.2",
-    "@radix-ui/react-switch": "^1.2.6",
-    "baseline-browser-mapping": "^2.10.22",
-    "caniuse-lite": "^1.0.30001791",
-    "class-variance-authority": "^0.7.1",
     "drizzle-orm": "^0.29.4",
     "drizzle-zod": "^0.5.1",
     "hono": "^3.12.12",
