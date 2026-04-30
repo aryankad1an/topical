@@ -196,55 +196,10 @@ export function AIContentPanel({ open, onClose, projectType, projectName, conten
           )}
         </div>
 
-        {/* Loading hierarchy */}
-        {isLoadingHierarchy && (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#22c55e' }} />
-            <span className="ml-2 text-white/30 text-xs">Generating hierarchy...</span>
-          </div>
-        )}
-
-        {/* Hierarchy */}
-        {hierarchy.length > 0 && (
-          <div className="px-3 pb-2">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Topics</span>
-              <button onClick={generateAll} disabled={isGenerating}
-                className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>Generate All</button>
-            </div>
-            <div className="space-y-0.5">
-              {hierarchy.map((item, i) => (
-                <div key={i}>
-                  <button onClick={() => generateForTopic(item.topic)} disabled={isGenerating}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${activeTopic === item.topic && isGenerating ? 'text-white/50' : 'text-white/60 hover:text-white/80 hover:bg-white/[0.03]'}`}>
-                    <div className="flex items-center gap-1.5">
-                      {activeTopic === item.topic && isGenerating
-                        ? <Loader2 className="h-3 w-3 animate-spin shrink-0" style={{ color: '#22c55e' }} />
-                        : <ChevronRight className="h-3 w-3 shrink-0 text-white/20" />}
-                      <span className="truncate">{item.topic}</span>
-                    </div>
-                  </button>
-                  {item.subtopics.map((sub, j) => (
-                    <button key={j} onClick={() => generateForTopic(sub)} disabled={isGenerating}
-                      className={`w-full text-left pl-7 pr-2.5 py-1 rounded-md text-[11px] transition-all ${activeTopic === sub && isGenerating ? 'text-white/40' : 'text-white/35 hover:text-white/60 hover:bg-white/[0.02]'}`}>
-                      <div className="flex items-center gap-1.5">
-                        {activeTopic === sub && isGenerating
-                          ? <Loader2 className="h-2.5 w-2.5 animate-spin shrink-0" style={{ color: '#22c55e' }} />
-                          : <div className="h-1 w-1 rounded-full bg-white/15 shrink-0" />}
-                        <span className="truncate">{sub}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Generated Snippets — draggable */}
         {snippets.length > 0 && (
           <div className="px-4 pb-6 mt-4">
-            <div className="flex items-center justify-between mb-3 mt-2 border-t border-white/5 pt-3">
+            <div className="flex items-center justify-between mb-3 mt-2 pt-3">
               <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Generated Snippets ({snippets.length})</span>
               <button onClick={() => {
                 const sep = projectType === 'latex' ? '\n\n' : '\n\n---\n\n';
@@ -290,6 +245,56 @@ export function AIContentPanel({ open, onClose, projectType, projectName, conten
                       </pre>
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Divider between Snippets and Hierarchy */}
+            {hierarchy.length > 0 && (
+              <div className="mt-6 border-b border-white/5" />
+            )}
+          </div>
+        )}
+
+        {/* Loading hierarchy */}
+        {isLoadingHierarchy && (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#22c55e' }} />
+            <span className="ml-2 text-white/30 text-xs">Generating hierarchy...</span>
+          </div>
+        )}
+
+        {/* Hierarchy */}
+        {hierarchy.length > 0 && (
+          <div className="px-3 pb-2 pt-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Topics</span>
+              <button onClick={generateAll} disabled={isGenerating}
+                className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}>Generate All</button>
+            </div>
+            <div className="space-y-0.5">
+              {hierarchy.map((item, i) => (
+                <div key={i}>
+                  <button onClick={() => generateForTopic(item.topic)} disabled={isGenerating}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${activeTopic === item.topic && isGenerating ? 'text-white/50' : 'text-white/60 hover:text-white/80 hover:bg-white/[0.03]'}`}>
+                    <div className="flex items-center gap-1.5">
+                      {activeTopic === item.topic && isGenerating
+                        ? <Loader2 className="h-3 w-3 animate-spin shrink-0" style={{ color: '#22c55e' }} />
+                        : <ChevronRight className="h-3 w-3 shrink-0 text-white/20" />}
+                      <span className="truncate">{item.topic}</span>
+                    </div>
+                  </button>
+                  {item.subtopics.map((sub, j) => (
+                    <button key={j} onClick={() => generateForTopic(sub)} disabled={isGenerating}
+                      className={`w-full text-left pl-7 pr-2.5 py-1 rounded-md text-[11px] transition-all ${activeTopic === sub && isGenerating ? 'text-white/40' : 'text-white/35 hover:text-white/60 hover:bg-white/[0.02]'}`}>
+                      <div className="flex items-center gap-1.5">
+                        {activeTopic === sub && isGenerating
+                          ? <Loader2 className="h-2.5 w-2.5 animate-spin shrink-0" style={{ color: '#22c55e' }} />
+                          : <div className="h-1 w-1 rounded-full bg-white/15 shrink-0" />}
+                        <span className="truncate">{sub}</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               ))}
             </div>

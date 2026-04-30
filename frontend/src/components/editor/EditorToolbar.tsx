@@ -10,7 +10,6 @@ interface EditorToolbarProps {
   setContent: (c: string) => void;
   setIsDirty: (d: boolean) => void;
   projectType: 'mdx' | 'latex';
-  onOpenAI: () => void;
   onImageUpload: () => void;
 }
 

@@ -293,7 +293,7 @@ export async function generateMdxFromUrlsRaw(urls: string[], selectedTopic: stri
 // --- LaTeX generation API functions ---
 
 export async function generateLatexLlmOnlyRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  const res = await fetch('/api/ai/generate-latex-llm-only-raw', {
+  const res = await customFetch('/api/ai/generate-latex-llm-only-raw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
@@ -303,7 +303,7 @@ export async function generateLatexLlmOnlyRaw(selectedTopic: string, mainTopic: 
 }
 
 export async function generateLatexCrawlRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  const res = await fetch('/api/ai/generate-latex-crawl-raw', {
+  const res = await customFetch('/api/ai/generate-latex-crawl-raw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
@@ -313,7 +313,7 @@ export async function generateLatexCrawlRaw(selectedTopic: string, mainTopic: st
 }
 
 export async function generateLatexFromUrlsRaw(urls: string[], selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  const res = await fetch('/api/ai/generate-latex-from-urls-raw', {
+  const res = await customFetch('/api/ai/generate-latex-from-urls-raw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ urls, selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy })
@@ -324,7 +324,7 @@ export async function generateLatexFromUrlsRaw(urls: string[], selectedTopic: st
 
 // Refine content
 export async function refineContent(mdx: string, question: string) {
-  const res = await fetch('/api/ai/refine', {
+  const res = await customFetch('/api/ai/refine', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mdx, question })

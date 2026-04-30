@@ -39,7 +39,7 @@ export const authRoute = new Hono()
   })
   .get("/me", getUser, async (c) => {
     const user = c.var.user;
-    let dbUser = null;
+    let dbUser: any = null;
 
     // Skip DB caching if database is not available
     if (db) {
