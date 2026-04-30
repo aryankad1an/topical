@@ -6,11 +6,11 @@ import { stripFrontmatter } from '@/lib/utils';
 import { MDXRenderer } from '@/components/mdxRenderer';
 import { LaTeXRenderer } from '@/components/editor/LaTeXRenderer';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
-import { AIContentDialog } from '@/components/editor/AIContentDialog';
+import { AIContentPanel } from '@/components/editor/AIContentDialog';
 import { useAuth } from '@/lib/auth-context';
 import { useYjsCollab } from '@/hooks/useYjsCollab';
 import { PeerCursors } from '@/components/editor/PeerCursors';
-import { Save, Eye, SplitSquareHorizontal, FileCode, Loader2, ArrowLeft, Undo2, Redo2, Users, Search as SearchIcon, UserPlus, X, Wifi, WifiOff } from 'lucide-react';
+import { Save, Eye, SplitSquareHorizontal, FileCode, Loader2, ArrowLeft, Undo2, Redo2, Users, Search as SearchIcon, UserPlus, X, Wifi, WifiOff, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,9 @@ function ProjectEditor() {
   const [imageUrl, setImageUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement>(null);
+
+  // Is the current user the project author? (author can manage co-authors)
+  const isAuthor = !authorUsername || authorUsername === currentUsername;
 
   // Yjs collaboration
   const docIdStr = projectId ? String(projectId) : undefined;
@@ -141,17 +144,39 @@ function ProjectEditor() {
 
   const addCoAuthor = (userId: string, uname: string) => {
     if (!coAuthors.includes(userId)) {
-      setCoAuthors([...coAuthors, userId]);
-      setCoAuthorUsernames([...coAuthorUsernames, uname]);
+      const newCoAuthors = [...coAuthors, userId];
+      const newCoAuthorUsernames = [...coAuthorUsernames, uname];
+      setCoAuthors(newCoAuthors);
+      setCoAuthorUsernames(newCoAuthorUsernames);
       setIsDirty(true);
       toast.success(`Added ${uname} as co-author`);
+      // Immediately persist co-author change
+      saveCoAuthors(newCoAuthors);
     }
   };
   const removeCoAuthor = (userId: string) => {
     const idx = coAuthors.indexOf(userId);
-    setCoAuthors(coAuthors.filter(id => id !== userId));
-    if (idx >= 0) setCoAuthorUsernames(coAuthorUsernames.filter((_, i) => i !== idx));
+    if (idx < 0) return;
+    const removedName = coAuthorUsernames[idx] || userId;
+    const newCoAuthors = coAuthors.filter(id => id !== userId);
+    const newCoAuthorUsernames = coAuthorUsernames.filter((_, i) => i !== idx);
+    setCoAuthors(newCoAuthors);
+    setCoAuthorUsernames(newCoAuthorUsernames);
     setIsDirty(true);
+    toast.success(`Removed ${removedName} as co-author`);
+    // Immediately persist co-author change
+    saveCoAuthors(newCoAuthors);
+  };
+
+  // Immediately save just the co-authors list without waiting for autosave
+  const saveCoAuthors = async (newCoAuthors: string[]) => {
+    if (!projectId) return;
+    try {
+      const mainTopic = projectType === 'latex' ? `latex:${projectName}` : projectName;
+      const plan = { id: projectId, name: projectName, mainTopic, topics: [{ topic: projectName, mdxContent: content, isSubtopic: false, parentTopic: projectName, mainTopic }], coAuthors: newCoAuthors };
+      await saveLessonPlan(plan);
+      setIsDirty(false);
+    } catch { toast.error('Failed to save co-author changes'); }
   };
 
   // Track cursor position for awareness — guarded against remote updates
@@ -226,10 +251,13 @@ function ProjectEditor() {
               <span className="text-xs text-white/45 truncate max-w-[120px]">{coAuthorUsernames.slice(0, 2).join(', ')}{coAuthorUsernames.length > 2 ? ` +${coAuthorUsernames.length - 2}` : ''}</span>
             </>
           )}
-          <button onClick={() => setShowCoAuthorsDialog(true)}
-            className="flex items-center gap-1 ml-1 px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-xs text-white/50">
-            <UserPlus className="h-3 w-3" />
-          </button>
+          {/* Only the author can manage co-authors */}
+          {isAuthor && (
+            <button onClick={() => setShowCoAuthorsDialog(true)}
+              className="flex items-center gap-1 ml-1 px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-[10px] text-white/40 hover:text-white/60">
+              <Users className="h-3 w-3" /> Manage
+            </button>
+          )}
         </div>
 
         {/* Peer presence indicators */}
@@ -289,24 +317,51 @@ function ProjectEditor() {
       </div>
 
       {/* Toolbar */}
-      <EditorToolbar editorRef={editorRef} content={content} setContent={setContent} setIsDirty={setIsDirty}
-        projectType={projectType} onOpenAI={() => setShowAI(true)} onImageUpload={handleImageUpload} />
+      <div className="flex items-center shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+        <button onClick={() => setShowAI(!showAI)}
+          className={`h-full px-3 py-1.5 flex items-center gap-1.5 text-[11px] font-medium transition-colors ${showAI ? 'text-white/70' : 'text-white/30 hover:text-white/50'}`}
+          style={showAI ? { background: 'rgba(34,197,94,0.06)', borderRight: '1px solid rgba(255,255,255,0.06)' } : { borderRight: '1px solid rgba(255,255,255,0.04)' }}>
+          <Sparkles className="h-3 w-3" style={{ color: '#22c55e' }} /> AI
+        </button>
+        <div className="flex-1">
+          <EditorToolbar editorRef={editorRef} content={content} setContent={setContent} setIsDirty={setIsDirty}
+            projectType={projectType} onOpenAI={() => setShowAI(true)} onImageUpload={handleImageUpload} />
+        </div>
+      </div>
 
-      {/* Editor + Preview */}
+      {/* AI Panel + Editor + Preview */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* AI Panel — left side */}
+        <AIContentPanel open={showAI} onClose={() => setShowAI(false)} projectType={projectType}
+          projectName={projectName} content={content} setContent={setContent} setIsDirty={setIsDirty} />
+
+        {/* Editor pane */}
         {viewMode !== 'preview' && (
-          <div className={`${viewMode === 'split' ? 'w-1/2' : 'w-full'} h-full flex flex-col relative`}
+          <div className={`${viewMode === 'split' ? 'w-1/2' : 'flex-1'} h-full flex flex-col relative`}
             style={viewMode === 'split' ? { borderRight: '1px solid rgba(255,255,255,0.06)' } : {}}>
             <textarea ref={editorRef}
               className="flex-1 w-full border-none resize-none font-mono focus:ring-0 focus:outline-none bg-transparent text-white/80 placeholder-white/15"
               value={content} onChange={e => {
                 setContent(e.target.value);
-                // Send cursor position immediately with the content change
-                // so peers see cursor move in sync with new text
                 updateCursor(e.target.selectionStart, e.target.selectionEnd - e.target.selectionStart);
               }}
               onSelect={handleEditorSelect}
               onClick={handleEditorSelect}
+              onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+              onDrop={e => {
+                e.preventDefault();
+                const droppedText = e.dataTransfer.getData('text/plain');
+                if (!droppedText) return;
+                const ta = editorRef.current;
+                if (!ta) return;
+                // Insert at drop position
+                const pos = ta.selectionStart;
+                const sep = content.trim() && pos > 0 ? (projectType === 'latex' ? '\n\n' : '\n\n---\n\n') : '';
+                const newContent = content.slice(0, pos) + sep + droppedText + content.slice(pos);
+                setContent(newContent);
+                setIsDirty(true);
+                toast.success('Content dropped into editor');
+              }}
               placeholder={projectType === 'latex' ? '% Start typing LaTeX here...' : 'Start typing your document here...'}
               style={{ fontSize: '13px', lineHeight: '1.7', padding: '1rem 1.25rem', tabSize: 2 }} />
 
@@ -314,8 +369,10 @@ function ProjectEditor() {
             <PeerCursors textareaRef={editorRef as any} content={content} peers={peers} />
           </div>
         )}
+
+        {/* Preview pane */}
         {viewMode !== 'code' && (
-          <div className={`${viewMode === 'split' ? 'w-1/2' : 'w-full'} h-full overflow-auto`} style={{ padding: '1rem 1.25rem' }}>
+          <div className={`${viewMode === 'split' ? 'w-1/2' : 'flex-1'} h-full overflow-auto`} style={{ padding: '1rem 1.25rem' }}>
             {content.trim() ? (
               projectType === 'latex'
                 ? <LaTeXRenderer content={content} />
@@ -329,9 +386,6 @@ function ProjectEditor() {
           </div>
         )}
       </div>
-
-      <AIContentDialog open={showAI} onOpenChange={setShowAI} projectType={projectType}
-        projectName={projectName} content={content} setContent={setContent} setIsDirty={setIsDirty} />
 
       {/* Co-Authors Dialog */}
       <Dialog open={showCoAuthorsDialog} onOpenChange={setShowCoAuthorsDialog}>

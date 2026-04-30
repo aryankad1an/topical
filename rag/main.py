@@ -67,34 +67,80 @@ async def crawl_url(url: str) -> str:
                 return result.markdown[:15000]
             return ""
     except (ImportError, TypeError):
-        logger.warning("crawl4ai not available (not installed or incompatible Python version), falling back to basic fetch")
+        logger.warning("crawl4ai not available, falling back to basic fetch")
         return await _basic_fetch(url)
     except Exception as e:
-        logger.error(f"Error crawling URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Error crawling URL: {str(e)}")
+        logger.warning(f"crawl4ai error for {url}: {e}, falling back to basic fetch")
+        return await _basic_fetch(url)
 
 
 async def _basic_fetch(url: str) -> str:
-    """Fallback URL fetcher when crawl4ai is unavailable."""
+    """Robust fallback URL fetcher using urllib."""
     import urllib.request
+    import ssl
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; Topical/1.0)"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        # Create a permissive SSL context for sites with cert issues
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
             html = resp.read().decode("utf-8", errors="ignore")
+
+        # Clean HTML to plain text
         text = re.sub(r"<script[\s\S]*?</script>", "", html, flags=re.I)
         text = re.sub(r"<style[\s\S]*?</style>", "", text, flags=re.I)
+        text = re.sub(r"<nav[\s\S]*?</nav>", "", text, flags=re.I)
+        text = re.sub(r"<footer[\s\S]*?</footer>", "", text, flags=re.I)
+        text = re.sub(r"<header[\s\S]*?</header>", "", text, flags=re.I)
+        text = re.sub(r"<!--[\s\S]*?-->", "", text)
+        # Convert common HTML elements to markdown
+        text = re.sub(r"<h[1-6][^>]*>(.*?)</h[1-6]>", r"\n## \1\n", text, flags=re.I)
+        text = re.sub(r"<li[^>]*>(.*?)</li>", r"\n- \1", text, flags=re.I)
+        text = re.sub(r"<p[^>]*>(.*?)</p>", r"\1\n\n", text, flags=re.I | re.S)
+        text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
         text = re.sub(r"<[^>]+>", " ", text)
-        text = re.sub(r"\s{2,}", " ", text).strip()
+        text = re.sub(r"&nbsp;", " ", text)
+        text = re.sub(r"&amp;", "&", text)
+        text = re.sub(r"&lt;", "<", text)
+        text = re.sub(r"&gt;", ">", text)
+        text = re.sub(r"\s{3,}", "\n\n", text).strip()
         return text[:15000]
     except Exception as e:
-        logger.error(f"Error fetching URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching URL: {str(e)}")
+        logger.error(f"Error fetching URL {url}: {e}")
+        return f"[Failed to fetch content from {url}]"
+
+
+async def crawl_for_topic(topic: str) -> str:
+    """Crawl multiple sources for a topic — Wikipedia + DuckDuckGo summary."""
+    wiki_url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
+    content = await crawl_url(wiki_url)
+    if content and "[Failed to fetch" not in content and len(content) > 200:
+        return content
+    # Fallback: try a simpler Wikipedia API
+    try:
+        import urllib.request, json as _json
+        api_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
+        req = urllib.request.Request(api_url, headers={"User-Agent": "Topical/1.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = _json.loads(resp.read().decode("utf-8"))
+        if data.get("extract"):
+            return f"# {data.get('title', topic)}\n\n{data['extract']}"
+    except Exception:
+        pass
+    return content or ""
 
 
 async def crawl_urls(urls: List[str]) -> str:
     """Crawl multiple URLs and join their content."""
-    results = await asyncio.gather(*(crawl_url(u) for u in urls))
-    return "\n\n---\n\n".join(filter(None, results))[:20000]
+    results = await asyncio.gather(*(crawl_url(u) for u in urls), return_exceptions=True)
+    valid = [r for r in results if isinstance(r, str) and r and "[Failed to fetch" not in r]
+    return "\n\n---\n\n".join(valid)[:20000]
 
 
 # ---------------------------------------------------------------------------
@@ -163,14 +209,15 @@ class RefineWithUrlsRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # LLM helpers
 # ---------------------------------------------------------------------------
-async def optimize_prompt(raw_topic: str) -> str:
+async def optimize_prompt(raw_topic: str, ai_client=None) -> str:
     """Refine a vague topic into a precise learning objective."""
-    if not GOOGLE_API_KEY:
+    if not ai_client:
         raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
     try:
         text = generate_content(
             f'Convert this topic into a precise educational learning objective in 5-10 words. '
-            f'Return ONLY the optimized topic name. Topic: "{raw_topic}"'
+            f'Return ONLY the optimized topic name. Topic: "{raw_topic}"',
+            ai_client=ai_client
         )
         text = text.strip().strip("'\"")
         return text or raw_topic
@@ -304,8 +351,8 @@ async def generate_mdx_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(g
 @app.post("/ai/single-topic")
 async def single_topic(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
     try:
-        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
+        context = await crawl_for_topic(req.selected_topic)
+        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or '', ai_client=ai_client)
         return {"status": "success", "data": {"mdx_content": mdx}}
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -315,8 +362,8 @@ async def single_topic(req: GenerateMdxRequest, ai_client=Depends(get_genai_clie
 @app.post("/ai/single-topic-raw", response_class=PlainTextResponse)
 async def single_topic_raw(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
     try:
-        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
+        context = await crawl_for_topic(req.selected_topic)
+        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or '', ai_client=ai_client)
         return mdx
     except Exception as e:
         logger.error(f"Error: {e}")
