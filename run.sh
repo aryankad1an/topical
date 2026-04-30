@@ -3,7 +3,19 @@
 # Exit on error
 set -e
 
+# ── Kill any processes already on our ports ──
+echo "-> Freeing ports 3000, 8000, 5173..."
+for PORT in 3000 8000 5173; do
+    PIDS=$(lsof -ti tcp:$PORT 2>/dev/null) || true
+    if [ -n "$PIDS" ]; then
+        echo "   Killing PID(s) $PIDS on port $PORT"
+        kill -9 $PIDS 2>/dev/null || true
+    fi
+done
+sleep 0.5   # brief pause to let OS release the sockets
+
 echo "Starting topical..."
+
 
 echo "-> Starting Bun backend..."
 bun run dev &

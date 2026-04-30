@@ -290,30 +290,7 @@ function ProjectsPage() {
                         </button>
                       </div>
 
-                      {/* Visibility toggle row */}
-                      <div className="flex items-center justify-between mb-5 py-2.5 px-3 rounded-xl"
-                        style={{ background: plan.isPublic ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)', border: `1px solid ${plan.isPublic ? 'rgba(34,197,94,0.18)' : 'rgba(255,255,255,0.05)'}`, transition: 'all 0.3s ease' }}>
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300"
-                            style={{ background: plan.isPublic ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)' }}>
-                            {plan.isPublic
-                              ? <Globe className="h-3.5 w-3.5" style={{ color: '#22c55e' }} />
-                              : <Lock className="h-3 w-3 text-white/30" />}
-                          </div>
-                          <div>
-                            <div className={`text-xs font-semibold transition-colors duration-300 ${plan.isPublic ? 'text-white/80' : 'text-white/30'}`}>
-                              {plan.isPublic ? 'Public' : 'Private'}
-                            </div>
-                            <div className="text-[10px] text-white/20 leading-none mt-0.5">
-                              {plan.isPublic ? 'Visible to everyone' : 'Only you can see this'}
-                            </div>
-                          </div>
-                        </div>
-                        <PillToggle
-                          checked={!!plan.isPublic}
-                          onChange={(v) => confirmTogglePublic(plan as LessonPlanResponse, v)}
-                        />
-                      </div>
+
 
                       {/* Actions */}
                       <div className="flex items-center gap-3">
