@@ -1,7 +1,15 @@
 <div align="center">
   <h1>Topical</h1>
   <p><b>Where the human brain works with artificial intelligence.</b></p>
+  
+  <!-- Badges -->
+  <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Backend-Bun%20%7C%20Hono-fbf0df?style=flat-square&logo=bun&logoColor=black" alt="Bun" />
+  <img src="https://img.shields.io/badge/AI_Service-Python%20%7C%20FastAPI-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="MIT License" />
 </div>
+
+<br />
 
 Topical is a premium, AI-powered platform for creating beautifully structured documents. Whether you are building lesson plans, writing research papers, or documenting technical architecture, Topical brings together the power of an intelligent AI author and real-time collaboration so you can create, refine, and publish your knowledge seamlessly.
 
@@ -19,9 +27,12 @@ Topical is a premium, AI-powered platform for creating beautifully structured do
 ## 🏗 Architecture
 
 Topical is built on a modern, decoupled microservice architecture:
-- **Frontend:** React 18, TypeScript, Vite, TanStack Router, Yjs
-- **Backend API & WebSockets:** Bun, Hono, PostgreSQL, Drizzle ORM
-- **AI Microservice:** Python 3.9+, FastAPI, google-genai, Crawl4AI
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite, TanStack Router, Yjs |
+| **Backend API & WebSockets** | Bun, Hono, PostgreSQL, Drizzle ORM |
+| **AI Microservice** | Python 3.9+, FastAPI, `google-genai`, Crawl4AI |
 
 ---
 
