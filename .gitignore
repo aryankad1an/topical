@@ -10,8 +10,8 @@ dist/
 frontend/dist/
 
 # Python
-rag/venv/
-rag/__pycache__/
+ai_service/venv/
+ai_service/__pycache__/
 *.pyc
 
 # IDE

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getUser } from "../kinde";
 
-const AI_SERVICE_URL = process.env.RAG_SERVICE_URL || "http://127.0.0.1:8000";
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://127.0.0.1:8000";
 
 export const contentGenerationRoute = new Hono()
   .all("*", getUser, async (c) => {

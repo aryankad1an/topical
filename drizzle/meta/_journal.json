@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786887683581,
+      "tag": "0000_spotty_skin",
+      "breakpoints": true
+    }
+  ]
+}

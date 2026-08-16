@@ -1,9 +1,10 @@
-import os
 import json
 import re
 import logging
 import asyncio
-from typing import List, Optional, Dict, Any
+from functools import wraps
+from typing import List, Optional
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -33,32 +34,49 @@ app.add_middleware(
 
 
 def get_genai_client(request: Request):
-    """Get a genai client from the per-request X-Gemini-API-Key header."""
+    """Build a genai client from the per-request X-Gemini-API-Key header."""
     header_key = request.headers.get("x-gemini-api-key", "").strip()
     if not header_key:
         raise HTTPException(
             status_code=400,
-            detail="No API key configured. Add your Gemini API key in Profile → AI Settings."
+            detail="No API key configured. Add your Gemini API key in Profile → AI Settings.",
         )
     return genai.Client(api_key=header_key)
 
 
-def generate_content(prompt: str, ai_client=None) -> str:
+def generate_content(prompt: str, ai_client) -> str:
     """Generate content using the Gemini API via the google.genai SDK."""
-    if not ai_client:
-        raise ValueError("No API key configured. Add your Gemini API key in Profile → AI Settings.")
-    response = ai_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-    )
+    response = ai_client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
     return response.text
 
 
+def endpoint(func):
+    """Wrap a route handler so unexpected errors become a 500 with a logged detail.
+
+    HTTPExceptions (e.g. the missing-API-key 400) are re-raised untouched.
+    """
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"{func.__name__}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    return wrapper
+
+
+def mdx_envelope(text: str) -> dict:
+    """The JSON envelope the frontend expects from non-raw endpoints."""
+    return {"status": "success", "data": {"mdx_content": text}}
+
+
 # ---------------------------------------------------------------------------
-# Crawl4AI web crawling
+# Web crawling (crawl4ai with a urllib fallback)
 # ---------------------------------------------------------------------------
 async def crawl_url(url: str) -> str:
-    """Use crawl4ai to extract clean text content from a URL."""
+    """Extract clean text content from a URL, falling back to a basic fetch."""
     try:
         from crawl4ai import AsyncWebCrawler
         async with AsyncWebCrawler() as crawler:
@@ -67,6 +85,7 @@ async def crawl_url(url: str) -> str:
                 return result.markdown[:15000]
             return ""
     except (ImportError, TypeError):
+        # crawl4ai unavailable (e.g. Python < 3.10) — degrade gracefully.
         logger.warning("crawl4ai not available, falling back to basic fetch")
         return await _basic_fetch(url)
     except Exception as e:
@@ -75,11 +94,11 @@ async def crawl_url(url: str) -> str:
 
 
 async def _basic_fetch(url: str) -> str:
-    """Robust fallback URL fetcher using urllib."""
+    """Robust fallback URL fetcher using urllib, returning markdown-ish text."""
     import urllib.request
     import ssl
     try:
-        # Create a permissive SSL context for sites with cert issues
+        # Permissive SSL context for sites with cert issues.
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -92,14 +111,13 @@ async def _basic_fetch(url: str) -> str:
         with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
             html = resp.read().decode("utf-8", errors="ignore")
 
-        # Clean HTML to plain text
+        # Strip non-content elements, then convert common tags to markdown.
         text = re.sub(r"<script[\s\S]*?</script>", "", html, flags=re.I)
         text = re.sub(r"<style[\s\S]*?</style>", "", text, flags=re.I)
         text = re.sub(r"<nav[\s\S]*?</nav>", "", text, flags=re.I)
         text = re.sub(r"<footer[\s\S]*?</footer>", "", text, flags=re.I)
         text = re.sub(r"<header[\s\S]*?</header>", "", text, flags=re.I)
         text = re.sub(r"<!--[\s\S]*?-->", "", text)
-        # Convert common HTML elements to markdown
         text = re.sub(r"<h[1-6][^>]*>(.*?)</h[1-6]>", r"\n## \1\n", text, flags=re.I)
         text = re.sub(r"<li[^>]*>(.*?)</li>", r"\n- \1", text, flags=re.I)
         text = re.sub(r"<p[^>]*>(.*?)</p>", r"\1\n\n", text, flags=re.I | re.S)
@@ -117,18 +135,17 @@ async def _basic_fetch(url: str) -> str:
 
 
 async def crawl_for_topic(topic: str) -> str:
-    """Crawl multiple sources for a topic — Wikipedia + DuckDuckGo summary."""
+    """Crawl Wikipedia for a topic, with the REST summary API as a fallback."""
     wiki_url = f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}"
     content = await crawl_url(wiki_url)
     if content and "[Failed to fetch" not in content and len(content) > 200:
         return content
-    # Fallback: try a simpler Wikipedia API
     try:
-        import urllib.request, json as _json
+        import urllib.request
         api_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic.replace(' ', '_')}"
         req = urllib.request.Request(api_url, headers={"User-Agent": "Topical/1.0"})
         with urllib.request.urlopen(req, timeout=15) as resp:
-            data = _json.loads(resp.read().decode("utf-8"))
+            data = json.loads(resp.read().decode("utf-8"))
         if data.get("extract"):
             return f"# {data.get('title', topic)}\n\n{data['extract']}"
     except Exception:
@@ -137,14 +154,14 @@ async def crawl_for_topic(topic: str) -> str:
 
 
 async def crawl_urls(urls: List[str]) -> str:
-    """Crawl multiple URLs and join their content."""
+    """Crawl multiple URLs concurrently and join the successful results."""
     results = await asyncio.gather(*(crawl_url(u) for u in urls), return_exceptions=True)
     valid = [r for r in results if isinstance(r, str) and r and "[Failed to fetch" not in r]
     return "\n\n---\n\n".join(valid)[:20000]
 
 
 # ---------------------------------------------------------------------------
-# Pydantic models
+# Request models
 # ---------------------------------------------------------------------------
 class SearchTopicsRequest(BaseModel):
     query: str
@@ -207,28 +224,15 @@ class RefineWithUrlsRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# LLM helpers
+# Content builders (shared by the JSON and raw route variants)
 # ---------------------------------------------------------------------------
-async def optimize_prompt(raw_topic: str, ai_client=None) -> str:
-    """Refine a vague topic into a precise learning objective."""
-    if not ai_client:
-        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
-    try:
-        text = generate_content(
-            f'Convert this topic into a precise educational learning objective in 5-10 words. '
-            f'Return ONLY the optimized topic name. Topic: "{raw_topic}"',
-            ai_client=ai_client
-        )
-        text = text.strip().strip("'\"")
-        return text or raw_topic
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Error connecting to Gemini API, maybe check your api key")
-
-
-async def generate_mdx_content(topic: str, main_topic: str, context: str = "", hierarchy: str = "", ai_client=None) -> str:
+def generate_mdx_content(topic: str, main_topic: str, context: str = "", hierarchy: str = "", ai_client=None) -> str:
     ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
-    hier_ctx = f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\nStrictly focus ONLY on the topic '{topic}' and do not explain other topics from the hierarchy to avoid redundant content." if hierarchy else ""
+    hier_ctx = (
+        f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\n"
+        f"Strictly focus ONLY on the topic '{topic}' and do not explain other topics from the hierarchy "
+        f"to avoid redundant content." if hierarchy else ""
+    )
     prompt = (
         f"You are an expert technical writer creating educational MDX content.\n\n"
         f"Generate comprehensive MDX content for: \"{topic}\"\n"
@@ -246,13 +250,10 @@ async def generate_mdx_content(topic: str, main_topic: str, context: str = "", h
         f"- No frontmatter\n"
         f"- Return ONLY the MDX content"
     )
-    text = generate_content(prompt, ai_client=ai_client)
-    return text.strip()
+    return generate_content(prompt, ai_client).strip()
 
 
-async def refine_mdx_content(
-    full_mdx: str, selected_text: str, question: str, topic: str, context: str = "", ai_client=None
-) -> str:
+def refine_mdx_content(full_mdx: str, selected_text: str, question: str, topic: str, context: str = "", ai_client=None) -> str:
     ctx = f"\nReference material:\n<context>\n{context}\n</context>\n" if context else ""
     sel = f"\nSelected text to refine:\n<selected>\n{selected_text}\n</selected>\n" if selected_text else ""
     action = (
@@ -267,14 +268,16 @@ async def refine_mdx_content(
         f"Full document:\n<document>\n{full_mdx}\n</document>\n\n"
         f"{action}\n\nReturn ONLY the complete updated MDX document."
     )
-    text = generate_content(prompt, ai_client=ai_client)
-    return text.strip()
+    return generate_content(prompt, ai_client).strip()
 
 
-async def generate_latex_content(topic: str, main_topic: str, context: str = "", hierarchy: str = "", ai_client=None) -> str:
-    """Generate LaTeX content instead of MDX."""
+def generate_latex_content(topic: str, main_topic: str, context: str = "", hierarchy: str = "", ai_client=None) -> str:
     ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
-    hier_ctx = f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\nStrictly focus ONLY on the topic '{topic}' and do not explain other topics from the hierarchy to avoid redundant content." if hierarchy else ""
+    hier_ctx = (
+        f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\n"
+        f"Strictly focus ONLY on the topic '{topic}' and do not explain other topics from the hierarchy "
+        f"to avoid redundant content." if hierarchy else ""
+    )
     prompt = (
         f"You are an expert technical writer creating educational LaTeX content.\n\n"
         f"Generate comprehensive LaTeX content for: \"{topic}\"\n"
@@ -291,238 +294,180 @@ async def generate_latex_content(topic: str, main_topic: str, context: str = "",
         f"- 400-800 words\n"
         f"- Return ONLY the LaTeX content (no preamble, no \\begin{{document}})\n"
     )
-    text = generate_content(prompt, ai_client=ai_client)
-    return text.strip()
+    return generate_content(prompt, ai_client).strip()
+
+
+# Operation builders — each returns the raw generated text; routes below wrap
+# them as either a JSON envelope or a plain-text response.
+async def build_llm_only(req: GenerateMdxRequest, ai_client) -> str:
+    return generate_mdx_content(req.topic or req.selected_topic, req.main_topic, "", req.hierarchy or "", ai_client)
+
+
+async def build_single_topic(req: GenerateMdxRequest, ai_client) -> str:
+    context = await crawl_for_topic(req.selected_topic)
+    return generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client)
+
+
+async def build_from_url(req: UrlMdxRequest, ai_client) -> str:
+    context = await crawl_url(req.url)
+    return generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client)
+
+
+async def build_from_urls(req: UrlsMdxRequest, ai_client) -> str:
+    context = await crawl_urls(req.urls)
+    return generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client)
+
+
+async def build_refine(req: RefineRequest, ai_client) -> str:
+    return refine_mdx_content(req.mdx, "", req.question, "", ai_client=ai_client)
+
+
+async def build_refine_selection(req: RefineWithSelectionRequest, ai_client) -> str:
+    return refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, ai_client=ai_client)
+
+
+async def build_refine_crawling(req: RefineWithCrawlingRequest, ai_client) -> str:
+    context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.topic.replace(' ', '_')}")
+    return refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context, ai_client=ai_client)
+
+
+async def build_refine_urls(req: RefineWithUrlsRequest, ai_client) -> str:
+    context = await crawl_urls(req.urls)
+    return refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context[:15000], ai_client=ai_client)
 
 
 # ---------------------------------------------------------------------------
-# API Routes — mounted under /ai/
+# API routes — mounted under /ai/. Each generation op exposes a JSON variant
+# (envelope) and a "-raw" variant (plain text); both share a build_* helper.
 # ---------------------------------------------------------------------------
-
 @app.post("/ai/search-topics")
+@endpoint
 async def search_topics(req: SearchTopicsRequest, ai_client=Depends(get_genai_client)):
-    try:
-        prompt = (
-            f'Generate a structured topic hierarchy for learning about "{req.query}".\n\n'
-            f"Return ONLY valid JSON in this format:\n"
-            f'[{{"topic": "Main topic", "subtopics": ["Sub 1", "Sub 2"]}}]\n\n'
-            f"Rules: 4-6 main topics, 2-4 subtopics each, logical progression, clear names."
-        )
-        text = generate_content(prompt, ai_client=ai_client)
-        text = text.strip()
-        clean = re.sub(r"^```json\s*", "", text, flags=re.I)
-        clean = re.sub(r"\s*```$", "", clean)
-        parsed = json.loads(clean)
-        for i, item in enumerate(parsed):
-            if "relevanceScore" not in item:
-                item["relevanceScore"] = max(60, 95 - i * 5)
-        return {"status": "success", "data": {"topics": "```json\n" + json.dumps(parsed, indent=2) + "\n```"}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    prompt = (
+        f'Generate a structured topic hierarchy for learning about "{req.query}".\n\n'
+        f"Return ONLY valid JSON in this format:\n"
+        f'[{{"topic": "Main topic", "subtopics": ["Sub 1", "Sub 2"]}}]\n\n'
+        f"Rules: 4-6 main topics, 2-4 subtopics each, logical progression, clear names."
+    )
+    text = generate_content(prompt, ai_client).strip()
+    clean = re.sub(r"^```json\s*", "", text, flags=re.I)
+    clean = re.sub(r"\s*```$", "", clean)
+    parsed = json.loads(clean)
+    for i, item in enumerate(parsed):
+        item.setdefault("relevanceScore", max(60, 95 - i * 5))
+    return {"status": "success", "data": {"topics": "```json\n" + json.dumps(parsed, indent=2) + "\n```"}}
 
 
 # --- LLM-only generation ---
-
 @app.post("/ai/generate-mdx-llm-only")
+@endpoint
 async def generate_mdx_llm_only(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        t = req.topic or req.selected_topic
-        text = await generate_mdx_content(t, req.main_topic, "", req.hierarchy or "", ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": text}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_llm_only(req, ai_client))
 
 
 @app.post("/ai/generate-mdx-llm-only-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_mdx_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        t = req.topic or req.selected_topic
-        text = await generate_mdx_content(t, req.main_topic, "", req.hierarchy or "", ai_client=ai_client)
-        return PlainTextResponse(content=text)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_llm_only(req, ai_client)
 
 
-# --- Single-topic with crawl4ai web crawling ---
-
+# --- Single-topic with web crawling ---
 @app.post("/ai/single-topic")
+@endpoint
 async def single_topic(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_for_topic(req.selected_topic)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or '', ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": mdx}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_single_topic(req, ai_client))
 
 
 @app.post("/ai/single-topic-raw", response_class=PlainTextResponse)
+@endpoint
 async def single_topic_raw(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_for_topic(req.selected_topic)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, req.hierarchy or '', ai_client=ai_client)
-        return mdx
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_single_topic(req, ai_client)
 
 
-# --- URL-based generation with crawl4ai ---
-
+# --- URL-based generation ---
 @app.post("/ai/generate-mdx-from-url")
+@endpoint
 async def generate_mdx_from_url(req: UrlMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_url(req.url)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": mdx}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_from_url(req, ai_client))
 
 
 @app.post("/ai/generate-mdx-from-url-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_mdx_from_url_raw(req: UrlMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_url(req.url)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
-        return mdx
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_from_url(req, ai_client)
 
 
 @app.post("/ai/generate-mdx-from-urls")
+@endpoint
 async def generate_mdx_from_urls(req: UrlsMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_urls(req.urls)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": mdx}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_from_urls(req, ai_client))
 
 
 @app.post("/ai/generate-mdx-from-urls-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_mdx_from_urls_raw(req: UrlsMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_urls(req.urls)
-        mdx = await generate_mdx_content(req.selected_topic, req.main_topic, context, getattr(req, 'hierarchy', ''), ai_client=ai_client)
-        return mdx
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_from_urls(req, ai_client)
 
 
-# --- Refinement endpoints ---
-
+# --- Refinement ---
 @app.post("/ai/refine")
+@endpoint
 async def refine(req: RefineRequest, ai_client=Depends(get_genai_client)):
-    try:
-        refined = await refine_mdx_content(req.mdx, "", req.question, "", ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": refined}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_refine(req, ai_client))
 
 
 @app.post("/ai/refine-with-selection")
+@endpoint
 async def refine_with_selection(req: RefineWithSelectionRequest, ai_client=Depends(get_genai_client)):
-    try:
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": refined}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_refine_selection(req, ai_client))
 
 
 @app.post("/ai/refine-with-selection-raw", response_class=PlainTextResponse)
+@endpoint
 async def refine_with_selection_raw(req: RefineWithSelectionRequest, ai_client=Depends(get_genai_client)):
-    try:
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, ai_client=ai_client)
-        return refined
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_refine_selection(req, ai_client)
 
 
 @app.post("/ai/refine-with-crawling")
+@endpoint
 async def refine_with_crawling(req: RefineWithCrawlingRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.topic.replace(' ', '_')}")
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context, ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": refined}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_refine_crawling(req, ai_client))
 
 
 @app.post("/ai/refine-with-crawling-raw", response_class=PlainTextResponse)
+@endpoint
 async def refine_with_crawling_raw(req: RefineWithCrawlingRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.topic.replace(' ', '_')}")
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context, ai_client=ai_client)
-        return refined
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_refine_crawling(req, ai_client)
 
 
 @app.post("/ai/refine-with-urls")
+@endpoint
 async def refine_with_urls(req: RefineWithUrlsRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_urls(req.urls)
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context[:15000], ai_client=ai_client)
-        return {"status": "success", "data": {"mdx_content": refined}}
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return mdx_envelope(await build_refine_urls(req, ai_client))
 
 
 @app.post("/ai/refine-with-urls-raw", response_class=PlainTextResponse)
+@endpoint
 async def refine_with_urls_raw(req: RefineWithUrlsRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_urls(req.urls)
-        refined = await refine_mdx_content(req.mdx, req.selected_text, req.question, req.topic, context[:15000], ai_client=ai_client)
-        return refined
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return await build_refine_urls(req, ai_client)
 
 
-# --- LaTeX generation endpoints ---
-
+# --- LaTeX generation (raw only) ---
 @app.post("/ai/generate-latex-llm-only-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_latex_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        t = req.topic or req.selected_topic
-        text = await generate_latex_content(t, req.main_topic, "", req.hierarchy or "", ai_client=ai_client)
-        return PlainTextResponse(content=text)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return generate_latex_content(req.topic or req.selected_topic, req.main_topic, "", req.hierarchy or "", ai_client)
 
 
 @app.post("/ai/generate-latex-crawl-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_latex_crawl_raw(req: GenerateMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
-        text = await generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client=ai_client)
-        return PlainTextResponse(content=text)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
+    return generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client)
 
 
 @app.post("/ai/generate-latex-from-urls-raw", response_class=PlainTextResponse)
+@endpoint
 async def generate_latex_from_urls_raw(req: UrlsMdxRequest, ai_client=Depends(get_genai_client)):
-    try:
-        context = await crawl_urls(req.urls)
-        text = await generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client=ai_client)
-        return PlainTextResponse(content=text)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+    context = await crawl_urls(req.urls)
+    return generate_latex_content(req.selected_topic, req.main_topic, context, req.hierarchy or "", ai_client)

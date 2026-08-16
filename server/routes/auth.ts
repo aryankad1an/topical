@@ -4,7 +4,7 @@ import { kindeClient, sessionManager, isKindeConfigured } from "../kinde";
 import { getUser } from "../kinde";
 import { db } from "../db";
 import { users as userTable } from "../db/schema/users";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 
 export const authRoute = new Hono()
   .get("/login", async (c) => {
@@ -156,7 +156,6 @@ export const authRoute = new Hono()
     if (!query || query.length < 2) return c.json({ users: [] });
 
     try {
-      const { ilike } = await import("drizzle-orm");
       const matchedUsers = await db
         .select({ id: userTable.id, username: userTable.username, givenName: userTable.givenName })
         .from(userTable)

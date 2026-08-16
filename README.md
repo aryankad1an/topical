@@ -21,7 +21,7 @@ Topical is a premium, AI-powered platform for creating beautifully structured do
 Topical is built on a modern, decoupled microservice architecture:
 - **Frontend:** React 18, TypeScript, Vite, TanStack Router, Yjs
 - **Backend API & WebSockets:** Bun, Hono, PostgreSQL, Drizzle ORM
-- **AI Microservice:** Python 3.9+, FastAPI, google-genai, Crawl4AI
+- **AI Microservice:** Python 3.10+, FastAPI, google-genai, Crawl4AI
 
 ---
 
@@ -29,7 +29,7 @@ Topical is built on a modern, decoupled microservice architecture:
 
 ### Prerequisites
 Before you begin, ensure you have the following installed:
-- [Python 3.9+](https://python.org/)
+- [Python 3.10+](https://python.org/) (required by Crawl4AI)
 - [Bun](https://bun.sh/)
 - [Node.js & npm](https://nodejs.org/) (for the Vite frontend)
 - A running PostgreSQL database

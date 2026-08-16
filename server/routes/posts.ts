@@ -5,6 +5,7 @@ import { posts, postComments, postVotes } from "../db/schema/posts.ts";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { requireDb } from "../middleware";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
@@ -18,10 +19,7 @@ const createCommentSchema = z.object({
 });
 
 export const postsRoute = new Hono()
-  .use("*", async (c, next) => {
-    if (!db) return c.json({ error: "Database not configured" }, 503);
-    await next();
-  })
+  .use("*", requireDb)
 
   // ── GET all posts (with sort) ──
   .get("/", async (c) => {
