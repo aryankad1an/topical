@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
-google-genai
 crawl4ai
+unclecode-litellm==1.81.13
 python-dotenv

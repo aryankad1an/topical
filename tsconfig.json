@@ -13,7 +13,6 @@
     "strictFunctionTypes": false,
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
-    "alwaysStrict": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

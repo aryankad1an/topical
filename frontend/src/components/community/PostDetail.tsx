@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { X, Send, BookOpen, ChevronDown } from 'lucide-react';
+import { X, Send, BookOpen, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
-import { fetchPostDetail, addComment, votePost } from '@/lib/communityApi';
+import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
+import { errorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowUp, ArrowDown, Clock } from 'lucide-react';
 
@@ -14,7 +16,7 @@ interface PostDetailProps {
 }
 
 export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: PostDetailProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const qc = useQueryClient();
   const [commentText, setCommentText] = useState('');
 
@@ -23,19 +25,74 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
     queryFn: () => fetchPostDetail(postId),
   });
 
+  const post = data?.post;
+
   const vote = useMutation({
     mutationFn: (v: 1 | -1) => votePost(postId, v),
     onSuccess: (updated) => {
       onPostUpdate(updated);
-      qc.setQueryData(['post-detail', postId], (old: any) => old ? { ...old, post: updated } : old);
+      qc.setQueryData(
+        ['post-detail', postId],
+        (old: { post: Post; comments: Comment[] } | undefined) => old ? { ...old, post: updated } : old
+      );
     },
   });
 
+  type Detail = { post: Post; comments: Comment[] };
+
+  /**
+   * Comments post optimistically: the thread updates the moment you hit send,
+   * with the temporary row rolled back if the request fails. Waiting on a
+   * round-trip made the thread feel laggy on every reply.
+   */
   const comment = useMutation({
     mutationFn: (body: string) => addComment(postId, body),
-    onSuccess: () => {
+    onMutate: async (body) => {
+      await qc.cancelQueries({ queryKey: ['post-detail', postId] });
+      const previous = qc.getQueryData<Detail>(['post-detail', postId]);
+      const optimistic: Comment = {
+        id: -Date.now(), // negative id — never collides with a real one
+        postId,
+        userId: user?.id ?? '',
+        authorName: user?.given_name || user?.username || 'You',
+        body,
+        createdAt: new Date().toISOString(),
+      };
+      qc.setQueryData<Detail>(['post-detail', postId], old =>
+        old ? { ...old, comments: [optimistic, ...old.comments] } : old);
       setCommentText('');
-      qc.invalidateQueries({ queryKey: ['post-detail', postId] });
+      return { previous, optimisticId: optimistic.id };
+    },
+    onError: (err, _body, ctx) => {
+      if (ctx?.previous) qc.setQueryData(['post-detail', postId], ctx.previous);
+      toast.error(errorMessage(err, 'Could not post your comment'));
+    },
+    onSuccess: (saved, _body, ctx) => {
+      // Swap the placeholder for the server row, keeping its position.
+      qc.setQueryData<Detail>(['post-detail', postId], old => old ? {
+        ...old,
+        comments: old.comments.map(c => (c.id === ctx?.optimisticId ? saved : c)),
+      } : old);
+      onPostUpdate({ ...(post as Post), commentCount: (post?.commentCount ?? 0) + 1 });
+    },
+  });
+
+  const removeComment = useMutation({
+    mutationFn: (commentId: number) => deleteComment(postId, commentId),
+    onMutate: async (commentId) => {
+      await qc.cancelQueries({ queryKey: ['post-detail', postId] });
+      const previous = qc.getQueryData<Detail>(['post-detail', postId]);
+      qc.setQueryData<Detail>(['post-detail', postId], old =>
+        old ? { ...old, comments: old.comments.filter(c => c.id !== commentId) } : old);
+      return { previous };
+    },
+    onError: (err, _id, ctx) => {
+      if (ctx?.previous) qc.setQueryData(['post-detail', postId], ctx.previous);
+      toast.error(errorMessage(err, 'Could not delete that comment'));
+    },
+    onSuccess: () => {
+      toast.success('Comment deleted');
+      onPostUpdate({ ...(post as Post), commentCount: Math.max((post?.commentCount ?? 1) - 1, 0) });
     },
   });
 
@@ -49,7 +106,6 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
     return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`;
   };
 
-  const post = data?.post;
   const comments = data?.comments ?? [];
   const score = (post?.upvotes ?? 0) - (post?.downvotes ?? 0);
 
@@ -107,18 +163,37 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
               {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
             </h3>
 
-            {comments.map(c => (
-              <div key={c.id} className="comment-row">
-                <div className="comment-avatar">{c.authorName[0]?.toUpperCase()}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-white/55">{c.authorName}</span>
-                    <span className="text-[10px] text-white/20">{relTime(c.createdAt)}</span>
+            {comments.map(c => {
+              // Negative ids belong to optimistic rows still in flight.
+              const pending = c.id < 0;
+              const mine = !!user && c.userId === user.id;
+              return (
+                <div key={c.id} className="comment-row group"
+                  style={pending ? { opacity: 0.55 } : undefined}>
+                  <div className="comment-avatar">{c.authorName[0]?.toUpperCase()}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-white/55">{c.authorName}</span>
+                      <span className="text-[10px] text-white/20">
+                        {pending ? 'sending…' : relTime(c.createdAt)}
+                      </span>
+                      {mine && !pending && (
+                        <button
+                          onClick={() => removeComment.mutate(c.id)}
+                          className="icon-btn icon-btn--danger ml-auto opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                          style={{ height: 22, width: 22 }}
+                          title="Delete comment"
+                          aria-label="Delete your comment"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-white/40 leading-relaxed whitespace-pre-wrap">{c.body}</p>
                   </div>
-                  <p className="text-sm text-white/40 leading-relaxed whitespace-pre-wrap">{c.body}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Add comment */}
             {isAuthenticated && (

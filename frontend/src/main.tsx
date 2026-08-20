@@ -1,18 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 // Import the auth provider
-import { AuthProvider, AUTH_CACHE_KEY } from "./lib/auth-context";
-import { userQueryOptions } from "./lib/api";
+import { AuthProvider } from "./lib/auth-context";
 
-// Create a client
+// Create a client. Auth state is intentionally NOT persisted to localStorage:
+// login/logout are full-page navigations (Kinde round-trip), and every such
+// reload should just ask the server for the current session rather than risk
+// showing a stale cached user from before the navigation. See auth-context.tsx.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -21,14 +21,8 @@ const queryClient = new QueryClient({
   },
 });
 
-const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: AUTH_CACHE_KEY,
-});
-
-
 // Create a new router instance
-const router: any = createRouter({ routeTree, context: {queryClient} });
+const router = createRouter({ routeTree, context: {queryClient} });
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
@@ -37,23 +31,12 @@ declare module "@tanstack/react-router" {
   }
 }
 
-
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        maxAge: 1000 * 60 * 60 * 24,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (query) => query.queryKey[0] === userQueryOptions.queryKey[0],
-        },
-      }}
-    >
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

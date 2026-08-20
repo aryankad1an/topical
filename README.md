@@ -3,97 +3,219 @@
   <p><b>Where the human brain works with artificial intelligence.</b></p>
 </div>
 
-Topical is a premium, AI-powered platform for creating beautifully structured documents. Whether you are building lesson plans, writing research papers, or documenting technical architecture, Topical brings together the power of an intelligent AI author and real-time collaboration so you can create, refine, and publish your knowledge seamlessly.
+Topical turns a topic into a structured, publishable document. You give it a
+subject; it generates a hierarchy of subtopics, then writes each section on
+demand — grounded in live web sources rather than model memory alone. You keep
+editorial control: every section arrives as a draft snippet you place, edit, and
+arrange yourself.
 
-## ✨ Key Features
-
-- **Rich Format Support (MDX & LaTeX):** Write interactive MDX documents with embedded code and components, or craft professional LaTeX documents optimized for academia, engineering, and science.
-- **Context-Aware AI Generation:** Instead of generating blindly, Topical is strategic. It first generates a comprehensive content hierarchy, allowing you to generate each section one by one with full contextual awareness of the surrounding document structure.
-- **Advanced Intelligence Sources:** The AI doesn't just rely on its internal training. It is powered by the **Google Gemini API** and aggressively augments its knowledge by crawling the **live Internet** and specific **user-provided URLs**, ensuring factual, up-to-date content.
-- **Real-Time Multiplayer Collaboration:** Work together flawlessly. Topical features robust real-time collaboration with dynamic peer cursors, presence awareness, and CRDT-based state synchronization, allowing multiple authors to edit the exact same document simultaneously without conflicts.
-- **One-Click Publishing:** Ready to share your work? Publish your projects to the public Topical library with a single click so the world can read and learn from your work.
-- **Community Library & Forum:** Browse, explore, and learn from published lesson plans, research summaries, and technical docs created by other members of the Topical community.
+Built for lesson plans, research summaries, and technical documentation.
 
 ---
 
-## 🏗 Architecture
+## Features
 
-Topical is built on a modern, decoupled microservice architecture:
-- **Frontend:** React 18, TypeScript, Vite, TanStack Router, Yjs
-- **Backend API & WebSockets:** Bun, Hono, PostgreSQL, Drizzle ORM
-- **AI Microservice:** Python 3.10+, FastAPI, google-genai, Crawl4AI
+- **MDX and LaTeX.** Write interactive MDX with embedded code, or LaTeX for
+  academic and scientific work. Both render live in a split-pane preview with
+  syntax highlighting, an outline rail, and line-accurate scroll sync.
+- **A LaTeX preview that behaves like LaTeX.** Sections, equations, figures and
+  tables are numbered; `\ref`/`\eqref`/`\cite` resolve; `\newcommand` macros
+  expand; theorem environments, footnotes and bibliographies render. Anything
+  unsupported is reported as an issue instead of vanishing.
+- **Editing that knows the format.** `/` opens every construct the format has,
+  lists and `\item`s continue on Enter, Tab indents a block, ⌘B/⌘I/⌘K wrap the
+  selection, and find-and-replace works over the source.
+- **Inline AI on the words you already wrote.** Select a passage and press ⌘J to
+  improve, expand, shorten, simplify, fix grammar, set the maths, or run a custom
+  instruction. Nothing is applied until you have read the result.
+- **Hierarchy-first generation.** Topical plans before it writes: it produces a
+  topic tree, then generates each section with the surrounding structure as
+  context, so sections don't overlap or repeat each other. It can also outline a
+  draft you already have.
+- **Grounded in live sources.** Generation can draw on real-time web crawling
+  (via Crawl4AI), specific URLs you supply, or the model's own knowledge —
+  your choice per section.
+- **Bring your own model.** Gemini, OpenAI, Anthropic, xAI, or Mistral. Keys are
+  per-user and never leave your browser except as a request header.
+- **Place content where you want it.** Generated sections drop in at your
+  cursor — drag them into position or insert at the caret.
+- **Export.** Download the source as `.md`/`.tex` (LaTeX comes wrapped in a
+  compilable document), copy it, or print the rendered document to PDF.
+- **Real-time collaboration.** CRDT-backed multiplayer editing (Yjs) with live
+  peer cursors and presence.
+- **Publish and browse.** Share documents to a public library, or keep them
+  private. Community forum included.
 
 ---
 
-## 🚀 Getting Started
+## Architecture
+
+Three services, decoupled:
+
+| Service | Stack | Port |
+|---|---|---|
+| Frontend | React 18, TypeScript, Vite 5, TanStack Router, Tailwind, Yjs | `5173` |
+| Backend API + WebSockets | Bun, Hono, PostgreSQL, Drizzle ORM | `3000` |
+| AI content service | Python 3.10+, FastAPI, LiteLLM, Crawl4AI | `8000` |
+
+The frontend talks only to the backend. The backend proxies `/api/ai/*` to the
+Python service, forwarding the caller's provider credentials as headers. LiteLLM
+handles provider routing, so adding a model is a config change rather than a
+new integration.
+
+```
+browser ──▶ Hono API (:3000) ──▶ FastAPI AI service (:8000) ──▶ provider
+   │              │                        │
+   │              ▼                        ▼
+   └── WS ──▶ Yjs sync            Crawl4AI (live web)
+                  │
+                  ▼
+             PostgreSQL
+```
+
+---
+
+## Getting started
 
 ### Prerequisites
-Before you begin, ensure you have the following installed:
-- [Python 3.10+](https://python.org/) (required by Crawl4AI)
-- [Bun](https://bun.sh/)
-- [Node.js & npm](https://nodejs.org/) (for the Vite frontend)
-- A running PostgreSQL database
 
-### 1. Installation
+- **Python 3.10+** — required by Crawl4AI, which fails to import on 3.9.
+- **Bun** — runs the backend.
+- **Node.js + npm** — runs the Vite frontend.
+- **PostgreSQL** — a reachable database.
 
-Clone the repository and install the required dependencies for both the backend and the frontend:
+### 1. Install
 
 ```bash
 git clone https://github.com/aryankad1an/topical.git
 cd topical
 
-# Install backend dependencies
-bun install
-
-# Install frontend dependencies
-cd frontend && npm install
+bun install                    # backend
+cd frontend && npm install     # frontend
 cd ..
 ```
 
-### 2. Environment Configuration
+The Python virtualenv is created automatically on first run — see step 4.
 
-Copy the example environment file to configure your local setup:
+### 2. Configure
+
 ```bash
 cp .env.example .env
 ```
-Open `.env` and fill in your connection details:
-- **Database:** Your local PostgreSQL connection string
-- **Auth:** Your Kinde Auth credentials (`KINDE_CLIENT_ID`, `KINDE_CLIENT_SECRET`, etc.)
 
-*Note: For local authentication to work, ensure your Kinde application settings have `http://localhost:5173/api/callback` as an Allowed Callback URL and `http://localhost:5173` as an Allowed Logout Redirect URL.*
+**`DATABASE_URL` is the only required variable.**
 
-### 3. Database Migration
+Kinde auth variables are optional. When they are unset, the server injects a
+mock `dev@localhost` user, so you can run the whole app locally without auth
+credentials. Set them only when you want real login:
 
-Initialize your PostgreSQL database schema:
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | **yes** | PostgreSQL connection string |
+| `AI_SERVICE_URL` | no | Defaults to the local FastAPI service |
+| `KINDE_*` | no | Real authentication; omit for a mock dev user |
+
+If you do configure Kinde, add `http://localhost:5173/api/callback` as an
+Allowed Callback URL and `http://localhost:5173` as an Allowed Logout Redirect
+URL.
+
+> API keys for AI providers are **not** environment variables — they are
+> configured per user in the web UI. See step 5.
+
+### 3. Migrate the database
+
 ```bash
 bun run db:migrate
 ```
 
-### 4. Running the Platform Locally
-
-We provide an orchestration script to start all necessary services concurrently. It will automatically set up the Python virtual environment for the AI service if it doesn't exist.
+### 4. Run
 
 ```bash
-chmod +x run.sh
 ./run.sh
 ```
 
-**Services Started:**
-- 🟢 **Backend API & WebSockets:** `http://localhost:3000`
-- 🟢 **AI Content Service:** `http://localhost:8000`
-- 🟢 **Frontend UI:** `http://localhost:5173`
+This frees ports 3000/8000/5173, starts all three services, and on first run
+creates `ai_service/venv`, installs Python dependencies, and downloads the
+headless browser Crawl4AI needs. Open **http://localhost:5173**.
 
-### 5. Configuring Your API Key
+### 5. Add an AI provider key
 
-To enable the AI generation features in Topical, you must provide your Google Gemini API Key. 
+Generation is disabled until you add a key. Keys live in browser storage and are
+sent only as request headers.
 
-**Important:** Instead of placing your API key in the `.env` file, **Topical handles API keys securely per-user within the web interface.**
-1. Log in to your locally running Topical instance (`http://localhost:5173`).
-2. Navigate to your **Profile** page.
-3. Scroll down to the **AI Settings** section.
-4. Enter and save your Gemini API Key. The platform will automatically verify it and enable the AI Generation workspace.
+1. Open **Profile → AI Providers**.
+2. Choose a provider and model.
+3. Paste your API key and click **Add & verify key**.
+
+The key is verified against the provider before being saved, so a bad key fails
+immediately rather than at generation time.
 
 ---
 
-## 📜 License
-MIT License
+## Development
+
+```bash
+bun run dev                  # backend only, with watch
+cd frontend && npm run dev   # frontend only
+bun run db:generate          # generate a migration from schema changes
+npx tsc --noEmit             # typecheck (run inside frontend/)
+```
+
+### Layout
+
+```
+frontend/src/
+  features/editor/        the writing screen
+    components/           header, toolbar, code surface, outline, AI panels
+    hooks/                document + collaboration, editing, find, scroll sync
+    lib/                  pure text operations, highlighting, outline, export
+  features/preview/       rendering, shared by editor / reader / community
+    latex/                parser → preamble → renderer pipeline
+  components/ui/          shared primitives (Surface, Avatar, Chip, IconButton…)
+ai_service/
+  main.py                 routes only
+  prompts.py              every prompt, including the inline-edit actions
+  providers.py            credentials, completion, error translation
+  crawl.py                web crawling
+```
+
+Text operations in `features/editor/lib/textOps.ts` are pure functions over
+`(document, selection)`, which is what lets the toolbar, the keyboard shortcuts,
+the `/` menu and the AI panels all drive the same behaviour.
+
+### Toolchain notes
+
+- **Drizzle is pinned** to `drizzle-orm` 0.29.5 with `drizzle-kit` 0.20.18.
+  Don't upgrade `drizzle-orm` alone — `drizzle-zod` 0.5.1 and the schema files
+  use the older `createInsertSchema(table, {...})` refinement API, which breaks
+  in newer releases.
+- `run.sh` picks the first Python ≥ 3.10 it finds. To pin one, create
+  `ai_service/venv` yourself before the first run.
+
+### AI service endpoints
+
+All are `POST`, mounted under `/ai/`, and proxied through `/api/ai/*`. Each
+reads the provider, model, and key from the `X-AI-Provider`, `X-AI-Model`, and
+`X-AI-Api-Key` headers.
+
+| Endpoint | Purpose |
+|---|---|
+| `search-topics` | Build the topic hierarchy for a subject |
+| `generate-mdx-llm-only-raw` | MDX from model knowledge alone |
+| `single-topic-raw` | MDX grounded in a live web crawl |
+| `generate-mdx-from-urls-raw` | MDX grounded in URLs you supply |
+| `generate-latex-llm-only-raw` | LaTeX from model knowledge alone |
+| `generate-latex-crawl-raw` | LaTeX grounded in a live web crawl |
+| `generate-latex-from-urls-raw` | LaTeX grounded in URLs you supply |
+| `outline-from-document` | The outline an existing draft is reaching for |
+| `transform` | Rewrite, extend or explain one selected passage |
+
+Provider failures map to real HTTP statuses — `401` for a rejected key, `429`
+for rate limits, `404` for an unknown model, `504` on timeout — each with a
+message safe to show a user. Raw provider payloads are logged, never returned.
+
+---
+
+## License
+
+MIT

@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Best-effort human-readable message from a caught value of unknown shape. */
+export function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 /**
  * Removes frontmatter from MDX content
  * Frontmatter is the section between --- markers at the beginning of the content

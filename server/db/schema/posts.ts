@@ -1,6 +1,4 @@
-import { text, pgTable, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { z } from "zod";
+import { text, pgTable, serial, integer, timestamp } from "drizzle-orm/pg-core";
 
 export const posts = pgTable("community_posts", {
   id: serial("id").primaryKey(),
@@ -30,13 +28,4 @@ export const postVotes = pgTable("community_post_votes", {
   postId: integer("post_id").notNull(),
   userId: text("user_id").notNull(),
   vote: integer("vote").notNull(), // 1 = up, -1 = down
-});
-
-export const insertPostSchema = createInsertSchema(posts, {
-  title: z.string().min(1),
-  body: z.string().default(""),
-});
-export const selectPostSchema = createSelectSchema(posts);
-export const insertCommentSchema = createInsertSchema(postComments, {
-  body: z.string().min(1),
 });

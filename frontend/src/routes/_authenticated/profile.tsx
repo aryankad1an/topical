@@ -1,73 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Mail, User, Shield, Key, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
+import { Loader2, Mail, User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { updateUsername } from "@/lib/api";
+import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
+import { IdentityBanner, EmptyState } from "@/components/ui/primitives";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: Profile,
 });
 
 function Profile() {
-  const { user, isLoading, loginUrl, logout, loginAction, refetchUser } = useAuth();
-  const [usernameInput, setUsernameInput] = useState("");
-  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const { user, isLoading, isNavigating, loginUrl, logout, loginAction } = useAuth();
 
-  // API Key state
-  const [apiKey, setApiKey] = useState("");
-  const [apiKeyStatus, setApiKeyStatus] = useState<'unknown' | 'valid' | 'invalid'>('unknown');
-  const [isTestingKey, setIsTestingKey] = useState(false);
+  // AI provider credentials
+  const [credentials, setCredentials] = useState<AiCredential[]>([]);
+  useEffect(() => { setCredentials(getCredentials()); }, []);
 
-  useEffect(() => {
-    if (user?.username) setUsernameInput(user.username);
-    const stored = localStorage.getItem('gemini_api_key');
-    if (stored) { setApiKey(stored); setApiKeyStatus('valid'); }
-  }, [user?.username]);
-
-  const handleUpdateUsername = async () => {
-    if (!usernameInput || usernameInput.length < 3) { toast.error("Username must be at least 3 characters"); return; }
-    setIsUpdatingUsername(true);
-    try {
-      await updateUsername(usernameInput);
-      await refetchUser?.();
-      toast.success("Username updated successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update username");
-    } finally { setIsUpdatingUsername(false); }
-  };
-
-  const handleSaveApiKey = async () => {
-    const key = apiKey.trim();
-    if (!key) { localStorage.removeItem('gemini_api_key'); setApiKeyStatus('unknown'); toast.success('API key removed'); return; }
-    setIsTestingKey(true);
-    try {
-      // Quick validation by calling a lightweight endpoint
-      const res = await fetch('/api/ai/search-topics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Gemini-API-Key': key },
-        body: JSON.stringify({ query: 'test', limit: 1 }),
-      });
-      if (res.ok) {
-        localStorage.setItem('gemini_api_key', key);
-        setApiKeyStatus('valid');
-        toast.success('API key saved and verified');
-      } else {
-        setApiKeyStatus('invalid');
-        toast.error('Invalid API key — check and try again');
-      }
-    } catch {
-      // If backend is down, just save locally
-      localStorage.setItem('gemini_api_key', key);
-      setApiKeyStatus('valid');
-      toast.success('API key saved');
-    } finally { setIsTestingKey(false); }
-  };
 
   if (isLoading) {
     return (
@@ -89,132 +39,137 @@ function Profile() {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
+    <div className="w-full mx-auto py-10" style={{ maxWidth: '68rem', paddingInline: 'var(--gutter)' }}>
+      {/* ── Identity banner ── */}
+      <IdentityBanner
+        className="mb-6"
+        seed={user.id}
+        name={[user.given_name, user.family_name].filter(Boolean).join(' ') || 'Your Profile'}
+        handle={user.username}
+        bio={user.bio}
+        bioFallback="No bio yet — add one from Edit profile."
+        avatarUrl={user.avatarUrl || user.picture}
+        meta={<>
+          {user.email && (
+            <span className="inline-flex items-center gap-1.5"><Mail className="h-3 w-3" />{user.email}</span>
+          )}
+          <span className="inline-flex items-center gap-1.5">
+            <Key className="h-3 w-3" />
+            {credentials.length
+              ? `${credentials.length} provider${credentials.length === 1 ? '' : 's'} connected`
+              : 'No AI provider yet'}
+          </span>
+        </>}
+        actions={
+          <Button onClick={logout} disabled={isNavigating} variant="ghost" size="sm"
+            className="text-white/35 hover:text-white/80 hover:bg-white/[0.05]">
+            {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><LogOut className="h-3.5 w-3.5 mr-1.5" /> Sign out</>}
+          </Button>
+        }
+      />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* The identity form carries more fields, so it gets the wider column.
+          An even 50/50 split at max-w-3xl left both sides cramped. */}
+      <div className="grid gap-6 md:grid-cols-[1.15fr_1fr] items-start">
         <Card>
           <CardHeader>
-            <CardTitle>User Information</CardTitle>
-            <CardDescription>Your personal information</CardDescription>
+            <CardTitle>Your details</CardTitle>
+            <CardDescription>What other members see on your public profile.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4 mb-6">
-              <Avatar className="h-16 w-16">
-                {user.picture ? (
-                  <AvatarImage src={user.picture} alt={user.given_name || 'User'} />
-                ) : (
-                  <AvatarFallback className="text-lg">
-                    {user.given_name ? user.given_name[0] : 'U'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div>
-                <h3 className="text-xl font-semibold">
-                  {user.given_name} {user.family_name}
-                </h3>
-                {user.email && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span>{user.email}</span>
-                  </div>
-                )}
-              </div>
+          <CardContent className="space-y-3.5">
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1">Username</div>
+              {user.username
+                ? <span className="person-handle">@{user.username}</span>
+                : <span className="text-[13px] text-white/30 italic">Not set — required to publish</span>}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">User ID</p>
-                  <p className="text-sm text-muted-foreground break-all">{user.id}</p>
+            <div>
+              <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1">Bio</div>
+              <p className="text-[13px] text-white/55 leading-relaxed">
+                {user.bio || <span className="text-white/25 italic">No bio yet</span>}
+              </p>
+            </div>
+
+            {user.roles && user.roles.length > 0 && (
+              <div>
+                <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1.5">Roles</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {user.roles.map(role => (
+                    <span key={role} className="text-[10.5px] px-2 py-0.5 rounded-full"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-300)", border: "1px solid var(--accent-line)" }}>
+                      <Shield className="h-2.5 w-2.5 inline mr-1" />{role}
+                    </span>
+                  ))}
                 </div>
               </div>
+            )}
 
-              <div className="mt-4 pt-4 border-t border-white/10">
-                <Label htmlFor="username" className="text-sm font-medium mb-2 block">Username</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="username"
-                    value={usernameInput} 
-                    onChange={(e) => setUsernameInput(e.target.value)} 
-                    placeholder="Set your username" 
-                    className="max-w-[240px] bg-black/40 border-white/10"
-                  />
-                  <Button 
-                    onClick={handleUpdateUsername} 
-                    disabled={isUpdatingUsername || usernameInput === (user.username || "")}
-                    size="sm"
-                  >
-                    {isUpdatingUsername ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Required for publishing projects to the community.
-                </p>
-              </div>
-
-              {user.roles && user.roles.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Roles</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {user.roles.map(role => (
-                        <span key={role} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">{role}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+            {/* Editing is its own screen — this page is for viewing. */}
+            <div className="flex items-center gap-2.5 pt-1">
+              <Link to="/profile/edit"
+                className="btn-subtle h-9 px-4">
+                <Pencil className="h-3.5 w-3.5" /> Edit profile
+              </Link>
+              {user.username && (
+                <Link to="/u/$username" params={{ username: user.username }}
+                  className="h-9 px-4 rounded-lg text-xs font-medium flex items-center gap-2 text-white/40 hover:text-white/75 transition-colors"
+                  style={{ textDecoration: "none" }}>
+                  <Eye className="h-3.5 w-3.5" /> View public profile
+                </Link>
               )}
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={logout} className="w-full">Logout</Button>
+          <CardFooter className="text-[11px] text-white/20">
+            <span className="inline-flex items-center gap-1.5">
+              <User className="h-3 w-3" /> {user.id}
+            </span>
           </CardFooter>
         </Card>
 
-        {/* API Key Settings */}
+        {/* AI Provider Settings */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="h-4 w-4" />
-                AI Settings
-              </CardTitle>
-              <CardDescription>Configure your Gemini API key for AI content generation.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="api-key" className="text-sm font-medium mb-2 block">Gemini API Key</Label>
-                <Input
-                  id="api-key"
-                  type="password"
-                  value={apiKey}
-                  onChange={e => { setApiKey(e.target.value); setApiKeyStatus('unknown'); }}
-                  placeholder="AIza..."
-                  className="bg-black/40 border-white/10 font-mono text-xs"
-                />
-                {apiKeyStatus === 'valid' && (
-                  <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: '#22c55e' }}>
-                    <CheckCircle2 className="h-3.5 w-3.5" /> API key verified
-                  </div>
-                )}
-                {apiKeyStatus === 'invalid' && (
-                  <div className="flex items-center gap-1.5 mt-2 text-xs text-red-400">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Invalid API key
-                  </div>
-                )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              AI Providers
+            </CardTitle>
+            <CardDescription>The models Topical generates with.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {credentials.length === 0 ? (
+              <EmptyState icon={Key} title="No providers connected"
+                description="Generation is disabled until you add one." />
+            ) : (
+              <div className="space-y-2">
+                {credentials.map((cred) => {
+                  const preset = presetFor(cred.provider);
+                  return (
+                    <div key={cred.id} className="provider-tile" data-default={cred.isDefault}
+                      style={{ ['--brand' as string]: preset.color }}>
+                      <span className="provider-mark">{preset.name[0]}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[13px] font-semibold text-white/85">{preset.name}</span>
+                          {cred.isDefault && <span className="provider-default-chip">DEFAULT</span>}
+                        </div>
+                        <p className="provider-model truncate">{cred.model}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <Button onClick={handleSaveApiKey} disabled={isTestingKey} className="w-full" size="sm">
-                {isTestingKey ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Verifying...</> : 'Save API Key'}
-              </Button>
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
-                className="text-xs text-white/40 hover:text-white/60 flex items-center gap-1 transition-colors">
-                <ExternalLink className="h-3 w-3" /> Get a free Gemini API key
-              </a>
-            </CardContent>
-          </Card>
+            )}
+
+            {/* Managing keys is its own task with its own screen. */}
+            <Link to="/providers"
+              className="btn-subtle w-full h-9">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {credentials.length ? "Manage providers" : "Connect a provider"}
+            </Link>
+          </CardContent>
+        </Card>
 
           <Card>
             <CardHeader>
@@ -237,4 +192,3 @@ function Profile() {
     </div>
   );
 }
-

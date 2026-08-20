@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowUp, ArrowDown, MessageSquare, BookOpen, Clock, User } from 'lucide-react';
+import { ArrowUp, ArrowDown, MessageSquare, BookOpen, Clock, User, Trash2 } from 'lucide-react';
 import type { Post } from '@/lib/communityApi';
 import { votePost } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
@@ -8,13 +8,16 @@ interface PostCardProps {
   post: Post;
   onUpdate: (updated: Post) => void;
   onOpen: (id: number) => void;
+  onDelete: (id: number) => void;
 }
 
-export function PostCard({ post, onUpdate, onOpen }: PostCardProps) {
-  const { isAuthenticated } = useAuth();
+export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
+  const { isAuthenticated, user } = useAuth();
   const [voting, setVoting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const score = post.upvotes - post.downvotes;
+  const isAuthor = !!user && user.id === post.userId;
 
   async function handleVote(e: React.MouseEvent, v: 1 | -1) {
     e.stopPropagation();
@@ -39,7 +42,7 @@ export function PostCard({ post, onUpdate, onOpen }: PostCardProps) {
   };
 
   return (
-    <div className="community-card" onClick={() => onOpen(post.id)}>
+    <div className="community-card group" onClick={() => onOpen(post.id)}>
 
       {/* ── Vote column ── */}
       <div className="community-vote-col" onClick={e => e.stopPropagation()}>
@@ -70,7 +73,42 @@ export function PostCard({ post, onUpdate, onOpen }: PostCardProps) {
       {/* ── Content ── */}
       <div className="community-card-content">
         {/* Title */}
-        <h3 className="community-card-title">{post.title}</h3>
+        <div className="flex items-start gap-2">
+          <h3 className="community-card-title flex-1">{post.title}</h3>
+
+          {isAuthor && (
+            /* Two-step delete: the second click confirms. A modal for a single
+               forum post would be heavier than the action deserves. */
+            <div onClick={e => e.stopPropagation()} className="shrink-0 flex items-center gap-1">
+              {confirming ? (
+                <>
+                  <button
+                    className="text-[10.5px] font-semibold px-2 py-1 rounded-md transition-colors"
+                    style={{ color: 'var(--status-danger)', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)' }}
+                    onClick={() => onDelete(post.id)}
+                  >
+                    Delete?
+                  </button>
+                  <button
+                    className="text-[10.5px] px-2 py-1 rounded-md text-white/40 hover:text-white/70"
+                    onClick={() => setConfirming(false)}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  onClick={() => setConfirming(true)}
+                  title="Delete post"
+                  aria-label={`Delete post "${post.title}"`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Body preview */}
         {post.body && (

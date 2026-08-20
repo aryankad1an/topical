@@ -1,14 +1,12 @@
 import { createContext, useContext, ReactNode, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { userQueryOptions } from './api';
 
-export const AUTH_ROUTES = {
+const AUTH_ROUTES = {
   login: '/api/login',
   register: '/api/register',
   logout: '/api/logout',
 } as const;
-
-export const AUTH_CACHE_KEY = 'topical-react-query-cache';
 
 // Define the shape of our user object
 export interface User {
@@ -18,6 +16,8 @@ export interface User {
   email?: string;
   picture?: string;
   username?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
   roles?: string[];
 }
 
@@ -26,6 +26,10 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isNewUser: boolean;
+  /** True the instant a login/register/logout action has been triggered but the
+   *  full-page navigation hasn't happened yet — use for immediate button feedback. */
+  isNavigating: boolean;
   hasRole: (role: string) => boolean;
   refetchUser?: () => Promise<void>;
   loginUrl: string;
@@ -40,6 +44,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  isNewUser: false,
+  isNavigating: false,
   hasRole: () => false,
   loginUrl: AUTH_ROUTES.login,
   registerUrl: AUTH_ROUTES.register,
@@ -50,70 +56,47 @@ const AuthContext = createContext<AuthContextType>({
 
 // Create a provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const queryClient = useQueryClient();
+  // Flips true the moment a login/register/logout click is handled, purely so
+  // buttons can show instant feedback — the actual navigation is a real <a
+  // href> or window.location.assign, never something this flag gates.
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // Use the userQueryOptions to fetch the current user
+  // No persisted cache to go stale: every full page load fetches /api/me
+  // fresh, so this always reflects the server's actual session state.
   const { data, isLoading, refetch } = useQuery(userQueryOptions);
 
-  // Extract the user from the data
   const user = (data?.user as unknown as User) || null;
-  // While we are initially fetching (no data cached yet), we don't want to flash unauthenticated UIs
-  // We can consider ourselves not strictly authenticated, but we shouldn't show Login buttons immediately.
   const isAuthenticated = !!user;
+  // True only on the /api/me response right after a user's very first login.
+  const isNewUser = !!(data as { isNewUser?: boolean } | undefined)?.isNewUser;
 
-  // Function to check if the user has a specific role
-  const hasRole = (role: string) => {
-    if (!user || !user.roles) return false;
-    return user.roles.includes(role);
-  };
+  const hasRole = (role: string) => !!user?.roles?.includes(role);
 
   const refetchUser = async () => {
     await refetch();
   };
 
-  // Function to handle logout
+  // Login/register links are real <a href> elements — the browser's native
+  // navigation is the actual mechanism, this just flags "pending" for UI
+  // feedback. Deliberately does NOT preventDefault or reimplement navigation.
+  const loginAction = (_e?: React.MouseEvent) => setIsNavigating(true);
+  const registerAction = (_e?: React.MouseEvent) => setIsNavigating(true);
+
+  // Logout is triggered from a plain <button> (no href to fall back on), so
+  // it has to navigate itself.
   const logout = () => {
-    setIsRedirecting(true);
-    queryClient.setQueryData(userQueryOptions.queryKey, { user: null });
-    queryClient.removeQueries({ queryKey: userQueryOptions.queryKey });
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(AUTH_CACHE_KEY);
-      window.location.assign(AUTH_ROUTES.logout);
-    }
+    setIsNavigating(true);
+    window.location.assign(AUTH_ROUTES.logout);
   };
 
-  const loginAction = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    setIsRedirecting(true);
-    queryClient.setQueryData(userQueryOptions.queryKey, { user: null });
-    queryClient.removeQueries({ queryKey: userQueryOptions.queryKey });
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(AUTH_CACHE_KEY);
-      window.location.assign(AUTH_ROUTES.login);
-    }
-  };
-
-  const registerAction = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    setIsRedirecting(true);
-    queryClient.setQueryData(userQueryOptions.queryKey, { user: null });
-    queryClient.removeQueries({ queryKey: userQueryOptions.queryKey });
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(AUTH_CACHE_KEY);
-      window.location.assign(AUTH_ROUTES.register);
-    }
-  };
-
-  // Note: 401 on /api/me is expected for unauthenticated users — no toast needed
-
-  // Provide the auth context to children
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading: isLoading || isRedirecting,
+        isLoading: isLoading || isNavigating,
         isAuthenticated,
+        isNewUser,
+        isNavigating,
         hasRole,
         refetchUser,
         loginUrl: AUTH_ROUTES.login,

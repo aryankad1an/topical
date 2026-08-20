@@ -9,32 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MdxPublicRouteImport } from './routes/mdxPublic'
+import { Route as ReadRouteImport } from './routes/read'
 import { Route as CommunityRouteImport } from './routes/community'
-import { Route as CombinedMdxRouteImport } from './routes/combined-mdx'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UUsernameRouteImport } from './routes/u.$username'
+import { Route as AuthenticatedProvidersRouteImport } from './routes/_authenticated/providers'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedMdxRouteImport } from './routes/_authenticated/mdx'
-import { Route as AuthenticatedLessonPlanRouteImport } from './routes/_authenticated/lesson-plan'
 import { Route as AuthenticatedEditorRouteImport } from './routes/_authenticated/editor'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile_.edit'
 
-const MdxPublicRoute = MdxPublicRouteImport.update({
-  id: '/mdxPublic',
-  path: '/mdxPublic',
+const ReadRoute = ReadRouteImport.update({
+  id: '/read',
+  path: '/read',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CombinedMdxRoute = CombinedMdxRouteImport.update({
-  id: '/combined-mdx',
-  path: '/combined-mdx',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -51,6 +45,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UUsernameRoute = UUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProvidersRoute = AuthenticatedProvidersRouteImport.update({
+  id: '/providers',
+  path: '/providers',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
@@ -61,127 +65,112 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedMdxRoute = AuthenticatedMdxRouteImport.update({
-  id: '/mdx',
-  path: '/mdx',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLessonPlanRoute = AuthenticatedLessonPlanRouteImport.update({
-  id: '/lesson-plan',
-  path: '/lesson-plan',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedEditorRoute = AuthenticatedEditorRouteImport.update({
   id: '/editor',
   path: '/editor',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
+const AuthenticatedProfileEditRoute =
+  AuthenticatedProfileEditRouteImport.update({
+    id: '/profile_/edit',
+    path: '/profile/edit',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/combined-mdx': typeof CombinedMdxRoute
   '/community': typeof CommunityRoute
-  '/mdxPublic': typeof MdxPublicRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/read': typeof ReadRoute
   '/editor': typeof AuthenticatedEditorRoute
-  '/lesson-plan': typeof AuthenticatedLessonPlanRoute
-  '/mdx': typeof AuthenticatedMdxRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/providers': typeof AuthenticatedProvidersRoute
+  '/u/$username': typeof UUsernameRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/combined-mdx': typeof CombinedMdxRoute
   '/community': typeof CommunityRoute
-  '/mdxPublic': typeof MdxPublicRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/read': typeof ReadRoute
   '/editor': typeof AuthenticatedEditorRoute
-  '/lesson-plan': typeof AuthenticatedLessonPlanRoute
-  '/mdx': typeof AuthenticatedMdxRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/providers': typeof AuthenticatedProvidersRoute
+  '/u/$username': typeof UUsernameRoute
+  '/profile/edit': typeof AuthenticatedProfileEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
-  '/combined-mdx': typeof CombinedMdxRoute
   '/community': typeof CommunityRoute
-  '/mdxPublic': typeof MdxPublicRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/read': typeof ReadRoute
   '/_authenticated/editor': typeof AuthenticatedEditorRoute
-  '/_authenticated/lesson-plan': typeof AuthenticatedLessonPlanRoute
-  '/_authenticated/mdx': typeof AuthenticatedMdxRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/providers': typeof AuthenticatedProvidersRoute
+  '/u/$username': typeof UUsernameRoute
+  '/_authenticated/profile_/edit': typeof AuthenticatedProfileEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
-    | '/combined-mdx'
     | '/community'
-    | '/mdxPublic'
-    | '/dashboard'
+    | '/read'
     | '/editor'
-    | '/lesson-plan'
-    | '/mdx'
     | '/profile'
     | '/projects'
+    | '/providers'
+    | '/u/$username'
+    | '/profile/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/combined-mdx'
     | '/community'
-    | '/mdxPublic'
-    | '/dashboard'
+    | '/read'
     | '/editor'
-    | '/lesson-plan'
-    | '/mdx'
     | '/profile'
     | '/projects'
+    | '/providers'
+    | '/u/$username'
+    | '/profile/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/about'
-    | '/combined-mdx'
     | '/community'
-    | '/mdxPublic'
-    | '/_authenticated/dashboard'
+    | '/read'
     | '/_authenticated/editor'
-    | '/_authenticated/lesson-plan'
-    | '/_authenticated/mdx'
     | '/_authenticated/profile'
     | '/_authenticated/projects'
+    | '/_authenticated/providers'
+    | '/u/$username'
+    | '/_authenticated/profile_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
-  CombinedMdxRoute: typeof CombinedMdxRoute
   CommunityRoute: typeof CommunityRoute
-  MdxPublicRoute: typeof MdxPublicRoute
+  ReadRoute: typeof ReadRoute
+  UUsernameRoute: typeof UUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mdxPublic': {
-      id: '/mdxPublic'
-      path: '/mdxPublic'
-      fullPath: '/mdxPublic'
-      preLoaderRoute: typeof MdxPublicRouteImport
+    '/read': {
+      id: '/read'
+      path: '/read'
+      fullPath: '/read'
+      preLoaderRoute: typeof ReadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -189,13 +178,6 @@ declare module '@tanstack/react-router' {
       path: '/community'
       fullPath: '/community'
       preLoaderRoute: typeof CommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/combined-mdx': {
-      id: '/combined-mdx'
-      path: '/combined-mdx'
-      fullPath: '/combined-mdx'
-      preLoaderRoute: typeof CombinedMdxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -219,6 +201,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/u/$username': {
+      id: '/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof UUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/providers': {
+      id: '/_authenticated/providers'
+      path: '/providers'
+      fullPath: '/providers'
+      preLoaderRoute: typeof AuthenticatedProvidersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/projects': {
       id: '/_authenticated/projects'
       path: '/projects'
@@ -233,20 +229,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/mdx': {
-      id: '/_authenticated/mdx'
-      path: '/mdx'
-      fullPath: '/mdx'
-      preLoaderRoute: typeof AuthenticatedMdxRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lesson-plan': {
-      id: '/_authenticated/lesson-plan'
-      path: '/lesson-plan'
-      fullPath: '/lesson-plan'
-      preLoaderRoute: typeof AuthenticatedLessonPlanRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/editor': {
       id: '/_authenticated/editor'
       path: '/editor'
@@ -254,32 +236,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEditorRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/profile_/edit': {
+      id: '/_authenticated/profile_/edit'
+      path: '/profile/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof AuthenticatedProfileEditRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEditorRoute: typeof AuthenticatedEditorRoute
-  AuthenticatedLessonPlanRoute: typeof AuthenticatedLessonPlanRoute
-  AuthenticatedMdxRoute: typeof AuthenticatedMdxRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedProvidersRoute: typeof AuthenticatedProvidersRoute
+  AuthenticatedProfileEditRoute: typeof AuthenticatedProfileEditRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEditorRoute: AuthenticatedEditorRoute,
-  AuthenticatedLessonPlanRoute: AuthenticatedLessonPlanRoute,
-  AuthenticatedMdxRoute: AuthenticatedMdxRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedProvidersRoute: AuthenticatedProvidersRoute,
+  AuthenticatedProfileEditRoute: AuthenticatedProfileEditRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -290,9 +270,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
-  CombinedMdxRoute: CombinedMdxRoute,
   CommunityRoute: CommunityRoute,
-  MdxPublicRoute: MdxPublicRoute,
+  ReadRoute: ReadRoute,
+  UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

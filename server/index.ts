@@ -1,6 +1,6 @@
 import app from "./app";
 import { z } from "zod";
-import { setupConnection, handleMessage, cleanupConnection } from "./ws";
+import { setupConnection, handleMessage, cleanupConnection, type DocWS } from "./ws";
 
 const ServeEnv = z.object({
   PORT: z
@@ -12,7 +12,7 @@ const ServeEnv = z.object({
 const ProcessEnv = ServeEnv.parse(process.env);
 
 // Store docName per WebSocket so we can clean up on close
-const wsDocMap = new WeakMap<any, string>();
+const wsDocMap = new WeakMap<DocWS, string>();
 
 const server = Bun.serve({
   port: ProcessEnv.PORT,
@@ -37,18 +37,21 @@ const server = Bun.serve({
     return app.fetch(req);
   },
   websocket: {
-    open(ws: any) {
+    open(ws: DocWS) {
       const docId = ws.data?.docId;
       if (!docId) { ws.close(); return; }
       wsDocMap.set(ws, docId);
       setupConnection(ws, docId);
     },
-    message(ws: any, data: any) {
+    message(ws: DocWS, data: string | Buffer) {
+      // The Yjs sync protocol is binary-only; a text frame would be a
+      // misbehaving client, so just drop it.
+      if (typeof data === "string") return;
       const docId = wsDocMap.get(ws);
       if (!docId) return;
       handleMessage(ws, docId, data);
     },
-    close(ws: any) {
+    close(ws: DocWS) {
       const docId = wsDocMap.get(ws);
       if (!docId) return;
       cleanupConnection(ws, docId);

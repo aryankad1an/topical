@@ -1,12 +1,12 @@
 import { hc } from "hono/client";
 import { type ApiRoutes } from "@server/app";
 import { queryOptions } from "@tanstack/react-query";
-import { LessonPlan } from "@/stores/lessonPlanStore";
-import { toast } from "sonner";
+import type { DocFormat, LessonPlan } from "@/lib/types";
+import { getDefaultCredential } from "@/lib/aiCredentials";
 
 /**
  * Custom fetch used by the Hono client. For AI routes (`/api/ai/*`) it attaches
- * the per-user Gemini key from localStorage and surfaces failures as toasts.
+ * the user's default AI provider key/model from localStorage.
  */
 const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const urlStr = typeof input === "string" ? input : (input as Request).url || input.toString();
@@ -15,28 +15,18 @@ const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     return fetch(input, init);
   }
 
-  toast.info("Query submitted");
-
-  const apiKey = localStorage.getItem("gemini_api_key") || "";
+  const credential = getDefaultCredential();
   const headers = new Headers(init?.headers);
-  if (apiKey) headers.set("X-Gemini-API-Key", apiKey);
-
-  try {
-    const response = await fetch(input, { ...init, headers });
-    if (!response.ok) {
-      const body = await response.clone().json().catch(() => null);
-      const detail = body?.detail || "";
-      if (response.status === 400 && detail.includes("No API key")) {
-        toast.error("No API key configured. Go to Profile → AI Settings to add your Gemini API key.");
-      } else {
-        toast.error(detail || "Error connecting to Gemini API");
-      }
-    }
-    return response;
-  } catch (error) {
-    toast.error("Error connecting to AI service");
-    throw error;
+  if (credential) {
+    headers.set("X-AI-Provider", credential.provider);
+    headers.set("X-AI-Model", credential.model);
+    headers.set("X-AI-Api-Key", credential.apiKey);
   }
+
+  // Errors are surfaced by the caller via ensureOk, so that each call site can
+  // give the failure context. Toasting here too produced two toasts per
+  // failure, with the caller's generic one landing on top of the useful one.
+  return fetch(input, { ...init, headers });
 };
 
 const client = hc<ApiRoutes>("/", { fetch: customFetch });
@@ -54,7 +44,17 @@ type ResponseLike = {
 /** Throw a descriptive Error if a response isn't OK; otherwise return it. */
 async function ensureOk<T extends ResponseLike>(res: T, message: string): Promise<T> {
   if (!res.ok) {
-    const detail = await res.text().catch(() => "");
+    const body = await res.text().catch(() => "");
+    // Both the Hono API and the FastAPI AI service report failures as
+    // {"detail": "..."} / {"error": "..."}; surface that sentence rather than
+    // the raw JSON, which used to be shown to users verbatim.
+    let detail = body;
+    try {
+      const parsed = JSON.parse(body);
+      detail = parsed?.detail || parsed?.error || body;
+    } catch {
+      // Not JSON — use the body as-is.
+    }
     throw new Error(detail || `${message} (${res.status} ${res.statusText})`);
   }
   return res;
@@ -78,17 +78,36 @@ export const userQueryOptions = queryOptions({
   retry: false,
 });
 
-export async function updateUsername(username: string) {
-  const res = await fetch("/api/username", {
+export interface ProfileUpdate {
+  username?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
+}
+
+export async function updateProfile(update: ProfileUpdate) {
+  const res = await fetch("/api/profile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    body: JSON.stringify(update),
   });
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody?.error || "Failed to update username");
+    throw new Error(errorBody?.error || "Failed to update profile");
   }
   return res.json();
+}
+
+/** Upload an image file (avatar, etc.) and return its public URL. */
+export async function uploadFile(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/files/upload", { method: "POST", body: fd });
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody?.error || "Upload failed");
+  }
+  const { url } = (await res.json()) as { url: string };
+  return url;
 }
 
 // ── AI generation — MDX ───────────────────────────────────────────────────
@@ -122,6 +141,42 @@ export async function generateMdxFromUrlsRaw(urls: string[], selectedTopic: stri
   });
   await ensureOk(res, "Failed to generate MDX from URLs");
   return res.text();
+}
+
+// ── AI editing — inline transforms on a passage ───────────────────────────
+
+export interface TransformRequest {
+  action: string;
+  selection: string;
+  format: DocFormat;
+  /** Free-text instruction; required for the `custom` action. */
+  instruction?: string;
+  /** Surrounding text, so the model matches the voice around the passage. */
+  before?: string;
+  after?: string;
+  title?: string;
+}
+
+/** Rewrite, extend, or explain one passage. Returns the model's plain text. */
+export async function transformSelection(req: TransformRequest): Promise<string> {
+  const res = await customFetch("/api/ai/transform", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  await ensureOk(res, "The AI edit failed");
+  return res.text();
+}
+
+/** Derive an outline from a draft that already exists. */
+export async function outlineFromDocument(document: string, format: DocFormat) {
+  const res = await customFetch("/api/ai/outline-from-document", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document, format }),
+  });
+  await ensureOk(res, "Failed to outline this document");
+  return res.json() as Promise<{ status: string; data?: { topics?: string } }>;
 }
 
 // ── AI generation — LaTeX ─────────────────────────────────────────────────
@@ -181,8 +236,8 @@ export type ErrorResponse = { error: string };
 /** Create a new lesson plan, or update it in place when it already has an id. */
 export async function saveLessonPlan(lessonPlan: LessonPlan) {
   const res = lessonPlan.id
-    ? await api.lessonPlans[":id"].$put({ param: { id: lessonPlan.id.toString() }, json: lessonPlan } as any)
-    : await api.lessonPlans.$post({ json: lessonPlan } as any);
+    ? await api.lessonPlans[":id"].$put({ param: { id: lessonPlan.id.toString() }, json: lessonPlan })
+    : await api.lessonPlans.$post({ json: lessonPlan });
   await ensureOk(res, "Failed to save lesson plan");
   return res.json();
 }
@@ -238,7 +293,7 @@ export async function searchUsername(query: string) {
   }
 }
 
-export async function getUserById(id: string) {
+async function getUserById(id: string) {
   try {
     const res = await api["user"][":id"].$get({ param: { id } });
     await ensureOk(res, "Failed to fetch user");
@@ -255,3 +310,44 @@ export const userByIdQueryOptions = (id: string) => queryOptions({
   staleTime: 1000 * 60 * 60,
   enabled: !!id,
 });
+
+// ── People / public profiles ─────────────────────────────────────────────
+export interface Person {
+  id: string;
+  username: string | null;
+  givenName: string | null;
+  familyName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  createdAt: string | null;
+}
+
+export interface PublishedDoc {
+  id: number;
+  name: string;
+  mainTopic: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/** Browse profiles. An empty query lists everyone with a username. */
+export async function fetchPeople(query = ""): Promise<Person[]> {
+  const res = await fetch(`/api/people?q=${encodeURIComponent(query)}`);
+  await ensureOk(res, "Failed to load people");
+  const data = await res.json();
+  return data.people ?? [];
+}
+
+export async function fetchPersonProfile(
+  username: string,
+): Promise<{ person: Person; published: PublishedDoc[] }> {
+  const res = await fetch(`/api/people/${encodeURIComponent(username)}`);
+  await ensureOk(res, "Profile not found");
+  return res.json();
+}
+
+/** Full display name, falling back to the handle. */
+export function personName(p: Pick<Person, "givenName" | "familyName" | "username">): string {
+  const full = [p.givenName, p.familyName].filter(Boolean).join(" ").trim();
+  return full || p.username || "Member";
+}

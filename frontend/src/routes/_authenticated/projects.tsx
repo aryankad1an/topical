@@ -5,10 +5,13 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getLessonPlans, deleteLessonPlan, saveLessonPlan, getLessonPlanById, LessonPlanResponse } from '@/lib/api';
 import { stripFrontmatter } from '@/lib/utils';
-import { MDXRenderer } from '@/components/mdxRenderer';
+import { MarkdownPreview } from '@/features/preview/MarkdownPreview';
+import { LatexPreview } from '@/features/preview/LatexPreview';
 import {
-  FileType2, FileCode2, Plus, Trash2, Loader2, Search, Globe, Lock, FolderOpen, Eye, X, Pencil, User, Users,
+  FileType2, FileCode2, Plus, Loader2, Search, FolderOpen, X, LayoutGrid, List,
 } from 'lucide-react';
+import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
+import { PageHeader, StatStrip, EmptyState } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -90,6 +93,7 @@ function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [view, setView] = useState<'grid' | 'list'>('grid');
 
 
 
@@ -107,6 +111,22 @@ function ProjectsPage() {
   const filtered = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const getType = (p: { mainTopic: string }): 'mdx' | 'latex' => p.mainTopic.startsWith('latex:') ? 'latex' : 'mdx';
+
+  // Workspace stats — a document count alone said little about the work itself.
+  const totalWords = projects.reduce((n, p) => n + wordCount(p), 0);
+  const publicCount = projects.filter(p => p.isPublic).length;
+  const editDates = projects
+    .map(p => p.updatedAt ?? p.createdAt)
+    .filter((d): d is string => !!d)
+    .sort();
+  const lastEdited = editDates.length ? editDates[editDates.length - 1] : null;
+
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  })();
 
   const openCreateDialog = (type: 'mdx' | 'latex') => {
     setProjectType(type);
@@ -178,175 +198,145 @@ function ProjectsPage() {
   const dialogStyle = { background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' };
 
   return (
-    <div className="flex flex-col min-h-screen w-full py-8 px-4">
-      <div className="container mx-auto max-w-5xl relative z-10">
-        <div className="mb-10">
-          <h1 className="font-brand text-4xl md:text-5xl tracking-tight mb-3 gradient-text">Projects</h1>
-          <p className="text-white/40 text-lg">Create and manage your documents.</p>
+    <div className="flex flex-col min-h-screen w-full py-8" style={{ paddingInline: 'var(--gutter)' }}>
+      <div className="mx-auto w-full relative z-10" style={{ maxWidth: '72rem' }}>
+
+        {/* ── Header ── */}
+        <PageHeader
+          className="mb-7"
+          title="Workspace"
+          subtitle={`${greeting}, ${user?.given_name || 'there'}. ${projects.length
+            ? `You have ${projects.length} document${projects.length === 1 ? '' : 's'}.`
+            : 'Start your first document below.'}`}
+          actions={
+            <button onClick={() => openCreateDialog('mdx')}
+              className="accent-btn inline-flex items-center gap-2 h-10 px-5 rounded-full text-sm">
+              <Plus className="h-4 w-4" /> New document
+            </button>
+          }
+        />
+
+        {/* ── Stats ── */}
+        <StatStrip className="mb-7" items={[
+          { label: 'Documents', value: projects.length },
+          { label: 'Words written', value: totalWords.toLocaleString() },
+          { label: 'Published', value: publicCount },
+          { label: 'Last edited', value: lastEdited ? formatDate(lastEdited) : '—', small: true },
+        ]} />
+
+        {/* ── Start something ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-9">
+          <button className="new-tile" onClick={() => openCreateDialog('mdx')}>
+            <span className="new-tile-icon">
+              <FileType2 className="h-4 w-4" style={{ color: 'var(--accent-500)' }} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-semibold text-white/85">Blank MDX document</span>
+              <span className="block text-[12px] text-white/30 mt-0.5">Interactive, with AI generation and live preview</span>
+            </span>
+            <Plus className="h-4 w-4 text-white/20 shrink-0" />
+          </button>
+
+          <button className="new-tile" onClick={() => openCreateDialog('latex')}
+            style={{ ['--tile-accent-soft' as string]: 'var(--latex-soft)', ['--tile-accent-line' as string]: 'rgba(96,165,250,0.34)' }}>
+            <span className="new-tile-icon">
+              <FileCode2 className="h-4 w-4" style={{ color: 'var(--latex-500)' }} />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-semibold text-white/85">Blank LaTeX document</span>
+              <span className="block text-[12px] text-white/30 mt-0.5">For mathematical and scientific writing</span>
+            </span>
+            <Plus className="h-4 w-4 text-white/20 shrink-0" />
+          </button>
         </div>
 
-        {/* Create Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-14">
-          <div className="glass-card liquid-glow p-7 group cursor-pointer hover:-translate-y-1 transition-all duration-300"
-            onClick={() => openCreateDialog('mdx')}>
-            <div className="flex items-start justify-between mb-5">
-              <div className="h-11 w-11 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                <FileType2 className="h-5 w-5" style={{ color: '#22c55e' }} />
-              </div>
-              <div className="h-7 w-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <Plus className="h-3.5 w-3.5 text-white/70" />
-              </div>
-            </div>
-            <h3 className="text-lg font-bold text-white/90 mb-2">Blank MDX Project</h3>
-            <p className="text-white/40 text-sm leading-relaxed mb-5">Interactive document with AI generation and smart refinement.</p>
-            <div className="text-sm font-medium" style={{ color: '#22c55e' }}>Create project &rarr;</div>
-          </div>
-
-          <div className="glass-card p-7 group cursor-pointer hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-            onClick={() => openCreateDialog('latex')}>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="flex items-start justify-between mb-5 relative z-10">
-              <div className="h-11 w-11 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
-                <FileCode2 className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="h-7 w-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <Plus className="h-3.5 w-3.5 text-white/70" />
-              </div>
-            </div>
-            <h3 className="text-lg font-bold text-white/90 mb-2 relative z-10">Blank LaTeX Project</h3>
-            <p className="text-white/40 text-sm leading-relaxed mb-5 relative z-10">Professional document for mathematical or scientific writing.</p>
-            <div className="text-sm font-medium text-blue-400 relative z-10">Create project &rarr;</div>
-          </div>
-        </div>
-
-        {/* My Projects */}
+        {/* ── Documents ── */}
         <div>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-bold text-white/80">My Projects</h2>
-            <span className="text-xs text-white/30">{projects.length} total</span>
-          </div>
-
-          {projects.length > 0 && (
-            <div className="relative mb-5 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
-              <input type="text" placeholder="Search projects..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="glass-input w-full h-10 pl-10 pr-4 text-sm" />
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <PageHeader level="section" title="Your documents" className="mb-0" />
+            <div className="flex items-center gap-2.5">
+              {projects.length > 0 && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                  <input type="text" placeholder="Search…" value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="glass-input h-9 pl-9 pr-3 text-sm" style={{ width: 180 }} />
+                </div>
+              )}
+              <div className="segmented" role="group" aria-label="View mode">
+                <button data-active={view === 'grid'} onClick={() => setView('grid')} aria-label="Grid view" title="Grid view">
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+                <button data-active={view === 'list'} onClick={() => setView('list')} aria-label="List view" title="List view">
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
-          )}
+          </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="glass-card p-5 animate-pulse">
-                  <div className="h-4 bg-white/[0.04] rounded w-3/4 mb-3" />
-                  <div className="h-3 bg-white/[0.03] rounded w-1/2" />
+                <div key={i} className="doc-card">
+                  <div className="skeleton" style={{ height: 132, borderRadius: 0 }} />
+                  <div className="doc-body">
+                    <div className="skeleton h-4 w-3/4 mb-2.5" />
+                    <div className="skeleton h-3 w-1/2" />
+                  </div>
                 </div>
               ))}
             </div>
           ) : filtered.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {filtered.map(plan => {
-                const type = getType(plan);
-                const isLatex = type === 'latex';
-                const accent = isLatex ? '#60a5fa' : '#22c55e';
-                const isAuthor = user?.id === plan.userId;
-
-                return (
-                  <div key={plan.id}
-                    className="group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    {/* Accent bar */}
-                    <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: `linear-gradient(90deg, ${accent}, transparent)`, opacity: 0.5 }} />
-
-                    <div className="p-6">
-                      {/* Header */}
-                      <div className="flex items-start gap-3 mb-5">
-                        <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-                          style={{ background: isLatex ? 'rgba(59,130,246,0.08)' : 'rgba(34,197,94,0.08)' }}>
-                          {isLatex
-                            ? <FileCode2 className="h-4 w-4" style={{ color: accent }} />
-                            : <FileType2 className="h-4 w-4" style={{ color: accent }} />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-semibold text-white/90 truncate group-hover:text-white transition-colors">
-                            {plan.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accent, opacity: 0.8 }}>
-                              {isLatex ? 'LaTeX' : 'MDX'}
-                            </span>
-                            <span className="text-white/10">·</span>
-                            <span className="text-[11px] text-white/30">{formatDate(plan.createdAt)}</span>
-                          </div>
-                          {/* Author + Co-Authors row */}
-                          <div className="flex items-center gap-2 mt-2 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-white/50 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/[0.06]">
-                              <User className="h-2.5 w-2.5 shrink-0" />
-                              <span className="truncate max-w-[70px]">{plan.authorUsername || "You"}</span>
-                            </span>
-                            {plan.coAuthorUsernames && plan.coAuthorUsernames.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-white/40 bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.05]">
-                                <Users className="h-2.5 w-2.5 shrink-0" />
-                                {plan.coAuthorUsernames.slice(0, 2).join(', ')}
-                                {plan.coAuthorUsernames.length > 2 && <span className="text-white/25"> +{plan.coAuthorUsernames.length - 2}</span>}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {isAuthor && (
-                          <button onClick={() => setDeleteId(plan.id)}
-                            className="h-8 w-8 rounded-lg flex items-center justify-center text-white/15 hover:text-red-400 hover:bg-red-400/5 transition-all shrink-0 opacity-0 group-hover:opacity-100">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Visibility toggle */}
-                      {isAuthor && (
-                        <div className="flex items-center justify-between mb-4 py-2 px-3 rounded-xl"
-                          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div className="flex items-center gap-2">
-                            {plan.isPublic
-                              ? <Globe className="h-3.5 w-3.5 text-white/40" />
-                              : <Lock className="h-3.5 w-3.5 text-white/25" />}
-                            <span className="text-xs text-white/40">
-                              {plan.isPublic ? 'Public' : 'Private'}
-                            </span>
-                          </div>
-                          <PillToggle
-                            checked={!!plan.isPublic}
-                            onChange={(v) => togglePublic(plan as LessonPlanResponse, v)}
-                          />
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => handleRead(plan.id)}
-                          className="flex-1 h-9 rounded-xl text-xs font-medium flex items-center justify-center gap-2 text-white/50 hover:text-white/80 transition-all duration-200"
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <Eye className="h-3.5 w-3.5" /> Read
-                        </button>
-                        <button onClick={() => handleView(plan.id)}
-                          className="flex-1 h-9 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 text-black transition-all duration-200 hover:brightness-110"
-                          style={{ background: `linear-gradient(135deg, ${accent}, ${isLatex ? '#93c5fd' : '#4ade80'})` }}>
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            view === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(plan => (
+                  <DocumentCard
+                    key={plan.id}
+                    doc={plan}
+                    isAuthor={user?.id === plan.userId}
+                    onRead={handleRead}
+                    onEdit={handleView}
+                    onDelete={setDeleteId}
+                    formatDate={formatDate}
+                  >
+                    {user?.id === plan.userId && (
+                      <PillToggle
+                        checked={!!plan.isPublic}
+                        onChange={(v) => togglePublic(plan as LessonPlanResponse, v)}
+                      />
+                    )}
+                  </DocumentCard>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filtered.map(plan => (
+                  <DocumentRow
+                    key={plan.id}
+                    doc={plan}
+                    isAuthor={user?.id === plan.userId}
+                    onRead={handleRead}
+                    onEdit={handleView}
+                    onDelete={setDeleteId}
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="text-center py-16">
-              <FolderOpen className="h-10 w-10 mx-auto mb-4 text-white/10" />
-              <p className="text-white/30 text-sm">{searchQuery ? `No projects matching "${searchQuery}"` : 'No projects yet. Create one above!'}</p>
-            </div>
+            <EmptyState
+              icon={FolderOpen}
+              title={searchQuery ? `No projects matching “${searchQuery}”` : 'No projects yet'}
+              description={searchQuery
+                ? 'Try a different search term.'
+                : 'Start a blank document and let AI draft the sections for you.'}
+              action={!searchQuery && (
+                <button onClick={() => openCreateDialog('mdx')}
+                  className="accent-btn inline-flex items-center gap-2 h-9 px-5 rounded-full text-xs">
+                  <Plus className="h-3.5 w-3.5" /> New MDX project
+                </button>
+              )}
+            />
           )}
         </div>
       </div>
@@ -366,7 +356,7 @@ function ProjectsPage() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowNameDialog(false)} className="glass-btn border-white/10">Cancel</Button>
             <Button onClick={handleCreate} className="text-black font-semibold"
-              style={{ background: 'linear-gradient(135deg, #22c55e, #4ade80)' }}>Create</Button>
+              style={{ background: 'linear-gradient(135deg, var(--accent-500), var(--accent-300))' }}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -397,7 +387,7 @@ function ProjectsPage() {
           <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                style={{ background: readProject?.type === 'latex' ? 'rgba(59,130,246,0.15)' : 'rgba(34,197,94,0.15)', color: readProject?.type === 'latex' ? '#60a5fa' : '#22c55e' }}>
+                style={{ background: readProject?.type === 'latex' ? 'var(--latex-soft)' : 'var(--accent-soft)', color: readProject?.type === 'latex' ? 'var(--latex-500)' : 'var(--accent-500)' }}>
                 {readProject?.type === 'latex' ? 'LaTeX' : 'MDX'}
               </span>
               <h3 className="text-sm font-semibold text-white/80">{readProject?.name}</h3>
@@ -406,9 +396,10 @@ function ProjectsPage() {
           </div>
           <div className="flex-1 overflow-auto px-6 py-5">
             {readProject?.content ? (
+              // Rendered, not raw: LaTeX used to be dumped here as source.
               readProject.type === 'latex'
-                ? <pre className="text-white/70 text-sm whitespace-pre-wrap font-mono leading-relaxed">{readProject.content}</pre>
-                : <div className="prose dark:prose-invert max-w-none"><MDXRenderer content={readProject.content} /></div>
+                ? <LatexPreview content={readProject.content} showIssues={false} />
+                : <MarkdownPreview content={readProject.content} />
             ) : (
               <div className="text-center py-16 text-white/20">
                 <p className="text-sm">This project has no content yet.</p>
@@ -421,7 +412,7 @@ function ProjectsPage() {
       {/* Loading overlay for read */}
       {isLoadingRead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: '#22c55e' }} />
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--accent-500)' }} />
         </div>
       )}
     </div>

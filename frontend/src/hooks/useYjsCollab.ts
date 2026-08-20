@@ -22,7 +22,7 @@ export interface AwarenessCursor {
 }
 
 const COLORS = [
-  '#f472b6', '#fb923c', '#a78bfa', '#34d399', '#60a5fa',
+  '#f472b6', '#fb923c', '#a78bfa', '#34d399', 'var(--latex-500)',
   '#fbbf24', '#e879f9', '#22d3ee', '#fb7185', '#a3e635',
 ];
 
@@ -196,7 +196,7 @@ export function useYjsCollab(
 
     // Send Y.Doc updates over WS — registered ONCE, outside connect()
     let currentWs: WebSocket | null = null;
-    const updateHandler = (update: Uint8Array, origin: any) => {
+    const updateHandler = (update: Uint8Array, origin: unknown) => {
       if (origin === 'ws') return;
       if (!currentWs || currentWs.readyState !== WebSocket.OPEN) return;
       const encoder = encoding.createEncoder();

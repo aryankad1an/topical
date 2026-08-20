@@ -18,6 +18,11 @@ const createCommentSchema = z.object({
   body: z.string().min(1).max(2000),
 });
 
+/** Display name for a post/comment author: given name, else email handle, else "Member". */
+function resolveAuthorName(user: { given_name?: string; email?: string }): string {
+  return user.given_name?.trim() || user.email?.split("@")[0] || "Member";
+}
+
 export const postsRoute = new Hono()
   .use("*", requireDb)
 
@@ -35,7 +40,7 @@ export const postsRoute = new Hono()
   .post("/", getUser, zValidator("json", createPostSchema), async (c) => {
     const user = c.var.user;
     const data = c.req.valid("json");
-    const authorName = `${user.given_name || ""}`.trim() || user.email?.split("@")[0] || "Member";
+    const authorName = resolveAuthorName(user);
     const [post] = await db!.insert(posts).values({
       userId: user.id,
       authorName,
@@ -104,7 +109,7 @@ export const postsRoute = new Hono()
     const user = c.var.user;
     const postId = Number(c.req.param("id"));
     const { body } = c.req.valid("json");
-    const authorName = `${user.given_name || ""}`.trim() || user.email?.split("@")[0] || "Member";
+    const authorName = resolveAuthorName(user);
 
     const [comment] = await db!.insert(postComments).values({
       postId, userId: user.id, authorName, body,
@@ -112,4 +117,46 @@ export const postsRoute = new Hono()
 
     await db!.update(posts).set({ commentCount: sql`${posts.commentCount} + 1` }).where(eq(posts.id, postId));
     return c.json({ comment }, 201);
+  })
+
+  // ── DELETE post ──
+  // Only the author may delete. Votes and comments go too, so no rows are
+  // orphaned against a post id that no longer exists.
+  .delete("/:id", getUser, async (c) => {
+    const user = c.var.user;
+    const id = Number(c.req.param("id"));
+    if (!Number.isInteger(id)) return c.json({ error: "Invalid post id" }, 400);
+
+    const [post] = await db!.select().from(posts).where(eq(posts.id, id));
+    if (!post) return c.json({ error: "Post not found" }, 404);
+    if (post.userId !== user.id) return c.json({ error: "You can only delete your own posts" }, 403);
+
+    await db!.delete(postComments).where(eq(postComments.postId, id));
+    await db!.delete(postVotes).where(eq(postVotes.postId, id));
+    await db!.delete(posts).where(eq(posts.id, id));
+
+    return c.json({ id });
+  })
+
+  // ── DELETE comment ──
+  .delete("/:id/comments/:commentId", getUser, async (c) => {
+    const user = c.var.user;
+    const postId = Number(c.req.param("id"));
+    const commentId = Number(c.req.param("commentId"));
+    if (!Number.isInteger(postId) || !Number.isInteger(commentId)) {
+      return c.json({ error: "Invalid id" }, 400);
+    }
+
+    const [comment] = await db!.select().from(postComments)
+      .where(and(eq(postComments.id, commentId), eq(postComments.postId, postId)));
+    if (!comment) return c.json({ error: "Comment not found" }, 404);
+    if (comment.userId !== user.id) return c.json({ error: "You can only delete your own comments" }, 403);
+
+    await db!.delete(postComments).where(eq(postComments.id, commentId));
+    // Floor at zero: a count that drifted negative would render as "-1 comments".
+    await db!.update(posts)
+      .set({ commentCount: sql`GREATEST(${posts.commentCount} - 1, 0)` })
+      .where(eq(posts.id, postId));
+
+    return c.json({ id: commentId });
   });

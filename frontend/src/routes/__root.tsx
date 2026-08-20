@@ -6,10 +6,12 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner"
 import { CustomCursor } from "@/components/CustomCursor";
+import { OnboardingModal } from "@/components/OnboardingModal";
 import { type QueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X, Home, FolderOpen, Users, UserRound, Command } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { CommandPalette } from "@/components/CommandPalette";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -19,8 +21,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: Root,
 });
 
-function NavBar() {
-  const { isAuthenticated } = useAuth();
+function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
+  const { isAuthenticated, loginUrl, loginAction, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -35,17 +37,48 @@ function NavBar() {
 
   const isActive = (path: string) => currentPath === path;
 
+  // Home lives on the brand mark and Profile lives on the avatar, so neither
+  // gets a second text link in the pill.
   const links = isAuthenticated
     ? [
-        { to: '/', label: 'Home' },
-        { to: '/projects', label: 'Projects' },
-        { to: '/community', label: 'Community' },
-        { to: '/profile', label: 'Profile' },
+        { to: '/', label: 'Home', icon: Home },
+        { to: '/projects', label: 'Projects', icon: FolderOpen },
+        { to: '/community', label: 'Community', icon: Users },
+        { to: '/profile', label: 'Profile', icon: UserRound },
       ]
     : [
-        { to: '/', label: 'Home' },
-        { to: '/community', label: 'Community' },
+        { to: '/', label: 'Home', icon: Home },
+        { to: '/community', label: 'Community', icon: Users },
       ];
+
+  const navLinks = links.filter(l => l.to !== '/' && l.to !== '/profile');
+
+  // The active pill is one element that slides, rather than a background on
+  // each link — so switching pages reads as movement instead of a jump cut.
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      const shell = shellRef.current;
+      if (!shell) return;
+      const active = shell.querySelector<HTMLElement>("[data-active='true']");
+      if (!active) { setIndicator(null); return; }
+      const a = active.getBoundingClientRect();
+      const s = shell.getBoundingClientRect();
+      setIndicator({ x: a.left - s.left, w: a.width });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    // Fonts land after first paint and change link widths.
+    document.fonts?.ready.then(measure).catch(() => {});
+    return () => window.removeEventListener('resize', measure);
+  }, [currentPath, isAuthenticated, navLinks.length]);
+
+  const initial = (user?.given_name?.[0] || user?.username?.[0] || 'U').toUpperCase();
+  // The same picture the profile page shows: an upload wins, then whatever the
+  // identity provider gave us, and only then the letter.
+  const avatarSrc = user?.avatarUrl || user?.picture || null;
 
   return (
     <>
@@ -109,63 +142,54 @@ function NavBar() {
         {/* Divider */}
         <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.07)', margin: '0 4px', flexShrink: 0 }} />
 
-        {links.filter(l => l.to !== '/').map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
+        <div className="nav-shell" ref={shellRef}>
+          <span
+            className="nav-indicator"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '8px 18px',
-              borderRadius: 100,
-              fontSize: 14,
-              fontWeight: 500,
-              color: isActive(link.to) ? '#cbd5e1' : 'rgba(255,255,255,0.45)',
-              background: isActive(link.to) ? 'rgba(148,163,184,0.08)' : 'transparent',
-              transition: 'color 0.2s, background 0.2s',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
+              width: indicator?.w ?? 0,
+              transform: `translate(${indicator?.x ?? 0}px, -50%)`,
+              opacity: indicator ? 1 : 0,
             }}
-            onMouseEnter={(e) => {
-              if (!isActive(link.to)) {
-                (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.75)';
-                (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive(link.to)) {
-                (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)';
-                (e.currentTarget as HTMLElement).style.background = 'transparent';
-              }
-            }}
-          >
-            {link.label}
-          </Link>
-        ))}
+          />
+          {navLinks.map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to} className="nav-link" data-active={isActive(to)}>
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </Link>
+          ))}
+        </div>
 
-        {!isAuthenticated && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
-            <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.07)', flexShrink: 0 }} />
-            <Link
-              to="/profile"
+        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.07)', margin: '0 6px', flexShrink: 0 }} />
+
+        <button className="nav-kbd" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
+          <Command className="h-3 w-3" />K
+        </button>
+
+        {isAuthenticated ? (
+          <Link to="/profile" style={{ marginLeft: 8, textDecoration: 'none' }} title="Profile" aria-label="Profile">
+            <span className="nav-avatar">
+              {avatarSrc ? <img src={avatarSrc} alt="" /> : initial}
+            </span>
+          </Link>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+            <a
+              href={loginUrl}
+              onClick={loginAction}
+              className="accent-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '7px 16px',
                 borderRadius: 100,
                 fontSize: 13,
-                fontWeight: 600,
-                color: '#000',
-                background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)',
-                boxShadow: '0 2px 12px rgba(148,163,184,0.25)',
-                transition: 'opacity 0.2s, box-shadow 0.2s',
                 textDecoration: 'none',
+                cursor: 'pointer',
+                minHeight: 0,
               }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.88'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
             >
               Sign in
-            </Link>
+            </a>
           </div>
         )}
       </nav>
@@ -218,6 +242,15 @@ function NavBar() {
               {links.map(link => (
                 <Link key={link.to} to={link.to} className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>{link.label}</Link>
               ))}
+              {!isAuthenticated && (
+                <a
+                  href={loginUrl}
+                  className="mobile-nav-link"
+                  onClick={(e) => { setIsMobileMenuOpen(false); loginAction(e); }}
+                >
+                  Sign in
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -228,9 +261,27 @@ function NavBar() {
 
 
 function Root() {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
   const searchParams = new URL(window.location.href).searchParams;
   const isAuthCallback = searchParams.get('auth_success') === '1';
+
+  // All hooks must run unconditionally on every render (Rules of Hooks) — in
+  // particular, before the early return below, which only some renders take.
+  const routerState = useRouterState();
+  const isEditorRoute = routerState.location.pathname.startsWith('/editor');
+  const [commandOpen, setCommandOpen] = useState(false);
+
+  // ⌘K / Ctrl-K anywhere, including the editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (isAuthCallback && !isLoading) {
@@ -254,14 +305,17 @@ function Root() {
     );
   }
 
-  const routerState = useRouterState();
-  const isEditorRoute = routerState.location.pathname.startsWith('/editor');
-
   return (
     <div className="min-h-screen flex flex-col relative">
       <CustomCursor />
       {!isEditorRoute && <div className="grid-bg" />}
-      {!isEditorRoute && <NavBar />}
+      {!isEditorRoute && <NavBar onOpenCommand={() => setCommandOpen(true)} />}
+      <CommandPalette
+        open={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        isAuthenticated={isAuthenticated}
+      />
+      <OnboardingModal />
       <main className={`flex-1 w-full mx-auto relative z-10 ${isEditorRoute ? '' : 'px-4 py-6 mt-20 md:mt-24'}`}>
         <Outlet />
       </main>

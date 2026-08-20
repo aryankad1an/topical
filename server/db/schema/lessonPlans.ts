@@ -1,5 +1,5 @@
 import { text, pgTable, serial, index, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-zod';
 import { z } from "zod";
 
 // Define the saved lesson topic schema
@@ -46,6 +46,3 @@ export const insertLessonPlanSchema = createInsertSchema(lessonPlans, {
   coAuthors: z.array(z.string()).default([]),
   isPublic: z.boolean().default(false)
 });
-
-// Schema for selecting a lesson plan - can be used to validate API responses
-export const selectLessonPlanSchema = createSelectSchema(lessonPlans);

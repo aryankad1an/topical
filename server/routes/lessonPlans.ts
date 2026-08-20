@@ -12,7 +12,7 @@ import { z } from "zod";
 import { requireDb } from "../middleware";
 
 // Define the create lesson plan schema for API validation
-export const createLessonPlanSchema = z.object({
+const createLessonPlanSchema = z.object({
     name: z.string().min(1),
     mainTopic: z.string().min(1),
     topics: z.array(z.object({
@@ -171,9 +171,12 @@ export const lessonPlansRoute = new Hono()
             userId: user.id,
         });
 
+        // drizzle-zod 0.5's createInsertSchema infers every field as optional
+        // (even required ones), so the parsed result needs a precise cast back
+        // to drizzle's own insert type — .parse() already validated it above.
         const result = await db!
             .insert(lessonPlanTable)
-            .values(validatedLessonPlan as any)
+            .values(validatedLessonPlan as typeof lessonPlanTable.$inferInsert)
             .returning()
             .then((res) => res[0]);
 
@@ -216,7 +219,7 @@ export const lessonPlansRoute = new Hono()
             .set({
                 name: lessonPlanData.name,
                 mainTopic: lessonPlanData.mainTopic,
-                topics: lessonPlanData.topics as any,
+                topics: lessonPlanData.topics,
                 coAuthors: lessonPlanData.coAuthors,
                 isPublic: lessonPlanData.isPublic,
                 updatedAt: new Date()

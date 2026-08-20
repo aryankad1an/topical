@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   Search,
   PenLine,
@@ -6,163 +6,152 @@ import {
   ArrowRight,
   Brain,
   Layers,
-  Code,
-  Zap,
-  Sparkles,
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { Surface } from '@/components/ui/primitives';
 
 export const Route = createFileRoute('/about')({
   component: About,
 });
 
+const FEATURES = [
+  { icon: Search, title: 'Topic discovery', desc: 'Search any subject and get a structured breakdown before a word is written.' },
+  { icon: Brain, title: 'AI generation', desc: 'Content generated from live web sources via the model you choose.' },
+  { icon: PenLine, title: 'Inline editing', desc: 'Edit in code, preview, or split view as you write.' },
+  { icon: Layers, title: 'Drag & drop', desc: 'Reorder topics, and drop generated sections exactly where you want them.' },
+  { icon: FileText, title: 'MDX & LaTeX', desc: 'Interactive documents, or typeset LaTeX for academic work.' },
+  { icon: Share2, title: 'Share or keep private', desc: 'Publish to the community library, or keep everything to yourself.' },
+];
+
+const STACK = [
+  { name: 'React', desc: 'Frontend' },
+  { name: 'Hono', desc: 'Backend API' },
+  { name: 'FastAPI', desc: 'AI service' },
+  { name: 'LiteLLM', desc: 'Multi-provider AI' },
+  { name: 'TanStack', desc: 'Routing' },
+  { name: 'Drizzle', desc: 'Database' },
+  { name: 'Yjs', desc: 'Collaboration' },
+  { name: 'MDX', desc: 'Content' },
+];
+
 function About() {
   const { isAuthenticated, registerUrl, registerAction } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
-      {/* Hero */}
-      <section className="relative py-24 px-4 overflow-hidden">
-        <div
-          className="green-orb glow-pulse"
-          style={{
-            width: '350px', height: '350px',
-            background: 'rgba(34, 197, 94, 0.05)',
-            top: '0%', right: '10%',
-          }}
-        />
-        <div className="container mx-auto max-w-4xl relative z-10 text-center">
-          <h1
-            className="font-brand text-4xl md:text-6xl tracking-tight mb-6"
-            style={{
-              background: 'linear-gradient(135deg, #22c55e, #4ade80, #86efac, #22c55e)',
-              backgroundSize: '300% 300%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              animation: 'iridescent 8s ease-in-out infinite',
-            }}
-          >
-            About Topical
-          </h1>
-          <p className="text-lg text-white/35 max-w-2xl mx-auto leading-relaxed">
-            A tool for turning any topic into a structured, AI-generated lesson plan you can edit and share.
-          </p>
-        </div>
-      </section>
+    <div className="flex flex-col min-h-screen w-full" style={{ paddingInline: 'var(--gutter)' }}>
+      <div className="mx-auto w-full" style={{ maxWidth: '64rem' }}>
 
-      {/* What it does — concise */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="glass-card p-8 md:p-10">
-            <h2 className="text-xl font-bold mb-4 text-white/80">What it does</h2>
-            <div className="space-y-3 text-white/40 text-sm leading-relaxed">
-              <p>
-                You type a topic. Topical generates a hierarchy of subtopics, then creates rich content for each one using Google Gemini and real-time web crawling.
+        {/* ── Hero ── */}
+        <section className="relative pt-24 pb-14 overflow-hidden">
+          <div
+            className="green-orb glow-pulse"
+            style={{ width: '350px', height: '350px', background: 'var(--accent-soft)', top: '-10%', right: '5%' }}
+          />
+          <div className="relative z-10 max-w-2xl">
+            <span className="eyebrow mb-6 inline-flex">About</span>
+            <h1 className="font-brand text-4xl md:text-5xl tracking-tight mb-4 text-white/90">
+              Structure first, then the words.
+            </h1>
+            <p className="text-base text-white/35 leading-relaxed">
+              Topical turns any topic into a structured document you can edit and share.
+              It plans the outline before it writes, so what you get is organised —
+              not one long undifferentiated draft.
+            </p>
+          </div>
+        </section>
+
+        {/* ── What it does ── */}
+        <section className="pb-16">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="step-card">
+              <span className="step-num">How it works</span>
+              <p className="text-white/40 text-sm leading-relaxed">
+                You type a topic. Topical generates a hierarchy of subtopics, then writes
+                rich content for each one using the AI provider of your choice, grounded in
+                real-time web crawling.
               </p>
-              <p>
-                You can edit everything inline, refine sections with AI, rearrange topics with drag-and-drop, and publish the result for others to learn from.
+            </div>
+            <div className="step-card">
+              <span className="step-num">What you control</span>
+              <p className="text-white/40 text-sm leading-relaxed">
+                Nothing is inserted without you. Edit inline, drag generated sections exactly
+                where you want them, rearrange topics, and publish the result — or keep it
+                private.
               </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Core features — 3 cards */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="text-xl font-bold mb-8 text-white/80">Core features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              { icon: Search, title: "Topic Discovery", desc: "Search any subject and get a structured breakdown." },
-              { icon: Brain, title: "AI Generation", desc: "Content generated from web sources via Google Gemini." },
-              { icon: PenLine, title: "Inline Editing", desc: "Select text, refine with AI, or edit manually." },
-              { icon: Layers, title: "Drag & Drop", desc: "Reorder topics and subtopics by dragging." },
-              { icon: FileText, title: "MDX Editor", desc: "Code, preview, and split-view editing modes." },
-              { icon: Share2, title: "Share or Private", desc: "Publish publicly or keep your plans private." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="glass-card liquid-glow p-5 group">
-                <div
-                  className="h-9 w-9 rounded-lg flex items-center justify-center mb-3"
-                  style={{
-                    background: 'rgba(34, 197, 94, 0.06)',
-                    border: '1px solid rgba(34, 197, 94, 0.1)',
-                  }}
-                >
-                  <Icon className="h-4 w-4" style={{ color: '#22c55e' }} />
-                </div>
-                <h3 className="text-sm font-semibold mb-1 text-white/80">{title}</h3>
-                <p className="text-white/30 text-xs leading-relaxed">{desc}</p>
+        {/* ── Features ── */}
+        <section className="pb-16">
+          <div className="mb-8 max-w-xl">
+            <h2 className="section-title">Core features</h2>
+            <p className="section-sub">Everything the editor gives you.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="step-card">
+                <div className="bento-icon"><Icon className="h-4 w-4" /></div>
+                <h3 className="text-sm font-semibold mb-1.5 text-white/80">{title}</h3>
+                <p className="text-white/30 text-[13px] leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Tech Stack — minimal */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <h2 className="text-xl font-bold mb-8 text-white/80">Built with</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: "React", desc: "Frontend" },
-              { name: "Hono", desc: "Backend API" },
-              { name: "FastAPI", desc: "AI Service" },
-              { name: "Gemini", desc: "AI Model" },
-              { name: "TanStack", desc: "Routing" },
-              { name: "Drizzle", desc: "Database" },
-              { name: "Zustand", desc: "State" },
-              { name: "MDX", desc: "Content" },
-            ].map(({ name, desc }) => (
-              <div key={name} className="glass-card p-4 text-center">
-                <h4 className="font-semibold text-sm text-white/70 mb-0.5">{name}</h4>
-                <p className="text-[11px] text-white/25">{desc}</p>
-              </div>
+        {/* ── Stack ── */}
+        <section className="pb-16">
+          <div className="mb-8 max-w-xl">
+            <h2 className="section-title">Built with</h2>
+            <p className="section-sub">Three services: a React frontend, a Bun API, and a Python AI service.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {STACK.map(({ name, desc }) => (
+              <Surface key={name} size="sm" padding="none" className="px-4 py-3.5">
+                <h4 className="font-semibold text-sm text-white/75">{name}</h4>
+                <p className="text-[11px] text-white/25 mt-0.5">{desc}</p>
+              </Surface>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-2xl text-center">
-          <div className="glass-card liquid-glow p-10">
-            <h2 className="text-2xl font-bold mb-4 gradient-text">
-              {isAuthenticated ? "Continue building" : "Try it out"}
+        {/* ── CTA ── */}
+        <section className="pb-20">
+          <div className="step-card text-center" style={{ padding: '2.75rem 2rem' }}>
+            <h2 className="section-title mb-3">
+              {isAuthenticated ? 'Continue building' : 'Try it out'}
             </h2>
-            <p className="text-sm text-white/30 mb-8 max-w-md mx-auto">
+            <p className="text-sm text-white/30 mb-8 max-w-md mx-auto leading-relaxed">
               {isAuthenticated
-                ? "Create another lesson plan or explore community content."
-                : "Sign up and make your first lesson plan in a couple of minutes."}
+                ? 'Create another document or explore what the community has published.'
+                : 'Sign up, add a provider key, and make your first document in a couple of minutes.'}
             </p>
             <a
-              href={isAuthenticated ? "/lesson-plan" : registerUrl}
+              href={isAuthenticated ? '/projects' : registerUrl}
               onClick={isAuthenticated ? undefined : registerAction}
               className="cta-btn group"
             >
-              <span>{isAuthenticated ? "New lesson plan" : "Get started"}</span>
+              <span>{isAuthenticated ? 'Go to Projects' : 'Get started'}</span>
               <span className="cta-arrow cta-arrow-animated">
                 <ArrowRight className="h-5 w-5" />
               </span>
             </a>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-3 md:mb-0">
-              <p className="font-brand text-base gradient-text">Topical</p>
-            </div>
+        {/* ── Footer ── */}
+        <footer className="py-8" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+            <p className="font-brand text-base gradient-text">Topical</p>
             <div className="flex gap-6 items-center">
-              <a href="/public-lessons" className="text-xs text-white/25 transition-colors">Explore</a>
+              <Link to="/community" className="text-xs text-white/25 hover:text-white/50 transition-colors">Community</Link>
+              <Link to="/" className="text-xs text-white/25 hover:text-white/50 transition-colors">Home</Link>
               <div className="text-xs text-white/15">© {new Date().getFullYear()}</div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

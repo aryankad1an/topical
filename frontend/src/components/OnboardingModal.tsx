@@ -1,0 +1,95 @@
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ProfileEditorFields } from "@/components/ProfileEditorFields";
+import { useAuth } from "@/lib/auth-context";
+import { updateProfile } from "@/lib/api";
+import { errorMessage } from "@/lib/utils";
+
+/** Shown once, right after a brand-new user's first Kinde login. */
+export function OnboardingModal() {
+  const { user, isNewUser, refetchUser } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isNewUser && user && !dismissed) setOpen(true);
+  }, [isNewUser, user, dismissed]);
+
+  const close = () => {
+    setOpen(false);
+    setDismissed(true);
+  };
+
+  const handleSave = async () => {
+    if (username && username.length < 3) {
+      toast.error("Username must be at least 3 characters");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const update: Record<string, string | null> = {};
+      if (username) update.username = username;
+      if (bio) update.bio = bio;
+      if (avatarUrl) update.avatarUrl = avatarUrl;
+
+      if (Object.keys(update).length > 0) {
+        await updateProfile(update);
+        await refetchUser?.();
+      }
+      toast.success("Profile set up!");
+      close();
+    } catch (error) {
+      toast.error(errorMessage(error, "Failed to save profile"));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => { if (!next) close(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Welcome to Topical!</DialogTitle>
+          <DialogDescription>
+            Set up your profile — you can always change this later from Profile.
+          </DialogDescription>
+        </DialogHeader>
+
+        <ProfileEditorFields
+          avatarUrl={avatarUrl}
+          onAvatarChange={setAvatarUrl}
+          fallbackAvatar={user.picture}
+          fallbackInitial={user.given_name?.[0] || "U"}
+          username={username}
+          onUsernameChange={setUsername}
+          bio={bio}
+          onBioChange={setBio}
+          disabled={isSaving}
+        />
+
+        <DialogFooter>
+          <Button variant="outline" onClick={close} disabled={isSaving}>Skip for now</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving...</> : "Save & Continue"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

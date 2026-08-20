@@ -6,11 +6,14 @@
  *   - Binary messages starting with byte 0 = sync
  *   - Binary messages starting with byte 1 = awareness
  */
+import type { ServerWebSocket } from "bun";
 import * as Y from "yjs";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as encoding from "lib0/encoding";
 import * as decoding from "lib0/decoding";
+
+export type DocWS = ServerWebSocket<{ docId: string }>;
 
 const MSG_SYNC = 0;
 const MSG_AWARENESS = 1;
@@ -18,14 +21,14 @@ const MSG_AWARENESS = 1;
 interface DocEntry {
   doc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
-  conns: Map<any, Set<number>>; // ws -> set of awareness client IDs this conn controls
+  conns: Map<DocWS, Set<number>>; // ws -> set of awareness client IDs this conn controls
 }
 
 const docs = new Map<string, DocEntry>();
 
 // Track which WS connection is currently being processed so we can
 // exclude it from doc update broadcasts
-let currentMessageOriginWs: any = null;
+let currentMessageOriginWs: DocWS | null = null;
 
 function getOrCreateDoc(docName: string): DocEntry {
   if (docs.has(docName)) return docs.get(docName)!;
@@ -36,7 +39,7 @@ function getOrCreateDoc(docName: string): DocEntry {
   // *** CRITICAL: Broadcast doc updates to all OTHER connections ***
   // When readSyncMessage applies an update, Y.Doc fires 'update'.
   // We must forward that update to every other connected client.
-  doc.on("update", (update: Uint8Array, origin: any) => {
+  doc.on("update", (update: Uint8Array) => {
     const entry = docs.get(docName);
     if (!entry) return;
 
@@ -56,7 +59,7 @@ function getOrCreateDoc(docName: string): DocEntry {
   // Broadcast awareness changes to all EXCEPT origin
   awareness.on("update", (
     { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
-    origin: any
+    origin: DocWS | null
   ) => {
     const changedClients = added.concat(updated, removed);
     const entry = docs.get(docName);
@@ -82,7 +85,7 @@ function getOrCreateDoc(docName: string): DocEntry {
   return entry;
 }
 
-function handleMessage(ws: any, docName: string, data: ArrayBuffer | Uint8Array) {
+function handleMessage(ws: DocWS, docName: string, data: ArrayBuffer | Uint8Array) {
   const entry = docs.get(docName);
   if (!entry) return;
 
@@ -129,7 +132,7 @@ function handleMessage(ws: any, docName: string, data: ArrayBuffer | Uint8Array)
   }
 }
 
-function setupConnection(ws: any, docName: string) {
+function setupConnection(ws: DocWS, docName: string) {
   const entry = getOrCreateDoc(docName);
   entry.conns.set(ws, new Set());
 
@@ -158,7 +161,7 @@ function setupConnection(ws: any, docName: string) {
   }
 }
 
-function cleanupConnection(ws: any, docName: string) {
+function cleanupConnection(ws: DocWS, docName: string) {
   const entry = docs.get(docName);
   if (!entry) return;
 

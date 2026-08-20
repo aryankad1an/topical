@@ -14,7 +14,9 @@ export const contentGenerationRoute = new Hono()
         method: c.req.method,
         headers: {
           "Content-Type": c.req.header("Content-Type") || "application/json",
-          "X-Gemini-API-Key": c.req.header("X-Gemini-API-Key") || "",
+          "X-AI-Provider": c.req.header("X-AI-Provider") || "",
+          "X-AI-Model": c.req.header("X-AI-Model") || "",
+          "X-AI-Api-Key": c.req.header("X-AI-Api-Key") || "",
         },
         signal: AbortSignal.timeout(90_000), // 90s — URL crawl + Gemini generation can be slow
       };
@@ -27,9 +29,9 @@ export const contentGenerationRoute = new Hono()
 
       const contentType = response.headers.get("Content-Type");
       if (contentType && contentType.includes("application/json")) {
-        return c.json(await response.json(), response.status as any);
+        return c.json(await response.json(), response.status);
       } else {
-        return c.text(await response.text(), response.status as any);
+        return c.text(await response.text(), response.status);
       }
     } catch (err) {
       console.error("Error proxying to AI content service:", err);

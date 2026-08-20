@@ -8,6 +8,13 @@
       "when": 1786887683581,
       "tag": "0000_spotty_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786898102452,
+      "tag": "0001_narrow_nextwave",
+      "breakpoints": true
     }
   ]
 }
