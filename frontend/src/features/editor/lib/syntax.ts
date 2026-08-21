@@ -150,9 +150,10 @@ function emit(text: string, tokens: Token[]): string {
   pushText(text.slice(cursor));
   lines.push(current);
 
-  // A trailing empty line keeps the overlay as tall as the textarea, so the
-  // last line of a document never drifts out of step with the caret.
-  return lines.map(line => `<div class="cl">${line || '<br/>'}</div>`).join('') + '<div class="cl"><br/></div>';
+  // Exactly one element per source line — no padding element. The mirror and
+  // the textarea share their bottom padding, so heights already match, and an
+  // extra element here would number a line that does not exist.
+  return lines.map(line => `<div class="cl">${line || '<br/>'}</div>`).join('');
 }
 
 function escapeHtml(s: string): string {

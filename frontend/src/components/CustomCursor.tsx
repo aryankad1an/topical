@@ -1,119 +1,129 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Futuristic custom cursor:
- * – Small sharp inner dot that snaps directly to the pointer
- * – Larger ring that follows with smooth lag
- * – Ring morphs on hover over interactive elements
- * – Perfect symmetry via translate(-50%, -50%)
- * – Acceleration and velocity-based stretch physics
+ * A macOS-style pointer.
+ *
+ * The important thing about the system pointer is what it *doesn't* do: it
+ * never lags behind the mouse, and it never animates its position. All the
+ * motion is in the transitions between shapes — arrow to hand, present to
+ * hidden — so that is where the animation budget goes here.
+ *
+ * Shapes follow the platform: the arrow's tip is its hotspot, the pointing
+ * hand's fingertip is its own, and anything with a caret falls through to the
+ * real I-beam, which no drawn copy would improve on.
  */
+
+/** Things that take a caret — the native I-beam shows over these. */
+const TEXT_SELECTOR = 'input, textarea, [contenteditable="true"], .code-surface';
+
+/** Things that respond to a click — the hand shows over these. */
+const INTERACTIVE_SELECTOR =
+  'a, button, [role="button"], label, select, summary, [tabindex]:not([tabindex="-1"])';
+
+/** macOS hides the pointer while you type, and brings it back on the first move. */
+const HIDE_WHILE_TYPING = true;
+
+type CursorState = 'idle' | 'interactive' | 'text';
+
 export function CustomCursor() {
-  const dotRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const dot = dotRef.current;
-    const ring = ringRef.current;
-    if (!dot || !ring) return;
+    const cursor = rootRef.current;
+    if (!cursor) return;
 
-    // Start centered
-    let mx = window.innerWidth / 2;
-    let my = window.innerHeight / 2;
-    let rx = mx, ry = my;
-    let raf: number;
-    let isMoving = false;
+    // A drawn pointer only makes sense where there is a real one to replace.
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    const html = document.documentElement;
+    html.classList.add('has-custom-cursor');
 
-    // Initialize position so it doesn't wait for mouse move
-    dot.style.transform = `translate3d(${mx}px, ${my}px, 0) translate(-50%, -50%)`;
-    ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`;
+    let state: CursorState = 'idle';
+    html.dataset.cursor = state;
 
-    const onMove = (e: MouseEvent) => {
-      mx = e.clientX;
-      my = e.clientY;
-      isMoving = true;
-      // dot snaps instantly
-      dot.style.transform = `translate3d(${mx}px, ${my}px, 0) translate(-50%, -50%)`;
+    const setState = (next: CursorState) => {
+      if (next === state) return;
+      state = next;
+      html.dataset.cursor = next;
     };
 
-    const tick = () => {
-      const dx = mx - rx;
-      const dy = my - ry;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+    const onMove = (event: MouseEvent) => {
+      // No easing, no interpolation: the pointer is exactly where the mouse is.
+      cursor.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
+      html.dataset.cursorVisible = 'true';
+      html.removeAttribute('data-cursor-typing');
 
-      // Dynamic lerp: moves faster when further away for an acceleration effect
-      const lerpFactor = Math.min(Math.max(0.12, distance * 0.002), 0.3);
-      rx += dx * lerpFactor;
-      ry += dy * lerpFactor;
+      // One delegated hit-test per move, rather than listeners on every element
+      // in the document — the editor rebuilds its DOM on each keystroke, and
+      // rescanning it every time was pure overhead.
+      const target = event.target as Element | null;
+      if (!target?.closest) return;
+      setState(
+        target.closest(TEXT_SELECTOR) ? 'text'
+          : target.closest(INTERACTIVE_SELECTOR) ? 'interactive'
+            : 'idle',
+      );
+    };
 
-      // Velocity-based stretching logic
-      let scaleX = 1;
-      let scaleY = 1;
-      let angle = 0;
+    const onDown = () => html.setAttribute('data-cursor-down', 'true');
+    const onUp = () => html.removeAttribute('data-cursor-down');
+    const onLeave = () => { html.dataset.cursorVisible = 'false'; };
+    const onEnter = () => { html.dataset.cursorVisible = 'true'; };
 
-      if (distance > 0.5 && isMoving) {
-        angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        // Stretch in direction of motion, squash perpendicularly
-        scaleX = Math.min(1 + distance * 0.003, 1.5);
-        scaleY = Math.max(1 - distance * 0.002, 0.7);
-      } else {
-        // Smoothly return to circle when stopping
-        isMoving = false;
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Only real typing hides it — not ⌘S, and not arrow keys.
+      if (!HIDE_WHILE_TYPING || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.length === 1 || event.key === 'Backspace' || event.key === 'Enter') {
+        html.setAttribute('data-cursor-typing', 'true');
       }
-
-      ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX}, ${scaleY})`;
-      
-      raf = requestAnimationFrame(tick);
-    };
-
-    const onEnterInteractive = () => {
-      dot.classList.add('cursor-dot--hover');
-      ring.classList.add('cursor-ring--hover');
-    };
-    const onLeaveInteractive = () => {
-      dot.classList.remove('cursor-dot--hover');
-      ring.classList.remove('cursor-ring--hover');
-    };
-    const onDown = () => {
-      dot.classList.add('cursor-dot--click');
-      ring.classList.add('cursor-ring--click');
-    };
-    const onUp = () => {
-      dot.classList.remove('cursor-dot--click');
-      ring.classList.remove('cursor-ring--click');
     };
 
     window.addEventListener('mousemove', onMove, { passive: true });
     window.addEventListener('mousedown', onDown);
     window.addEventListener('mouseup', onUp);
-
-    const interactiveSelector = 'a, button, [role="button"], input, textarea, select, label, [tabindex]';
-    const attachListeners = () => {
-      document.querySelectorAll<HTMLElement>(interactiveSelector).forEach(el => {
-        el.addEventListener('mouseenter', onEnterInteractive);
-        el.addEventListener('mouseleave', onLeaveInteractive);
-      });
-    };
-
-    attachListeners();
-    const observer = new MutationObserver(attachListeners);
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    raf = requestAnimationFrame(tick);
+    window.addEventListener('keydown', onKeyDown, { passive: true });
+    document.addEventListener('mouseleave', onLeave);
+    document.addEventListener('mouseenter', onEnter);
 
     return () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
-      cancelAnimationFrame(raf);
-      observer.disconnect();
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mouseleave', onLeave);
+      document.removeEventListener('mouseenter', onEnter);
+      html.classList.remove('has-custom-cursor');
+      delete html.dataset.cursor;
+      delete html.dataset.cursorVisible;
+      html.removeAttribute('data-cursor-down');
+      html.removeAttribute('data-cursor-typing');
     };
   }, []);
 
   return (
-    <>
-      <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
-      <div ref={ringRef} className="cursor-ring" aria-hidden="true" />
-    </>
+    <div ref={rootRef} className="cursor-mac" aria-hidden="true">
+      {/* Arrow — hotspot is the tip, at the path's origin. */}
+      <span className="cursor-shape cursor-shape--arrow">
+        <svg width="15" height="22" viewBox="0 0 15 22" fill="none">
+          <path
+            d="M1.2 1.1 L1.2 17.4 L5.35 13.5 L8.15 19.9 L10.85 18.7 L8.1 12.5 L13.4 12.5 Z"
+            className="cursor-fill"
+            strokeWidth="1.1"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+
+      {/* Pointing hand — hotspot is the fingertip. */}
+      <span className="cursor-shape cursor-shape--hand">
+        <svg width="22" height="24" viewBox="0 0 22 24" fill="none">
+          <path
+            d="M8.4 1.9c0-1 .8-1.7 1.7-1.7s1.7.8 1.7 1.7v7.4c.3-.5.8-.8 1.4-.8.9 0 1.7.8 1.7 1.7v.5c.3-.4.8-.7 1.4-.7.9 0 1.7.8 1.7 1.7v.8c.3-.3.7-.5 1.2-.5.9 0 1.7.8 1.7 1.7v3.8c0 3.1-2.5 5.6-5.6 5.6h-2.9c-1.6 0-3.1-.7-4.2-1.9l-5-5.6c-.6-.7-.6-1.8.1-2.4.7-.6 1.7-.6 2.4 0l2.7 2.5V1.9Z"
+            className="cursor-fill"
+            strokeWidth="1.1"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </div>
   );
 }

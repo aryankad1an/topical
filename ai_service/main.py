@@ -27,7 +27,6 @@ from .models import (
     UrlsMdxRequest,
 )
 from .prompts import (
-    TRANSFORM_ACTIONS,
     latex_content_prompt,
     mdx_content_prompt,
     outline_from_document_prompt,
@@ -75,7 +74,7 @@ def _hierarchy_envelope(parsed: list) -> dict:
 @app.post("/ai/search-topics")
 @endpoint
 async def search_topics(req: SearchTopicsRequest, ai_client=Depends(get_ai_credentials)):
-    text = generate_content(topic_hierarchy_prompt(req.query), ai_client)
+    text = await generate_content(topic_hierarchy_prompt(req.query), ai_client)
     return _hierarchy_envelope(_parse_topic_json(text))
 
 
@@ -83,7 +82,7 @@ async def search_topics(req: SearchTopicsRequest, ai_client=Depends(get_ai_crede
 @endpoint
 async def outline_from_document(req: OutlineFromDocumentRequest, ai_client=Depends(get_ai_credentials)):
     """Derive an outline from a draft the writer already has open."""
-    text = generate_content(outline_from_document_prompt(req.document, req.format), ai_client)
+    text = await generate_content(outline_from_document_prompt(req.document, req.format), ai_client)
     return _hierarchy_envelope(_parse_topic_json(text))
 
 
@@ -94,7 +93,7 @@ async def outline_from_document(req: OutlineFromDocumentRequest, ai_client=Depen
 @endpoint
 async def generate_mdx_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(get_ai_credentials)):
     topic = req.topic or req.selected_topic
-    return generate_content(mdx_content_prompt(topic, req.main_topic, "", req.hierarchy or ""), ai_client).strip()
+    return (await generate_content(mdx_content_prompt(topic, req.main_topic, "", req.hierarchy or ""), ai_client)).strip()
 
 
 @app.post("/ai/single-topic-raw", response_class=PlainTextResponse)
@@ -102,7 +101,7 @@ async def generate_mdx_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(g
 async def single_topic_raw(req: GenerateMdxRequest, ai_client=Depends(get_ai_credentials)):
     context = await crawl_for_topic(req.selected_topic)
     prompt = mdx_content_prompt(req.selected_topic, req.main_topic, context, req.hierarchy or "")
-    return generate_content(prompt, ai_client).strip()
+    return (await generate_content(prompt, ai_client)).strip()
 
 
 @app.post("/ai/generate-mdx-from-urls-raw", response_class=PlainTextResponse)
@@ -110,7 +109,7 @@ async def single_topic_raw(req: GenerateMdxRequest, ai_client=Depends(get_ai_cre
 async def generate_mdx_from_urls_raw(req: UrlsMdxRequest, ai_client=Depends(get_ai_credentials)):
     context = await crawl_urls(req.urls)
     prompt = mdx_content_prompt(req.selected_topic, req.main_topic, context, req.hierarchy or "")
-    return generate_content(prompt, ai_client).strip()
+    return (await generate_content(prompt, ai_client)).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +119,7 @@ async def generate_mdx_from_urls_raw(req: UrlsMdxRequest, ai_client=Depends(get_
 @endpoint
 async def generate_latex_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends(get_ai_credentials)):
     topic = req.topic or req.selected_topic
-    return generate_content(latex_content_prompt(topic, req.main_topic, "", req.hierarchy or ""), ai_client).strip()
+    return (await generate_content(latex_content_prompt(topic, req.main_topic, "", req.hierarchy or ""), ai_client)).strip()
 
 
 @app.post("/ai/generate-latex-crawl-raw", response_class=PlainTextResponse)
@@ -128,7 +127,7 @@ async def generate_latex_llm_only_raw(req: GenerateMdxRequest, ai_client=Depends
 async def generate_latex_crawl_raw(req: GenerateMdxRequest, ai_client=Depends(get_ai_credentials)):
     context = await crawl_url(f"https://en.wikipedia.org/wiki/{req.selected_topic.replace(' ', '_')}")
     prompt = latex_content_prompt(req.selected_topic, req.main_topic, context, req.hierarchy or "")
-    return generate_content(prompt, ai_client).strip()
+    return (await generate_content(prompt, ai_client)).strip()
 
 
 @app.post("/ai/generate-latex-from-urls-raw", response_class=PlainTextResponse)
@@ -136,7 +135,7 @@ async def generate_latex_crawl_raw(req: GenerateMdxRequest, ai_client=Depends(ge
 async def generate_latex_from_urls_raw(req: UrlsMdxRequest, ai_client=Depends(get_ai_credentials)):
     context = await crawl_urls(req.urls)
     prompt = latex_content_prompt(req.selected_topic, req.main_topic, context, req.hierarchy or "")
-    return generate_content(prompt, ai_client).strip()
+    return (await generate_content(prompt, ai_client)).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -155,8 +154,5 @@ async def transform(req: TransformRequest, ai_client=Depends(get_ai_credentials)
         after=req.after or "",
         title=req.title or "",
     )
-    # Edits should be faithful; a low temperature keeps a "fix grammar" from
-    # quietly rewriting the author's argument.
-    _, replaces = TRANSFORM_ACTIONS.get(req.action, TRANSFORM_ACTIONS["custom"])
-    text = generate_content(prompt, ai_client, temperature=0.3 if replaces else 0.5)
+    text = await generate_content(prompt, ai_client)
     return strip_fences(text, req.format)

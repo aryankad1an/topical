@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowLeft, Download, Eye, FileCode, Loader2, Printer, Redo2, Save, Settings2,
-  SplitSquareHorizontal, Undo2, Users, Wifi, WifiOff, Copy, Sparkles, ListTree, Check,
+  ArrowLeft, Copy, Download, Eye, FileCode, Loader2, Printer, Redo2, Save,
+  Settings2, SplitSquareHorizontal, Undo2, Users, ListTree, Check,
 } from 'lucide-react';
 import { IconButton } from '@/components/ui/primitives';
 import type { AwarenessCursor } from '@/hooks/useYjsCollab';
@@ -15,7 +15,6 @@ interface Props {
   isAuthor: boolean;
   onManageCoAuthors: () => void;
   peers: AwarenessCursor[];
-  connected: boolean;
   isSaving: boolean;
   isDirty: boolean;
   onSave: () => void;
@@ -26,8 +25,6 @@ interface Props {
   onViewMode: (mode: ViewMode) => void;
   options: ViewOptions;
   onOptions: (next: Partial<ViewOptions>) => void;
-  aiOpen: boolean;
-  onToggleAi: () => void;
   onExport: (kind: 'source' | 'copy' | 'print') => void;
 }
 
@@ -37,7 +34,13 @@ const VIEWS: { mode: ViewMode; icon: typeof Eye; label: string }[] = [
   { mode: 'preview', icon: Eye, label: 'Read' },
 ];
 
-/** Closes a popover when the pointer goes anywhere else. */
+/**
+ * Closes a popover when the pointer goes anywhere else.
+ *
+ * The returned ref must wrap every trigger as well as the menus themselves —
+ * a trigger left outside it gets its menu closed on mousedown and reopened on
+ * click, so it can never toggle off.
+ */
 function useDismiss(onDismiss: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -56,8 +59,8 @@ export function EditorHeader(props: Props) {
 
   const {
     name, onRename, authorUsername, coAuthorUsernames, isAuthor, onManageCoAuthors,
-    peers, connected, isSaving, isDirty, onSave, onBack, onUndo, onRedo,
-    viewMode, onViewMode, options, onOptions, aiOpen, onToggleAi, onExport,
+    peers, isSaving, isDirty, onSave, onBack, onUndo, onRedo,
+    viewMode, onViewMode, options, onOptions, onExport,
   } = props;
 
   return (
@@ -105,21 +108,8 @@ export function EditorHeader(props: Props) {
         </div>
       )}
 
-      <span className="editor-conn" title={connected ? 'Live — changes sync instantly' : 'Reconnecting…'}>
-        {connected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5 editor-conn--off" />}
-      </span>
-
       <div className="flex-1" />
 
-      <button
-        className="toolbar-btn"
-        data-active={aiOpen}
-        onClick={onToggleAi}
-        title="Generation panel"
-        aria-label="Toggle generation panel"
-      >
-        <Sparkles className="h-4 w-4" />
-      </button>
       <button className="toolbar-btn" onClick={onUndo} title="Undo  ⌘Z" aria-label="Undo">
         <Undo2 className="h-4 w-4" />
       </button>
@@ -127,7 +117,7 @@ export function EditorHeader(props: Props) {
         <Redo2 className="h-4 w-4" />
       </button>
 
-      <div className="segmented ml-1">
+      <div className="segmented segmented--labeled ml-1">
         {VIEWS.map(view => (
           <button key={view.mode} data-active={viewMode === view.mode} onClick={() => onViewMode(view.mode)}>
             <view.icon className="h-3.5 w-3.5" />
@@ -136,59 +126,61 @@ export function EditorHeader(props: Props) {
         ))}
       </div>
 
-      <div className="editor-menu-wrap" ref={menuRef}>
-        <button
-          className="toolbar-btn"
-          data-active={menu === 'view'}
-          onClick={() => setMenu(menu === 'view' ? 'none' : 'view')}
-          title="View options"
-          aria-label="View options"
-        >
-          <Settings2 className="h-4 w-4" />
-        </button>
+      <div className="editor-menus" ref={menuRef}>
+        <div className="editor-menu-wrap">
+          <button
+            className="toolbar-btn"
+            data-active={menu === 'view'}
+            onClick={() => setMenu(menu === 'view' ? 'none' : 'view')}
+            title="View options"
+            aria-label="View options"
+          >
+            <Settings2 className="h-4 w-4" />
+          </button>
 
-        {menu === 'view' && (
-          <div className="editor-menu">
-            <div className="editor-menu-label">Layout</div>
-            <MenuToggle label="Outline rail" icon={ListTree} on={options.outline} onClick={() => onOptions({ outline: !options.outline })} />
-            <MenuToggle label="Line numbers" on={options.lineNumbers} onClick={() => onOptions({ lineNumbers: !options.lineNumbers })} />
-            <MenuToggle label="Focus mode" on={options.focusMode} onClick={() => onOptions({ focusMode: !options.focusMode })} />
-            <MenuToggle label="Sync scrolling" on={options.syncScroll} onClick={() => onOptions({ syncScroll: !options.syncScroll })} />
+          {menu === 'view' && (
+            <div className="editor-menu">
+              <div className="editor-menu-label">Layout</div>
+              <MenuToggle label="Outline rail" icon={ListTree} on={options.outline} onClick={() => onOptions({ outline: !options.outline })} />
+              <MenuToggle label="Line numbers" on={options.lineNumbers} onClick={() => onOptions({ lineNumbers: !options.lineNumbers })} />
+              <MenuToggle label="Focus mode" on={options.focusMode} onClick={() => onOptions({ focusMode: !options.focusMode })} />
+              <MenuToggle label="Sync scrolling" on={options.syncScroll} onClick={() => onOptions({ syncScroll: !options.syncScroll })} />
 
-            <div className="editor-menu-label">Text size</div>
-            <div className="editor-menu-row">
-              <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.max(12, options.fontSize - 1) })}>−</button>
-              <span className="editor-menu-value">{options.fontSize}px</span>
-              <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.min(24, options.fontSize + 1) })}>+</button>
+              <div className="editor-menu-label">Text size</div>
+              <div className="editor-menu-row">
+                <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.max(12, options.fontSize - 1) })}>−</button>
+                <span className="editor-menu-value">{options.fontSize}px</span>
+                <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.min(24, options.fontSize + 1) })}>+</button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div className="editor-menu-wrap">
-        <button
-          className="toolbar-btn"
-          data-active={menu === 'export'}
-          onClick={() => setMenu(menu === 'export' ? 'none' : 'export')}
-          title="Export"
-          aria-label="Export"
-        >
-          <Download className="h-4 w-4" />
-        </button>
+        <div className="editor-menu-wrap">
+          <button
+            className="toolbar-btn"
+            data-active={menu === 'export'}
+            onClick={() => setMenu(menu === 'export' ? 'none' : 'export')}
+            title="Export"
+            aria-label="Export"
+          >
+            <Download className="h-4 w-4" />
+          </button>
 
-        {menu === 'export' && (
-          <div className="editor-menu">
-            <button className="editor-menu-item" onClick={() => { onExport('source'); setMenu('none'); }}>
-              <Download className="h-3.5 w-3.5" /> Download source
-            </button>
-            <button className="editor-menu-item" onClick={() => { onExport('copy'); setMenu('none'); }}>
-              <Copy className="h-3.5 w-3.5" /> Copy to clipboard
-            </button>
-            <button className="editor-menu-item" onClick={() => { onExport('print'); setMenu('none'); }}>
-              <Printer className="h-3.5 w-3.5" /> Print / save as PDF
-            </button>
-          </div>
-        )}
+          {menu === 'export' && (
+            <div className="editor-menu">
+              <button className="editor-menu-item" onClick={() => { onExport('source'); setMenu('none'); }}>
+                <Download className="h-3.5 w-3.5" /> Download source
+              </button>
+              <button className="editor-menu-item" onClick={() => { onExport('copy'); setMenu('none'); }}>
+                <Copy className="h-3.5 w-3.5" /> Copy to clipboard
+              </button>
+              <button className="editor-menu-item" onClick={() => { onExport('print'); setMenu('none'); }}>
+                <Printer className="h-3.5 w-3.5" /> Print / save as PDF
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <button className="accent-btn editor-save" onClick={onSave} disabled={isSaving}>

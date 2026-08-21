@@ -46,7 +46,7 @@ else
     pip install -r ai_service/requirements.txt
 fi
 echo "-> Starting FastAPI AI service..."
-uvicorn ai_service.main:app --host 127.0.0.1 --port 8000 &
+uvicorn ai_service.main:app --host 127.0.0.1 --port 8000 --reload &
 AI_PID=$!
 
 # Start frontend development server in the background

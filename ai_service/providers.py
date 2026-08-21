@@ -5,8 +5,10 @@ Everything here is provider-agnostic — litellm routes `provider/model` to
 whichever vendor the user configured in the browser.
 """
 
+import asyncio
 import json
 import logging
+import random
 from dataclasses import dataclass
 from functools import wraps
 from typing import List, Optional
@@ -52,22 +54,61 @@ def get_ai_credentials(request: Request) -> AiCredentials:
     )
 
 
-def generate_content(prompt: str, ai_client: AiCredentials, *, temperature: Optional[float] = None) -> str:
-    """Generate content via litellm, routed to whichever provider/model the user picked."""
-    # litellm.completion() is typed to also allow a streaming response; we never
-    # pass stream=True, so this is always a plain ModelResponse at runtime.
-    kwargs = {} if temperature is None else {"temperature": temperature}
-    response = cast(
-        litellm.ModelResponse,
-        litellm.completion(
-            model=f"{ai_client.provider}/{ai_client.model}",
-            messages=[{"role": "user", "content": prompt}],
-            api_key=ai_client.api_key,
-            **kwargs,
-        ),
-    )
-    choice = cast(Choices, response.choices[0])
-    return choice.message.content or ""
+# Failures worth trying again: capacity, rate limits, timeouts, and transport.
+# Gemini in particular returns 503 "this model is currently experiencing high
+# demand" often enough that a single attempt makes the app look broken when the
+# retry that would have succeeded is one second away.
+_RETRYABLE = (
+    litellm.ServiceUnavailableError,
+    litellm.RateLimitError,
+    litellm.InternalServerError,
+    litellm.APIConnectionError,
+    litellm.Timeout,
+)
+
+MAX_ATTEMPTS = 3
+_BASE_DELAY_SECONDS = 1.0
+
+
+async def generate_content(prompt: str, ai_client: AiCredentials) -> str:
+    """Generate content via litellm, retrying the failures that are worth retrying.
+
+    Async all the way down: a blocking call here would stall every other
+    request for the length of a model round-trip, and the backoff would stall
+    it further still.
+
+    No temperature is passed. Gemini 3 models warn that anything below the
+    default degrades reasoning and can fail outright, and the other providers'
+    defaults are already appropriate for this kind of writing.
+    """
+    delay = _BASE_DELAY_SECONDS
+
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            # acompletion() is typed to also allow a streaming response; we never
+            # pass stream=True, so this is always a plain ModelResponse at runtime.
+            response = cast(
+                litellm.ModelResponse,
+                await litellm.acompletion(
+                    model=f"{ai_client.provider}/{ai_client.model}",
+                    messages=[{"role": "user", "content": prompt}],
+                    api_key=ai_client.api_key,
+                ),
+            )
+            choice = cast(Choices, response.choices[0])
+            return choice.message.content or ""
+
+        except _RETRYABLE as exc:
+            if attempt == MAX_ATTEMPTS:
+                raise
+            # Jitter so a burst of parallel requests doesn't retry in lockstep.
+            wait = delay + random.uniform(0, 0.4)
+            logger.info(
+                "%s/%s attempt %d failed (%s); retrying in %.1fs",
+                ai_client.provider, ai_client.model, attempt, type(exc).__name__, wait,
+            )
+            await asyncio.sleep(wait)
+            delay *= 2.5
 
 
 # Provider failures map to the status the client should actually act on, with a
@@ -85,10 +126,12 @@ _PROVIDER_ERRORS: List[tuple] = [
     (litellm.ContentPolicyViolationError, 422,
      "{provider} declined to generate this content."),
     (litellm.RateLimitError, 429,
-     "{provider} is rate-limiting your key. Wait a moment and retry."),
+     "{provider} is rate-limiting your key. Wait a minute and try again."),
     (litellm.Timeout, 504,
      "{provider} took too long to respond. Try again, or use a faster model."),
-    (litellm.ServiceUnavailableError, 502, "{provider} is temporarily unavailable."),
+    (litellm.ServiceUnavailableError, 502,
+     "{provider} says '{model}' is overloaded right now — tried " + str(MAX_ATTEMPTS)
+     + " times. Wait a moment, or pick another model under Profile → AI Providers."),
     (litellm.APIConnectionError, 502, "Could not reach {provider}."),
     (litellm.InternalServerError, 502, "{provider} returned an internal error."),
     # Least specific last: several of the above subclass BadRequestError.

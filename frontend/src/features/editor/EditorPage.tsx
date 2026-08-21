@@ -194,15 +194,22 @@ export function EditorPage() {
 
       if (key === 's') { event.preventDefault(); doc.save(); }
       if (key === 'f') { event.preventDefault(); find.setOpen(true); }
+      // ⌘J both opens and dismisses — the same key that summoned it should
+      // put it away, without reaching for Escape or the close button.
       if (key === 'j') {
         event.preventDefault();
-        syncSelection();
-        setAssistOpen(true);
+        if (assistOpen) {
+          setAssistOpen(false);
+          textareaRef.current?.focus();
+        } else {
+          syncSelection();
+          setAssistOpen(true);
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [doc, find, syncSelection]);
+  }, [assistOpen, doc, find, syncSelection]);
 
   // ── Export ──────────────────────────────────────────────────────────────
   const handleExport = useCallback((kind: 'source' | 'copy' | 'print') => {
@@ -241,7 +248,6 @@ export function EditorPage() {
         isAuthor={doc.isAuthor}
         onManageCoAuthors={() => setShowShare(true)}
         peers={doc.peers}
-        connected={doc.connected}
         isSaving={doc.saveState === 'saving'}
         isDirty={doc.saveState === 'dirty'}
         onSave={() => doc.save()}
@@ -252,8 +258,6 @@ export function EditorPage() {
         onViewMode={setViewMode}
         options={options}
         onOptions={updateOptions}
-        aiOpen={aiPanelOpen}
-        onToggleAi={() => setAiPanelOpen(o => !o)}
         onExport={handleExport}
       />
 
@@ -262,6 +266,8 @@ export function EditorPage() {
           format={doc.format}
           onRun={editing.run}
           onUploadImage={() => setShowImage(true)}
+          aiOpen={aiPanelOpen}
+          onToggleAi={() => setAiPanelOpen(open => !open)}
         />
       )}
 
@@ -290,7 +296,7 @@ export function EditorPage() {
           <div
             className="editor-pane"
             ref={surfaceRef}
-            style={showPreview ? { width: `${splitRatio}%` } : { flex: 1 }}
+            style={{ flex: showPreview ? splitRatio : 100 }}
           >
             <CodeSurface
               value={doc.content}
@@ -360,8 +366,11 @@ export function EditorPage() {
               event.preventDefault();
               const startX = event.clientX;
               const startRatio = splitRatio;
+              // Measure against the row the panes actually share, not the
+              // window — the outline rail and the AI panel are not in it.
+              const row = (event.currentTarget.parentElement as HTMLElement).getBoundingClientRect().width;
               const onMove = (move: MouseEvent) => {
-                const delta = ((move.clientX - startX) / window.innerWidth) * 100;
+                const delta = ((move.clientX - startX) / Math.max(row, 1)) * 100;
                 setSplitRatio(Math.min(Math.max(22, startRatio + delta), 78));
               };
               const onUp = () => {
@@ -377,7 +386,7 @@ export function EditorPage() {
         )}
 
         {showPreview && (
-          <div className="editor-preview" style={showEditor ? { width: `${100 - splitRatio}%` } : { flex: 1 }}>
+          <div className="editor-preview" style={{ flex: showEditor ? 100 - splitRatio : 100 }}>
             <PreviewPane
               ref={previewRef}
               content={doc.content}
