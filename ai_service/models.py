@@ -42,3 +42,19 @@ class TransformRequest(BaseModel):
 class OutlineFromDocumentRequest(BaseModel):
     document: str
     format: str = "mdx"
+
+
+class OutlineNodeIn(BaseModel):
+    """One row of an outline the writer has been editing by hand."""
+
+    title: str
+    level: int = 1
+
+
+class RefineOutlineRequest(BaseModel):
+    """Ask for a better-organised version of an outline, and why it changed."""
+
+    outline: List[OutlineNodeIn]
+    subject: Optional[str] = None
+    instruction: Optional[str] = None
+    format: str = "mdx"

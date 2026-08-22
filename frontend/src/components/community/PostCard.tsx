@@ -56,7 +56,7 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
         </button>
         <span
           className="vote-score"
-          style={{ color: score > 0 ? '#cbd5e1' : score < 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)' }}
+          style={{ color: score > 0 ? 'var(--ink-muted)' : score < 0 ? 'var(--ink-ghost)' : 'var(--ink-a12)' }}
         >
           {score}
         </span>
@@ -84,13 +84,13 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
                 <>
                   <button
                     className="text-[10.5px] font-semibold px-2 py-1 rounded-md transition-colors"
-                    style={{ color: 'var(--status-danger)', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)' }}
+                    style={{ color: 'var(--status-danger)', background: 'var(--status-danger)', border: '1px solid var(--status-danger)' }}
                     onClick={() => onDelete(post.id)}
                   >
                     Delete?
                   </button>
                   <button
-                    className="text-[10.5px] px-2 py-1 rounded-md text-white/40 hover:text-white/70"
+                    className="text-[10.5px] px-2 py-1 rounded-md text-[var(--ink-faint)] hover:text-[var(--ink-2)]"
                     onClick={() => setConfirming(false)}
                   >
                     Cancel
@@ -126,7 +126,7 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
         )}
 
         {/* Meta row — pinned to bottom */}
-        <div className="community-card-meta" style={{ marginTop: 'auto', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div className="community-card-meta" style={{ marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
           <span className="meta-item">
             <User className="h-3 w-3" />
             {post.authorName}

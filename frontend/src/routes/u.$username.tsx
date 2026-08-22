@@ -23,7 +23,7 @@ function PublicProfile() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--ink-faint)]" />
       </div>
     );
   }
@@ -37,7 +37,7 @@ function PublicProfile() {
           title="Profile not found"
           description={error instanceof Error ? error.message : `No member goes by @${username}.`}
           action={
-            <Link to="/community" className="text-xs text-white/45 hover:text-white/80 transition-colors">
+            <Link to="/community" className="text-xs text-[var(--ink-muted)] hover:text-[var(--ink-2)] transition-colors">
               ← Browse the community
             </Link>
           }
@@ -60,7 +60,7 @@ function PublicProfile() {
   return (
     <div className="w-full mx-auto py-10" style={{ maxWidth: "60rem", paddingInline: "var(--gutter)" }}>
       <Link to="/community"
-        className="inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/65 transition-colors mb-6">
+        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
         <ArrowLeft className="h-3.5 w-3.5" /> Community
       </Link>
 
@@ -115,8 +115,8 @@ function PublicProfile() {
               <button key={doc.id} className="pub-row" onClick={() => openDoc(doc)}>
                 <DocTypeIcon type={isLatex ? "latex" : "mdx"} icon={Icon} />
                 <span className="min-w-0 flex-1 text-left">
-                  <span className="block text-[13px] font-medium text-white/85 truncate">{doc.name}</span>
-                  <span className="block text-[11px] text-white/25">
+                  <span className="block text-[13px] font-medium text-[var(--ink)] truncate">{doc.name}</span>
+                  <span className="block text-[11px] text-[var(--ink-ghost)]">
                     {isLatex ? "LaTeX" : "MDX"}
                     {doc.updatedAt && ` · ${new Date(doc.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
                   </span>

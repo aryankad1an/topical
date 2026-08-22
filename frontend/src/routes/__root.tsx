@@ -5,7 +5,6 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner"
-import { CustomCursor } from "@/components/CustomCursor";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { type QueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
@@ -92,13 +91,11 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           transform: 'translateX(-50%)',
           alignItems: 'center',
           gap: 2,
-          background: 'rgba(8, 8, 8, 0.55)',
-          backdropFilter: 'blur(48px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(48px) saturate(180%)',
-          border: '1px solid rgba(255,255,255,0.09)',
+          background: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: 100,
           padding: '6px 8px',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1)',
+          boxShadow: '0 8px 40px rgba(25,25,23,0.12), inset 0 1px 1px transparent',
         }}
       >
         {/* Logo / brand */}
@@ -111,26 +108,26 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
             padding: '8px 16px 8px 12px',
             borderRadius: 100,
             marginRight: 4,
-            background: isActive('/') ? 'rgba(148,163,184,0.10)' : 'transparent',
+            background: isActive('/') ? 'var(--ink-a06)' : 'transparent',
             transition: 'background 0.25s',
             textDecoration: 'none',
           }}
         >
           <div style={{
             width: 26, height: 26, borderRadius: 8,
-            background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)',
+            background: 'var(--accent-400)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(148,163,184,0.35)',
+            boxShadow: '0 2px 8px var(--ink-a12)',
             flexShrink: 0,
           }}>
-            <span style={{ color: '#000', fontWeight: 800, fontSize: 13, fontFamily: 'inherit' }}>T</span>
+            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 13, fontFamily: 'inherit' }}>T</span>
           </div>
           <span
             className="font-brand"
             style={{
               fontSize: 15,
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #94a3b8, #e2e8f0)',
+              background: 'linear-gradient(135deg, var(--ink), var(--ink-2))',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -140,7 +137,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
         </Link>
 
         {/* Divider */}
-        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.07)', margin: '0 4px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 18, background: 'var(--ink-a06)', margin: '0 4px', flexShrink: 0 }} />
 
         <div className="nav-shell" ref={shellRef}>
           <span
@@ -159,7 +156,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           ))}
         </div>
 
-        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.07)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 18, background: 'var(--ink-a06)', margin: '0 6px', flexShrink: 0 }} />
 
         <button className="nav-kbd" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
           <Command className="h-3 w-3" />K
@@ -197,27 +194,26 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
         style={{
-          background: 'rgba(8,8,8,0.7)',
-          backdropFilter: 'blur(40px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--surface)',
+          borderBottom: '1px solid var(--line-soft)',
         }}>
         <Link to="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
           <div style={{
             width: 24, height: 24, borderRadius: 7,
-            background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)',
+            background: 'var(--accent-400)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ color: '#000', fontWeight: 800, fontSize: 12 }}>T</span>
+            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
           </div>
           <span className="font-brand text-base" style={{
-            background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)',
+            background: 'linear-gradient(135deg, var(--ink), var(--ink-2))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>Topical</span>
         </Link>
         <button
-          className="p-2 rounded-full text-white/60"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+          className="p-2 rounded-full text-[var(--ink-muted)]"
+          style={{ background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         >
@@ -229,14 +225,14 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[200] md:hidden mobile-menu-overlay">
           <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center p-5 border-b border-white/5">
+            <div className="flex justify-between items-center p-5 border-b border-[var(--line-soft)]">
               <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                <div style={{ width: 24, height: 24, borderRadius: 7, background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: '#000', fontWeight: 800, fontSize: 12 }}>T</span>
+                <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--accent-400)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
                 </div>
-                <span className="font-brand text-lg" style={{ background: 'linear-gradient(135deg,#94a3b8,#e2e8f0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Topical</span>
+                <span className="font-brand text-lg" style={{ background: 'linear-gradient(135deg, var(--ink), var(--ink-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Topical</span>
               </Link>
-              <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 text-white/60"><X size={20} /></button>
+              <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 text-[var(--ink-muted)]"><X size={20} /></button>
             </div>
             <div className="flex flex-col gap-1 p-6">
               {links.map(link => (
@@ -297,8 +293,8 @@ function Root() {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="grid-bg" />
-        <div className="z-10 flex flex-col items-center gap-4 text-white">
-          <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+        <div className="z-10 flex flex-col items-center gap-4 text-[var(--ink)]">
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--line-strong)] border-t-[var(--accent-400)] animate-spin" />
           <p className="opacity-70 text-sm">Completing authentication...</p>
         </div>
       </div>
@@ -307,7 +303,6 @@ function Root() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <CustomCursor />
       {!isEditorRoute && <div className="grid-bg" />}
       {!isEditorRoute && <NavBar onOpenCommand={() => setCommandOpen(true)} />}
       <CommandPalette
@@ -322,10 +317,9 @@ function Root() {
       <Toaster
         toastOptions={{
           style: {
-            background: 'rgba(10, 10, 10, 0.4)',
-            backdropFilter: 'blur(40px) saturate(180%)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.9)',
+            background: 'rgba(25,25,23,0.4)',
+            border: '1px solid var(--line)',
+            color: 'var(--ink)',
             borderRadius: '14px',
           },
         }}

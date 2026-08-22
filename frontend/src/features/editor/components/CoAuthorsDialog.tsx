@@ -48,21 +48,21 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md dialog-dark">
         <DialogHeader>
-          <DialogTitle className="text-white/90 text-base flex items-center gap-2">
+          <DialogTitle className="text-[var(--ink)] text-base flex items-center gap-2">
             <Users className="h-4 w-4" /> Share this document
           </DialogTitle>
-          <DialogDescription className="text-white/40">
+          <DialogDescription className="text-[var(--ink-faint)]">
             Collaborators see your cursor and edits as they happen.
           </DialogDescription>
         </DialogHeader>
 
         <div className="relative mt-2">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-white/30" />
+          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--ink-faint)]" />
           <Input
             placeholder="Search by username…"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/20"
+            className="pl-9 bg-[var(--ink-a04)] border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus-visible:ring-1 focus-visible:ring-[var(--line-strong)]"
           />
         </div>
 
@@ -87,7 +87,7 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
         <div className="mt-1">
           <h4 className="share-heading">Collaborators</h4>
           {coAuthors.length === 0 ? (
-            <p className="text-xs text-white/25">Only you can edit this document.</p>
+            <p className="text-xs text-[var(--ink-ghost)]">Only you can edit this document.</p>
           ) : (
             <div className="flex flex-col gap-1.5">
               {coAuthors.map((id, index) => (

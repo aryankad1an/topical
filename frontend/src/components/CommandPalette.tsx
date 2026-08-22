@@ -107,7 +107,7 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
     <div className="cmdk-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Command palette">
       <div className="cmdk-panel" onClick={e => e.stopPropagation()}>
         <div className="cmdk-input-row">
-          <Search className="h-4 w-4 text-white/25 shrink-0" />
+          <Search className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
           <input
             ref={inputRef}
             className="cmdk-input"
@@ -139,7 +139,7 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
                   >
                     <Icon className="cmdk-item-icon h-4 w-4" />
                     <span className="flex-1">{cmd.label}</span>
-                    {cmd.hint && <span className="text-[11px] text-white/20 hidden sm:inline">{cmd.hint}</span>}
+                    {cmd.hint && <span className="text-[11px] text-[var(--ink-ghost)] hidden sm:inline">{cmd.hint}</span>}
                     {i === cursor && <CornerDownLeft className="h-3 w-3 opacity-50" />}
                   </button>
                 </div>

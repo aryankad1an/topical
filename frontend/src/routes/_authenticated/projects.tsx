@@ -43,11 +43,11 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
         borderRadius: 24,
         padding: '2px',
         cursor: 'pointer',
-        border: `1px solid ${checked ? 'rgba(200,215,230,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        border: `1px solid ${checked ? 'var(--ink-a12)' : 'var(--ink-a06)'}`,
         background: checked
-          ? 'linear-gradient(135deg, rgba(180,200,220,0.18) 0%, rgba(200,215,230,0.10) 100%)'
-          : 'rgba(255,255,255,0.04)',
-        boxShadow: checked ? '0 0 10px rgba(180,200,220,0.10), inset 0 1px 1px rgba(255,255,255,0.07)' : 'none',
+          ? 'linear-gradient(135deg, var(--ink-a08) 0%, var(--ink-a06) 100%)'
+          : 'var(--ink-a04)',
+        boxShadow: checked ? '0 0 10px var(--ink-a06), inset 0 1px 1px var(--ink-a06)' : 'none',
         transition: 'background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease',
         flexShrink: 0,
         position: 'relative',
@@ -59,7 +59,7 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
         position: 'absolute',
         inset: 0,
         borderRadius: 'inherit',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%)',
+        background: 'linear-gradient(135deg, var(--ink-a04) 0%, transparent 60%)',
         pointerEvents: 'none',
       }} />
       {/* Sliding thumb pill */}
@@ -69,11 +69,11 @@ function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boo
         borderRadius: '50%',
         flexShrink: 0,
         background: checked
-          ? 'linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 100%)'
-          : 'rgba(255,255,255,0.14)',
+          ? 'var(--accent-400)'
+          : 'var(--ink-a08)',
         boxShadow: checked
-          ? '0 1px 6px rgba(148,163,184,0.3), inset 0 1px 1px rgba(255,255,255,0.5)'
-          : '0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.08)',
+          ? '0 1px 6px var(--ink-a12), inset 0 1px 1px var(--surface)'
+          : '0 1px 3px rgba(25,25,23,0.25), inset 0 1px 1px var(--ink-a06)',
         transform: checked ? `translateX(${TRAVEL}px)` : 'translateX(0px)',
         transition: 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), background 0.32s ease, box-shadow 0.32s ease',
       }} />
@@ -195,7 +195,7 @@ function ProjectsPage() {
 
   const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
 
-  const dialogStyle = { background: 'rgba(10,10,10,0.85)', backdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' };
+  const dialogStyle = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px' };
 
   return (
     <div className="flex flex-col min-h-screen w-full py-8" style={{ paddingInline: 'var(--gutter)' }}>
@@ -231,22 +231,22 @@ function ProjectsPage() {
               <FileType2 className="h-4 w-4" style={{ color: 'var(--accent-500)' }} />
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-white/85">Blank MDX document</span>
-              <span className="block text-[12px] text-white/30 mt-0.5">Interactive, with AI generation and live preview</span>
+              <span className="block text-sm font-semibold text-[var(--ink)]">Blank MDX document</span>
+              <span className="block text-[12px] text-[var(--ink-faint)] mt-0.5">Interactive, with AI generation and live preview</span>
             </span>
-            <Plus className="h-4 w-4 text-white/20 shrink-0" />
+            <Plus className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
           </button>
 
           <button className="new-tile" onClick={() => openCreateDialog('latex')}
-            style={{ ['--tile-accent-soft' as string]: 'var(--latex-soft)', ['--tile-accent-line' as string]: 'rgba(96,165,250,0.34)' }}>
+            style={{ ['--tile-accent-soft' as string]: 'var(--latex-soft)', ['--tile-accent-line' as string]: 'var(--latex-500)' }}>
             <span className="new-tile-icon">
               <FileCode2 className="h-4 w-4" style={{ color: 'var(--latex-500)' }} />
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-white/85">Blank LaTeX document</span>
-              <span className="block text-[12px] text-white/30 mt-0.5">For mathematical and scientific writing</span>
+              <span className="block text-sm font-semibold text-[var(--ink)]">Blank LaTeX document</span>
+              <span className="block text-[12px] text-[var(--ink-faint)] mt-0.5">For mathematical and scientific writing</span>
             </span>
-            <Plus className="h-4 w-4 text-white/20 shrink-0" />
+            <Plus className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
           </button>
         </div>
 
@@ -257,7 +257,7 @@ function ProjectsPage() {
             <div className="flex items-center gap-2.5">
               {projects.length > 0 && (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/25" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--ink-ghost)]" />
                   <input type="text" placeholder="Search…" value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="glass-input h-9 pl-9 pr-3 text-sm" style={{ width: 180 }} />
@@ -345,8 +345,8 @@ function ProjectsPage() {
       <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
         <DialogContent className="sm:max-w-md" style={dialogStyle}>
           <DialogHeader>
-            <DialogTitle className="text-white/90">Name your project</DialogTitle>
-            <DialogDescription className="text-white/40">Give your {projectType === 'mdx' ? 'MDX' : 'LaTeX'} project a name.</DialogDescription>
+            <DialogTitle className="text-[var(--ink)]">Name your project</DialogTitle>
+            <DialogDescription className="text-[var(--ink-faint)]">Give your {projectType === 'mdx' ? 'MDX' : 'LaTeX'} project a name.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input placeholder="e.g. Machine Learning Fundamentals" value={projectName}
@@ -354,9 +354,9 @@ function ProjectsPage() {
               className="glass-input" autoFocus />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowNameDialog(false)} className="glass-btn border-white/10">Cancel</Button>
-            <Button onClick={handleCreate} className="text-black font-semibold"
-              style={{ background: 'linear-gradient(135deg, var(--accent-500), var(--accent-300))' }}>Create</Button>
+            <Button variant="outline" onClick={() => setShowNameDialog(false)} className="glass-btn border-[var(--line)]">Cancel</Button>
+            <Button onClick={handleCreate} className="text-[var(--accent-ink)] font-semibold"
+              style={{ background: 'var(--accent-400)' }}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -365,11 +365,11 @@ function ProjectsPage() {
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-md" style={dialogStyle}>
           <DialogHeader>
-            <DialogTitle className="text-white/90">Delete project?</DialogTitle>
-            <DialogDescription className="text-white/40">This action cannot be undone.</DialogDescription>
+            <DialogTitle className="text-[var(--ink)]">Delete project?</DialogTitle>
+            <DialogDescription className="text-[var(--ink-faint)]">This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting} className="glass-btn border-white/10">Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting} className="glass-btn border-[var(--line)]">Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Deleting...</> : 'Delete'}
             </Button>
@@ -384,15 +384,15 @@ function ProjectsPage() {
         <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-hidden flex flex-col" style={{
           ...dialogStyle, padding: 0, width: '90vw',
         }}>
-          <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-between px-5 py-3 shrink-0" style={{ borderBottom: '1px solid var(--line-soft)' }}>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                 style={{ background: readProject?.type === 'latex' ? 'var(--latex-soft)' : 'var(--accent-soft)', color: readProject?.type === 'latex' ? 'var(--latex-500)' : 'var(--accent-500)' }}>
                 {readProject?.type === 'latex' ? 'LaTeX' : 'MDX'}
               </span>
-              <h3 className="text-sm font-semibold text-white/80">{readProject?.name}</h3>
+              <h3 className="text-sm font-semibold text-[var(--ink-2)]">{readProject?.name}</h3>
             </div>
-            <button onClick={() => setReadProject(null)} className="text-white/40 hover:text-white/70"><X className="h-4 w-4" /></button>
+            <button onClick={() => setReadProject(null)} className="text-[var(--ink-faint)] hover:text-[var(--ink-2)]"><X className="h-4 w-4" /></button>
           </div>
           <div className="flex-1 overflow-auto px-6 py-5">
             {readProject?.content ? (
@@ -401,7 +401,7 @@ function ProjectsPage() {
                 ? <LatexPreview content={readProject.content} showIssues={false} />
                 : <MarkdownPreview content={readProject.content} />
             ) : (
-              <div className="text-center py-16 text-white/20">
+              <div className="text-center py-16 text-[var(--ink-ghost)]">
                 <p className="text-sm">This project has no content yet.</p>
               </div>
             )}
@@ -411,7 +411,7 @@ function ProjectsPage() {
 
       {/* Loading overlay for read */}
       {isLoadingRead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'var(--surface)' }}>
           <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--accent-500)' }} />
         </div>
       )}

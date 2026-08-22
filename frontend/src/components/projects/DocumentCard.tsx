@@ -91,29 +91,29 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
             <Icon className="h-3.5 w-3.5" style={{ color: 'var(--doc-accent)' }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-white/90 truncate">{doc.name}</h3>
-            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-white/28">
+            <h3 className="text-sm font-semibold text-[var(--ink)] truncate">{doc.name}</h3>
+            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--ink-faint)]">
               <span>{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</span>
-              {words > 0 && <><span className="text-white/12">·</span><span>{words.toLocaleString()} words</span></>}
+              {words > 0 && <><span className="text-[var(--ink-ghost)]">·</span><span>{words.toLocaleString()} words</span></>}
             </div>
           </div>
           {isAuthor && doc.id != null && (
             <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-white/15 hover:text-[var(--status-danger)] hover:bg-[rgba(244,63,94,0.08)] transition-all shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-[var(--ink-ghost)] hover:text-[var(--status-danger)] hover:bg-[var(--status-danger)] transition-all shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-[10.5px] text-white/40 px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <span className="inline-flex items-center gap-1 text-[10.5px] text-[var(--ink-faint)] px-2 py-0.5 rounded-full"
+            style={{ background: 'var(--ink-a04)', border: '1px solid var(--line-soft)' }}>
             {doc.isPublic ? <Globe className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
             {doc.isPublic ? 'Public' : 'Private'}
           </span>
           {doc.coAuthorUsernames && doc.coAuthorUsernames.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10.5px] text-white/35 px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <span className="inline-flex items-center gap-1 text-[10.5px] text-[var(--ink-faint)] px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--ink-a02)', border: '1px solid var(--line-soft)' }}>
               <Users className="h-2.5 w-2.5" />
               {doc.coAuthorUsernames.length + 1}
             </span>
@@ -151,16 +151,16 @@ export function DocumentRow({ doc, isAuthor, onRead, onEdit, onDelete, formatDat
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-white/85 truncate">{doc.name}</h3>
+          <h3 className="text-sm font-medium text-[var(--ink)] truncate">{doc.name}</h3>
           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
             style={{ background: 'var(--doc-accent-soft)', color: 'var(--doc-accent)' }}>
             {isLatex ? 'TEX' : 'MDX'}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-white/25 mt-0.5">
+        <div className="flex items-center gap-1.5 text-[11px] text-[var(--ink-ghost)] mt-0.5">
           <span>{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</span>
-          {words > 0 && <><span className="text-white/12">·</span><span>{words.toLocaleString()} words</span></>}
-          <span className="text-white/12">·</span>
+          {words > 0 && <><span className="text-[var(--ink-ghost)]">·</span><span>{words.toLocaleString()} words</span></>}
+          <span className="text-[var(--ink-ghost)]">·</span>
           <span className="inline-flex items-center gap-1">
             {doc.isPublic ? <Globe className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
             {doc.isPublic ? 'Public' : 'Private'}
@@ -178,7 +178,7 @@ export function DocumentRow({ doc, isAuthor, onRead, onEdit, onDelete, formatDat
           </button>
           {isAuthor && (
             <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="h-8 w-8 rounded-lg flex items-center justify-center text-white/15 hover:text-[var(--status-danger)] transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-[var(--ink-ghost)] hover:text-[var(--status-danger)] transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}

@@ -55,7 +55,7 @@ function EditProfile() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--ink-faint)]" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ function EditProfile() {
   return (
     <div className="w-full mx-auto py-10" style={{ maxWidth: "44rem", paddingInline: "var(--gutter)" }}>
       <Link to="/profile"
-        className="inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/65 transition-colors mb-6">
+        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
         <ArrowLeft className="h-3.5 w-3.5" /> Back to profile
       </Link>
 
@@ -96,14 +96,14 @@ function EditProfile() {
           ) : username ? (
             <>
               <Check className="h-3.5 w-3.5 shrink-0 mt-px" style={{ color: "var(--status-success)" }} />
-              <span className="text-white/35">
+              <span className="text-[var(--ink-faint)]">
                 Your profile will be at <span className="person-handle">/u/{username}</span>
               </span>
             </>
           ) : (
             <>
-              <AtSign className="h-3.5 w-3.5 shrink-0 mt-px text-white/25" />
-              <span className="text-white/30">
+              <AtSign className="h-3.5 w-3.5 shrink-0 mt-px text-[var(--ink-ghost)]" />
+              <span className="text-[var(--ink-faint)]">
                 A username is required before you can publish documents to the community.
               </span>
             </>
@@ -117,11 +117,11 @@ function EditProfile() {
           {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</> : "Save changes"}
         </Button>
         <Link to="/profile"
-          className="text-xs text-white/35 hover:text-white/70 transition-colors"
+          className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors"
           style={{ textDecoration: "none" }}>
           Cancel
         </Link>
-        {dirty && <span className="text-[11px] text-white/25 ml-auto">Unsaved changes</span>}
+        {dirty && <span className="text-[11px] text-[var(--ink-ghost)] ml-auto">Unsaved changes</span>}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import {
 } from '@/lib/api';
 import { stripFrontmatter } from '@/lib/utils';
 import type { DocFormat, TopicHierarchy } from '@/lib/types';
+import { planFromHierarchy, planToOutlineText, type PlanItem } from './plan';
 
 export type GenerationMethod = 'crawl' | 'llm' | 'urls';
 
@@ -21,14 +22,18 @@ export interface SectionRequest {
   method: GenerationMethod;
   topic: string;
   mainTopic: string;
-  hierarchy: TopicHierarchy[];
+  /** The whole plan, so the model knows what the other sections cover. */
+  outline: PlanItem[];
   urls: string[];
 }
 
 /** Generate one section, cleaned of any frontmatter the model added. */
 export async function generateSection(req: SectionRequest): Promise<string> {
   const { format, method, topic, mainTopic, urls } = req;
-  const hierarchy = JSON.stringify(req.hierarchy);
+  // Sent as indented text rather than JSON: the plan is now arbitrarily deep,
+  // and an indented list carries that depth to the model more legibly than a
+  // nested object would.
+  const hierarchy = planToOutlineText(req.outline);
 
   if (method === 'urls' && urls.length === 0) {
     throw new Error('Add at least one URL to generate from.');
@@ -46,13 +51,13 @@ export async function generateSection(req: SectionRequest): Promise<string> {
 }
 
 /** Ask for an outline of a subject the writer names. */
-export async function fetchHierarchy(query: string): Promise<TopicHierarchy[]> {
-  return parseHierarchy(await searchTopics(query));
+export async function fetchHierarchy(query: string): Promise<PlanItem[]> {
+  return planFromHierarchy(parseHierarchy(await searchTopics(query)));
 }
 
 /** Ask for the outline the current draft is reaching for. */
-export async function outlineDraft(content: string, format: DocFormat): Promise<TopicHierarchy[]> {
-  return parseHierarchy(await outlineFromDocument(content, format));
+export async function outlineDraft(content: string, format: DocFormat): Promise<PlanItem[]> {
+  return planFromHierarchy(parseHierarchy(await outlineFromDocument(content, format)));
 }
 
 function parseHierarchy(envelope: unknown): TopicHierarchy[] {

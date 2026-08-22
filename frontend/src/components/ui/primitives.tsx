@@ -107,13 +107,13 @@ export function EmptyState({
         className="h-11 w-11 rounded-2xl mx-auto mb-3.5 flex items-center justify-center"
         style={accent
           ? { background: 'var(--accent-soft)', border: '1px solid var(--accent-line)' }
-          : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+          : { background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
       >
-        <Icon className="h-5 w-5" style={{ color: accent ? 'var(--accent-400)' : 'rgba(255,255,255,0.3)' }} />
+        <Icon className="h-5 w-5" style={{ color: accent ? 'var(--accent-400)' : 'var(--ink-a12)' }} />
       </div>
-      <p className="text-[13px] font-medium text-white/60">{title}</p>
+      <p className="text-[13px] font-medium text-[var(--ink-muted)]">{title}</p>
       {description && (
-        <p className="text-[11.5px] text-white/25 mt-1.5 max-w-xs mx-auto leading-relaxed">{description}</p>
+        <p className="text-[11.5px] text-[var(--ink-ghost)] mt-1.5 max-w-xs mx-auto leading-relaxed">{description}</p>
       )}
       {action && <div className="mt-5 flex justify-center">{action}</div>}
     </Surface>
@@ -240,14 +240,14 @@ export function IdentityBanner({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap mb-1">
-            <h1 className="font-brand text-2xl md:text-3xl tracking-tight text-white/95 leading-none">{name}</h1>
+            <h1 className="font-brand text-2xl md:text-3xl tracking-tight text-[var(--ink)] leading-none">{name}</h1>
             {handle && <Chip tone="accent" mono>@{handle}</Chip>}
           </div>
           {bio
-            ? <p className="text-sm text-white/45 leading-relaxed max-w-lg">{bio}</p>
-            : <p className="text-sm text-white/22 italic">{bioFallback}</p>}
+            ? <p className="text-sm text-[var(--ink-muted)] leading-relaxed max-w-lg">{bio}</p>
+            : <p className="text-sm text-[var(--ink-ghost)] italic">{bioFallback}</p>}
           {meta && (
-            <div className="flex items-center gap-3 mt-2.5 flex-wrap text-[11.5px] text-white/28">{meta}</div>
+            <div className="flex items-center gap-3 mt-2.5 flex-wrap text-[11.5px] text-[var(--ink-faint)]">{meta}</div>
           )}
         </div>
 
@@ -268,15 +268,15 @@ export function docTypeVars(type: DocType): React.CSSProperties {
         '--doc-accent': 'var(--latex-500)',
         '--doc-accent-2': 'var(--latex-300)',
         '--doc-accent-soft': 'var(--latex-soft)',
-        '--doc-accent-line': 'rgba(96,165,250,0.34)',
-        '--doc-accent-dim': 'rgba(96,165,250,0.45)',
+        '--doc-accent-line': 'var(--latex-500)',
+        '--doc-accent-dim': 'var(--latex-500)',
       } as React.CSSProperties)
     : ({
         '--doc-accent': 'var(--accent-500)',
         '--doc-accent-2': 'var(--accent-300)',
         '--doc-accent-soft': 'var(--accent-soft)',
         '--doc-accent-line': 'var(--accent-line)',
-        '--doc-accent-dim': 'rgba(245,158,11,0.5)',
+        '--doc-accent-dim': 'var(--accent-400)',
       } as React.CSSProperties);
 }
 

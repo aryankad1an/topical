@@ -101,6 +101,41 @@ def outline_from_document_prompt(document: str, fmt: str) -> str:
     )
 
 
+def refine_outline_prompt(outline: str, subject: str = "", instruction: str = "") -> str:
+    """Reorganise an outline the writer has been editing, and say why.
+
+    The reasoning is the point. A restructure that arrives as a finished list
+    is one the writer has to reverse-engineer before they can trust it, so the
+    model is asked to account for every row it touched — and to stay silent
+    about the ones it left alone, or the explanation drowns in "kept as is".
+    """
+    about = f'The document is about "{subject}".\n' if subject else ""
+    extra = f"\nThe author also asks: {instruction.strip()}\n" if instruction.strip() else ""
+    return (
+        "You are an editor restructuring the outline of a document.\n"
+        f"{about}"
+        "Here is the current outline, indented by depth:\n"
+        f"<outline>\n{outline}\n</outline>\n"
+        f"{extra}"
+        "\nImprove the structure: fix the ordering so it builds logically, regroup "
+        "topics that belong together, adjust depth where a heading is really a "
+        "sub-point of its neighbour, split anything that covers two ideas, and add "
+        "a section only where there is a real gap. Keep the author's wording unless "
+        "it is genuinely unclear. Do not pad it out — a good outline can come back "
+        "the same length or shorter.\n\n"
+        "Return ONLY valid JSON, no code fence, in exactly this shape:\n"
+        '{"summary": "one sentence on what you changed overall", '
+        '"outline": [{"title": "Section name", "level": 1}], '
+        '"changes": [{"title": "Section name", "kind": "moved", "reason": "why"}]}\n\n'
+        "Rules:\n"
+        "- `level` starts at 1 and never jumps by more than one between consecutive rows.\n"
+        "- `kind` is one of: moved, renamed, added, removed, nested, split.\n"
+        "- List a change for every row you altered, and for nothing you left alone.\n"
+        "- Each `reason` is one short sentence naming the actual problem it fixes.\n"
+        "- `title` in `changes` must match the row's new title (or the old one, if removed)."
+    )
+
+
 # ---------------------------------------------------------------------------
 # Selection transforms — the editor's inline AI actions
 # ---------------------------------------------------------------------------

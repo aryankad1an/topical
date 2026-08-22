@@ -175,7 +175,7 @@ function CommunityPage() {
               </button>
             </div>
 
-            <span className="text-[11px] text-white/20">
+            <span className="text-[11px] text-[var(--ink-ghost)]">
               {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
             </span>
           </div>
@@ -201,7 +201,7 @@ function CommunityPage() {
           ) : (
             <div className="community-empty">
               <TrendingUp className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <p className="text-white/25 text-sm">
+              <p className="text-[var(--ink-ghost)] text-sm">
                 {search ? `No posts matching "${search}"` : 'No posts yet — be the first!'}
               </p>
               {isAuthenticated && !search && (
@@ -218,7 +218,7 @@ function CommunityPage() {
       {tab === 'people' && (
         <section className="community-section">
           <div className="community-toolbar">
-            <span className="text-xs text-white/25 flex items-center gap-1.5">
+            <span className="text-xs text-[var(--ink-ghost)] flex items-center gap-1.5">
               <UsersIcon className="h-3.5 w-3.5" />
               {people.length} {people.length === 1 ? 'member' : 'members'}
             </span>
@@ -242,9 +242,9 @@ function CommunityPage() {
                 <Link key={p.id} to="/u/$username" params={{ username: p.username ?? '' }} className="person-card">
                   <Avatar seed={p.id} src={p.avatarUrl} name={personName(p)} size="md" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-white/85 truncate">{personName(p)}</span>
+                    <span className="block text-sm font-semibold text-[var(--ink)] truncate">{personName(p)}</span>
                     <span className="person-handle block">@{p.username}</span>
-                    {p.bio && <span className="block text-[11.5px] text-white/30 truncate mt-0.5">{p.bio}</span>}
+                    {p.bio && <span className="block text-[11.5px] text-[var(--ink-faint)] truncate mt-0.5">{p.bio}</span>}
                   </span>
                 </Link>
               ))}
@@ -264,7 +264,7 @@ function CommunityPage() {
       {tab === 'lessons' && (
         <section className="community-section">
           <div className="community-toolbar">
-            <span className="text-xs text-white/25 flex items-center gap-1.5">
+            <span className="text-xs text-[var(--ink-ghost)] flex items-center gap-1.5">
               <Globe className="h-3.5 w-3.5" />
               {filteredLessons.length} public {filteredLessons.length === 1 ? 'lesson' : 'lessons'}
             </span>
@@ -283,17 +283,17 @@ function CommunityPage() {
                 return (
                   <div key={plan.id} className="lesson-community-card group">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-white/75 group-hover:text-white/90 transition-colors leading-snug flex-1 mr-2">
+                      <h3 className="text-sm font-semibold text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors leading-snug flex-1 mr-2">
                         {plan.name}
                       </h3>
                       {isOwn && <span className="own-badge">Yours</span>}
                     </div>
-                    <div className="flex items-center gap-3 text-[11px] text-white/25 mb-3">
+                    <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
                       <span>{isOwn ? 'You' : userMap[plan.userId] || 'Member'}</span>
                       <span>·</span>
                       <span>{formatDate(plan.createdAt)}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-white/25 mb-4">
+                    <div className="flex items-center gap-1.5 text-[10px] text-[var(--ink-ghost)] mb-4">
                       <Layers className="h-2.5 w-2.5" />
                       {plan.topics.length} {plan.topics.length === 1 ? 'topic' : 'topics'}
                     </div>
@@ -307,7 +307,7 @@ function CommunityPage() {
                       {isAuthenticated && (
                         <button
                           className="flex-1 h-8 text-xs rounded-lg flex items-center justify-center gap-1 font-medium transition-all"
-                          style={{ background: 'linear-gradient(135deg,#cbd5e1,#e2e8f0)', color: '#080a0c' }}
+                          style={{ background: 'var(--accent-400)', color: 'var(--accent-ink)' }}
                           onClick={() => handleViewLesson(plan.id, plan.userId)}
                         >
                           {isOwn ? 'Edit' : 'View'}
@@ -321,7 +321,7 @@ function CommunityPage() {
           ) : (
             <div className="community-empty">
               <BookOpen className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <p className="text-white/25 text-sm">
+              <p className="text-[var(--ink-ghost)] text-sm">
                 {search ? `No lessons matching "${search}"` : 'No public lessons yet.'}
               </p>
             </div>

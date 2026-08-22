@@ -26,6 +26,11 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-serif)"],
+        mono: ["var(--font-mono)"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -59,6 +64,28 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        ink: {
+          DEFAULT: "var(--ink)",
+          2: "var(--ink-2)",
+          muted: "var(--ink-muted)",
+          faint: "var(--ink-faint)",
+          ghost: "var(--ink-ghost)",
+        },
+        line: {
+          DEFAULT: "var(--line)",
+          soft: "var(--line-soft)",
+          strong: "var(--line-strong)",
+        },
+        surface: {
+          DEFAULT: "var(--surface)",
+          2: "var(--surface-2)",
+          3: "var(--surface-3)",
+        },
+        brand: {
+          DEFAULT: "var(--accent-400)",
+          hover: "var(--accent-500)",
+          ink: "var(--accent-ink)",
         },
       },
       borderRadius: {

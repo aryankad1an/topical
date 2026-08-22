@@ -48,7 +48,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
     <div className="post-detail-overlay" onClick={onClose}>
       <div className="new-post-dialog" onClick={e => e.stopPropagation()}>
         <div className="post-detail-header">
-          <span className="text-sm font-semibold text-white/70 flex items-center gap-2">
+          <span className="text-sm font-semibold text-[var(--ink-2)] flex items-center gap-2">
             <PenLine className="h-4 w-4" /> New post
           </span>
           <button className="detail-close-btn" onClick={onClose}><X className="h-4 w-4" /></button>
@@ -76,7 +76,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
           {/* Attach lesson */}
           <div>
             <button
-              className="flex items-center gap-2 text-xs text-white/35 hover:text-white/60 transition-colors mb-2"
+              className="flex items-center gap-2 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-muted)] transition-colors mb-2"
               onClick={() => setShowLessons(v => !v)}
             >
               <BookOpen className="h-3.5 w-3.5" />
@@ -101,7 +101,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
                   </button>
                 ))}
                 {myPlans.length === 0 && (
-                  <p className="text-xs text-white/25 p-3">No public lessons found. Make a lesson public first.</p>
+                  <p className="text-xs text-[var(--ink-ghost)] p-3">No public lessons found. Make a lesson public first.</p>
                 )}
               </div>
             )}

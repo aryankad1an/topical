@@ -21,17 +21,26 @@ export interface AiAction {
   replaces: boolean;
   /** Offered even with nothing selected (operates on the passage around the caret). */
   worksOnCaret?: boolean;
+  /**
+   * Needs several ideas to restructure. Running these on a word or two returns
+   * something shaped like a table or a list but carrying nothing, which reads
+   * as the feature being broken rather than misapplied.
+   */
+  needsPassage?: boolean;
 }
+
+/** Below this, the structural actions have nothing to restructure. */
+export const MIN_PASSAGE_WORDS = 6;
 
 export const AI_ACTIONS: AiAction[] = [
   { id: 'improve', label: 'Improve writing', hint: 'Clearer and more precise, same voice', icon: Wand2, replaces: true },
   { id: 'expand', label: 'Expand', hint: 'Add detail, examples, reasoning', icon: Expand, replaces: true },
-  { id: 'shorten', label: 'Make it shorter', hint: 'About half the length, same points', icon: Shrink, replaces: true },
+  { id: 'shorten', label: 'Make it shorter', hint: 'About half the length, same points', icon: Shrink, replaces: true, needsPassage: true },
   { id: 'grammar', label: 'Fix grammar', hint: 'Spelling and punctuation only', icon: SpellCheck, replaces: true },
   { id: 'simplify', label: 'Simplify', hint: 'Plain language, jargon defined', icon: Baby, replaces: true },
   { id: 'academic', label: 'Academic tone', hint: 'Formal and impersonal', icon: GraduationCap, replaces: true },
-  { id: 'bullets', label: 'Turn into bullets', hint: 'One idea per line', icon: List, replaces: true },
-  { id: 'table', label: 'Turn into a table', hint: 'Columns with headers', icon: Table, replaces: true },
+  { id: 'bullets', label: 'Turn into bullets', hint: 'One idea per line', icon: List, replaces: true, needsPassage: true },
+  { id: 'table', label: 'Turn into a table', hint: 'Columns with headers', icon: Table, replaces: true, needsPassage: true },
   { id: 'math', label: 'Set the maths', hint: 'Real notation and display equations', icon: Sigma, replaces: true },
   { id: 'continue', label: 'Continue writing', hint: 'Keep going from here', icon: ArrowRight, replaces: true, worksOnCaret: true },
   { id: 'explain', label: 'Explain this', hint: 'What it says and what it misses', icon: HelpCircle, replaces: false },

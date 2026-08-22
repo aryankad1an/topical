@@ -119,7 +119,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="h-6 w-6 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
+            <div className="h-6 w-6 rounded-full border-2 border-[var(--line)] border-t-white/40 animate-spin" />
           </div>
         ) : post ? (
           <div className="post-detail-body">
@@ -127,28 +127,28 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
             <div className="flex gap-4 items-start mb-4">
               <div className="flex flex-col items-center gap-1 pt-1">
                 <button className="vote-btn" onClick={() => vote.mutate(1)} disabled={!isAuthenticated}><ArrowUp className="h-3.5 w-3.5" /></button>
-                <span className="text-xs font-semibold" style={{ color: '#94a3b8' }}>{score}</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--ink-muted)' }}>{score}</span>
                 <button className="vote-btn" onClick={() => vote.mutate(-1)} disabled={!isAuthenticated}><ArrowDown className="h-3.5 w-3.5" /></button>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-white/85 leading-snug mb-1">{post.title}</h2>
-                <div className="flex items-center gap-3 text-[11px] text-white/25 mb-3">
+                <h2 className="text-lg font-semibold text-[var(--ink)] leading-snug mb-1">{post.title}</h2>
+                <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
                   <span>by {post.authorName}</span>
                   <span><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relTime(post.createdAt)}</span>
                 </div>
-                {post.body && <p className="text-sm text-white/50 leading-relaxed whitespace-pre-wrap">{post.body}</p>}
+                {post.body && <p className="text-sm text-[var(--ink-muted)] leading-relaxed whitespace-pre-wrap">{post.body}</p>}
               </div>
             </div>
 
             {/* Attached lesson */}
             {post.lessonPlanId && post.lessonPlanName && (
               <div className="attached-lesson-row">
-                <BookOpen className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#94a3b8' }} />
-                <span className="text-xs text-white/50 flex-1">{post.lessonPlanName}</span>
+                <BookOpen className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--ink-muted)' }} />
+                <span className="text-xs text-[var(--ink-muted)] flex-1">{post.lessonPlanName}</span>
                 {onViewLesson && (
                   <button
                     className="text-xs font-medium"
-                    style={{ color: '#94a3b8' }}
+                    style={{ color: 'var(--ink-muted)' }}
                     onClick={() => onViewLesson(post.lessonPlanId!)}
                   >
                     View lesson →
@@ -159,7 +159,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
 
             {/* Comments */}
             <div className="detail-divider" />
-            <h3 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">
+            <h3 className="text-xs font-semibold text-[var(--ink-faint)] uppercase tracking-widest mb-3">
               {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
             </h3>
 
@@ -173,8 +173,8 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                   <div className="comment-avatar">{c.authorName[0]?.toUpperCase()}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-white/55">{c.authorName}</span>
-                      <span className="text-[10px] text-white/20">
+                      <span className="text-xs font-medium text-[var(--ink-muted)]">{c.authorName}</span>
+                      <span className="text-[10px] text-[var(--ink-ghost)]">
                         {pending ? 'sending…' : relTime(c.createdAt)}
                       </span>
                       {mine && !pending && (
@@ -189,7 +189,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                         </button>
                       )}
                     </div>
-                    <p className="text-sm text-white/40 leading-relaxed whitespace-pre-wrap">{c.body}</p>
+                    <p className="text-sm text-[var(--ink-faint)] leading-relaxed whitespace-pre-wrap">{c.body}</p>
                   </div>
                 </div>
               );
@@ -218,7 +218,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
             )}
           </div>
         ) : (
-          <p className="text-center text-white/30 py-12">Post not found.</p>
+          <p className="text-center text-[var(--ink-faint)] py-12">Post not found.</p>
         )}
       </div>
     </div>

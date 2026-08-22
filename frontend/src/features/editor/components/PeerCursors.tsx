@@ -193,7 +193,7 @@ export function PeerCursors({ textareaRef, content, peers }: Props) {
             {/* Name label — hidden, shown on hover via CSS */}
             <div className="peer-cursor-label" style={{
               position: 'absolute', top: '-2px', left: '8px',
-              background: pos.color, color: '#fff',
+              background: pos.color, color: 'var(--ink)',
               fontSize: '10px', fontWeight: 600,
               fontFamily: 'system-ui, -apple-system, sans-serif',
               padding: '2px 7px', borderRadius: '0 4px 4px 4px',

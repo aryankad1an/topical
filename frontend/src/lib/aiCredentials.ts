@@ -32,7 +32,21 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     provider: "gemini",
     name: "Gemini",
-    models: ["gemini-3.7-flash", "gemini-3-pro"],
+    // Ordered newest-first so the top entry is the recommended default. The
+    // tail matters: Gemini returns 503 "high demand" on the newest Flash often
+    // enough that a one-click drop to an older, less-contended model is the
+    // difference between waiting it out and getting work done.
+    models: [
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro-preview",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+    ],
     keyPlaceholder: "AIza...",
     getKeyUrl: "https://aistudio.google.com/apikey",
       color: "#4285F4",

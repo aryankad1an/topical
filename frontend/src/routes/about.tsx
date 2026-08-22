@@ -50,10 +50,10 @@ function About() {
           />
           <div className="relative z-10 max-w-2xl">
             <span className="eyebrow mb-6 inline-flex">About</span>
-            <h1 className="font-brand text-4xl md:text-5xl tracking-tight mb-4 text-white/90">
+            <h1 className="font-brand text-4xl md:text-5xl tracking-tight mb-4 text-[var(--ink)]">
               Structure first, then the words.
             </h1>
-            <p className="text-base text-white/35 leading-relaxed">
+            <p className="text-base text-[var(--ink-faint)] leading-relaxed">
               Topical turns any topic into a structured document you can edit and share.
               It plans the outline before it writes, so what you get is organised —
               not one long undifferentiated draft.
@@ -66,7 +66,7 @@ function About() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="step-card">
               <span className="step-num">How it works</span>
-              <p className="text-white/40 text-sm leading-relaxed">
+              <p className="text-[var(--ink-faint)] text-sm leading-relaxed">
                 You type a topic. Topical generates a hierarchy of subtopics, then writes
                 rich content for each one using the AI provider of your choice, grounded in
                 real-time web crawling.
@@ -74,7 +74,7 @@ function About() {
             </div>
             <div className="step-card">
               <span className="step-num">What you control</span>
-              <p className="text-white/40 text-sm leading-relaxed">
+              <p className="text-[var(--ink-faint)] text-sm leading-relaxed">
                 Nothing is inserted without you. Edit inline, drag generated sections exactly
                 where you want them, rearrange topics, and publish the result — or keep it
                 private.
@@ -93,8 +93,8 @@ function About() {
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="step-card">
                 <div className="bento-icon"><Icon className="h-4 w-4" /></div>
-                <h3 className="text-sm font-semibold mb-1.5 text-white/80">{title}</h3>
-                <p className="text-white/30 text-[13px] leading-relaxed">{desc}</p>
+                <h3 className="text-sm font-semibold mb-1.5 text-[var(--ink-2)]">{title}</h3>
+                <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -109,8 +109,8 @@ function About() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {STACK.map(({ name, desc }) => (
               <Surface key={name} size="sm" padding="none" className="px-4 py-3.5">
-                <h4 className="font-semibold text-sm text-white/75">{name}</h4>
-                <p className="text-[11px] text-white/25 mt-0.5">{desc}</p>
+                <h4 className="font-semibold text-sm text-[var(--ink-2)]">{name}</h4>
+                <p className="text-[11px] text-[var(--ink-ghost)] mt-0.5">{desc}</p>
               </Surface>
             ))}
           </div>
@@ -122,7 +122,7 @@ function About() {
             <h2 className="section-title mb-3">
               {isAuthenticated ? 'Continue building' : 'Try it out'}
             </h2>
-            <p className="text-sm text-white/30 mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-sm text-[var(--ink-faint)] mb-8 max-w-md mx-auto leading-relaxed">
               {isAuthenticated
                 ? 'Create another document or explore what the community has published.'
                 : 'Sign up, add a provider key, and make your first document in a couple of minutes.'}
@@ -141,13 +141,13 @@ function About() {
         </section>
 
         {/* ── Footer ── */}
-        <footer className="py-8" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <footer className="py-8" style={{ borderTop: '1px solid var(--line-soft)' }}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
             <p className="font-brand text-base gradient-text">Topical</p>
             <div className="flex gap-6 items-center">
-              <Link to="/community" className="text-xs text-white/25 hover:text-white/50 transition-colors">Community</Link>
-              <Link to="/" className="text-xs text-white/25 hover:text-white/50 transition-colors">Home</Link>
-              <div className="text-xs text-white/15">© {new Date().getFullYear()}</div>
+              <Link to="/community" className="text-xs text-[var(--ink-ghost)] hover:text-[var(--ink-muted)] transition-colors">Community</Link>
+              <Link to="/" className="text-xs text-[var(--ink-ghost)] hover:text-[var(--ink-muted)] transition-colors">Home</Link>
+              <div className="text-xs text-[var(--ink-ghost)]">© {new Date().getFullYear()}</div>
             </div>
           </div>
         </footer>

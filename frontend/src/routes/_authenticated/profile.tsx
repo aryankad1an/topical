@@ -62,7 +62,7 @@ function Profile() {
         </>}
         actions={
           <Button onClick={logout} disabled={isNavigating} variant="ghost" size="sm"
-            className="text-white/35 hover:text-white/80 hover:bg-white/[0.05]">
+            className="text-[var(--ink-faint)] hover:text-[var(--ink-2)] hover:bg-[var(--ink-a04)]">
             {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><LogOut className="h-3.5 w-3.5 mr-1.5" /> Sign out</>}
           </Button>
         }
@@ -78,26 +78,26 @@ function Profile() {
           </CardHeader>
           <CardContent className="space-y-3.5">
             <div>
-              <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1">Username</div>
+              <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1">Username</div>
               {user.username
                 ? <span className="person-handle">@{user.username}</span>
-                : <span className="text-[13px] text-white/30 italic">Not set — required to publish</span>}
+                : <span className="text-[13px] text-[var(--ink-faint)] italic">Not set — required to publish</span>}
             </div>
 
             <div>
-              <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1">Bio</div>
-              <p className="text-[13px] text-white/55 leading-relaxed">
-                {user.bio || <span className="text-white/25 italic">No bio yet</span>}
+              <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1">Bio</div>
+              <p className="text-[13px] text-[var(--ink-muted)] leading-relaxed">
+                {user.bio || <span className="text-[var(--ink-ghost)] italic">No bio yet</span>}
               </p>
             </div>
 
             {user.roles && user.roles.length > 0 && (
               <div>
-                <div className="text-[10.5px] uppercase tracking-wider text-white/25 mb-1.5">Roles</div>
+                <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1.5">Roles</div>
                 <div className="flex flex-wrap gap-1.5">
                   {user.roles.map(role => (
                     <span key={role} className="text-[10.5px] px-2 py-0.5 rounded-full"
-                      style={{ background: "var(--accent-soft)", color: "var(--accent-300)", border: "1px solid var(--accent-line)" }}>
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-500)", border: "1px solid var(--accent-line)" }}>
                       <Shield className="h-2.5 w-2.5 inline mr-1" />{role}
                     </span>
                   ))}
@@ -113,14 +113,14 @@ function Profile() {
               </Link>
               {user.username && (
                 <Link to="/u/$username" params={{ username: user.username }}
-                  className="h-9 px-4 rounded-lg text-xs font-medium flex items-center gap-2 text-white/40 hover:text-white/75 transition-colors"
+                  className="h-9 px-4 rounded-lg text-xs font-medium flex items-center gap-2 text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors"
                   style={{ textDecoration: "none" }}>
                   <Eye className="h-3.5 w-3.5" /> View public profile
                 </Link>
               )}
             </div>
           </CardContent>
-          <CardFooter className="text-[11px] text-white/20">
+          <CardFooter className="text-[11px] text-[var(--ink-ghost)]">
             <span className="inline-flex items-center gap-1.5">
               <User className="h-3 w-3" /> {user.id}
             </span>
@@ -151,7 +151,7 @@ function Profile() {
                       <span className="provider-mark">{preset.name[0]}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[13px] font-semibold text-white/85">{preset.name}</span>
+                          <span className="text-[13px] font-semibold text-[var(--ink)]">{preset.name}</span>
                           {cred.isDefault && <span className="provider-default-chip">DEFAULT</span>}
                         </div>
                         <p className="provider-model truncate">{cred.model}</p>

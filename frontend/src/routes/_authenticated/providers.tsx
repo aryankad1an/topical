@@ -79,7 +79,7 @@ function ProvidersPage() {
   return (
     <div className="w-full mx-auto py-10" style={{ maxWidth: "60rem", paddingInline: "var(--gutter)" }}>
       <Link to="/profile"
-        className="inline-flex items-center gap-1.5 text-xs text-white/30 hover:text-white/65 transition-colors mb-6">
+        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
         <ArrowLeft className="h-3.5 w-3.5" /> Back to profile
       </Link>
 
@@ -117,8 +117,8 @@ function ProvidersPage() {
                     )}
                     <span className="brand-card-mark">{p.name[0]}</span>
                     <span className="min-w-0">
-                      <span className="block text-[13px] font-semibold text-white/85 truncate">{p.name}</span>
-                      <span className="block text-[10.5px] text-white/25">
+                      <span className="block text-[13px] font-semibold text-[var(--ink)] truncate">{p.name}</span>
+                      <span className="block text-[10.5px] text-[var(--ink-ghost)]">
                         {p.models.length} model{p.models.length === 1 ? "" : "s"}
                       </span>
                     </span>
@@ -144,7 +144,7 @@ function ProvidersPage() {
                     <span className="model-name flex-1">{m}</span>
                     {preset.models[0] === m && (
                       <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: "var(--accent-soft)", color: "var(--accent-300)" }}>
+                        style={{ background: "var(--accent-soft)", color: "var(--accent-500)" }}>
                         RECOMMENDED
                       </span>
                     )}
@@ -160,7 +160,7 @@ function ProvidersPage() {
                     value={customModel}
                     onChange={e => setCustomModel(e.target.value)}
                     placeholder="Exact model id, e.g. gpt-5.2-mini"
-                    className="bg-black/40 border-white/10 font-mono text-xs mt-1"
+                    className="bg-[var(--surface)] border-[var(--line)] font-mono text-xs mt-1"
                   />
                 )}
               </div>
@@ -182,7 +182,7 @@ function ProvidersPage() {
                 onChange={e => setApiKey(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
                 placeholder={preset.keyPlaceholder}
-                className="bg-black/40 border-white/10 font-mono text-xs mb-3"
+                className="bg-[var(--surface)] border-[var(--line)] font-mono text-xs mb-3"
               />
 
               <div className="key-note mb-4">
@@ -200,7 +200,7 @@ function ProvidersPage() {
                     : <><Plus className="h-4 w-4 mr-1.5" /> Connect {preset.name}</>}
                 </Button>
                 <a href={preset.getKeyUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-white/35 hover:text-white/65 flex items-center gap-1.5 transition-colors">
+                  className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] flex items-center gap-1.5 transition-colors">
                   <ExternalLink className="h-3 w-3" /> Get a {preset.name} key
                 </a>
               </div>
@@ -229,7 +229,7 @@ function ProvidersPage() {
                       <span className="provider-mark">{p.name[0]}</span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[13px] font-semibold text-white/85">{p.name}</span>
+                          <span className="text-[13px] font-semibold text-[var(--ink)]">{p.name}</span>
                           {cred.isDefault && <span className="provider-default-chip">DEFAULT</span>}
                         </div>
                         <p className="provider-model truncate">{cred.model}</p>
@@ -251,8 +251,8 @@ function ProvidersPage() {
                 })}
               </div>
 
-              <p className="text-[11px] text-white/25 mt-3.5 leading-relaxed">
-                The <span style={{ color: "var(--accent-300)" }}>default</span> provider is used for every
+              <p className="text-[11px] text-[var(--ink-ghost)] mt-3.5 leading-relaxed">
+                The <span style={{ color: "var(--accent-500)" }}>default</span> provider is used for every
                 generation. Star another to switch.
               </p>
 

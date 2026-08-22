@@ -5,7 +5,8 @@ import { transformSelection } from '@/lib/api';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import { IconButton } from '@/components/ui/primitives';
-import { AI_ACTIONS, CONTEXT_CHARS, type AiAction } from '../lib/aiActions';
+import { AI_ACTIONS, CONTEXT_CHARS, MIN_PASSAGE_WORDS, type AiAction } from '../lib/aiActions';
+import { countWords } from '../lib/stats';
 import { copyText } from '../lib/exporters';
 
 interface Props {
@@ -39,6 +40,12 @@ export function AiAssist({
 
   const passage = content.slice(selection.start, selection.end);
   const hasSelection = passage.trim().length > 0;
+  // The same counter the status bar uses, so the two never disagree — it reads
+  // through the markup rather than counting `**bold**` and `\section{}` as words.
+  const words = countWords(passage, format);
+  // Text leading up to the selection: context for a rewrite, and the passage
+  // itself when there is nothing selected to continue from.
+  const runUp = content.slice(Math.max(0, selection.start - CONTEXT_CHARS), selection.start);
 
   useEffect(() => {
     if (phase === 'custom') instructionRef.current?.focus();
@@ -55,16 +62,22 @@ export function AiAssist({
   if (!anchor) return null;
 
   const run = async (chosen: AiAction, customInstruction = '') => {
+    if (chosen.needsPassage && words < MIN_PASSAGE_WORDS) {
+      toast.info(`"${chosen.label}" needs something to work with — select at least ${MIN_PASSAGE_WORDS} words.`);
+      return;
+    }
     setAction(chosen);
     setPhase('running');
     try {
       const text = await transformSelection({
         action: chosen.id,
-        // "Continue writing" has nothing selected: feed it the run-up instead.
-        selection: hasSelection ? passage : content.slice(Math.max(0, selection.start - CONTEXT_CHARS), selection.start),
+        // "Continue writing" has nothing selected: the run-up becomes the
+        // passage. Sending it as `before` as well would put the identical text
+        // in the prompt twice, once labelled "do not rewrite it".
+        selection: hasSelection ? passage : runUp,
         format,
         instruction: customInstruction,
-        before: content.slice(Math.max(0, selection.start - CONTEXT_CHARS), selection.start),
+        before: hasSelection ? runUp : '',
         after: content.slice(selection.end, selection.end + CONTEXT_CHARS),
         title,
       });
@@ -83,7 +96,11 @@ export function AiAssist({
     <div className="ai-assist" style={{ left: anchor.x, top: anchor.y }} role="dialog" aria-label="AI edit">
       <div className="ai-assist-head">
         <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--accent-400)' }} />
-        <span>{phase === 'result' && action ? action.label : hasSelection ? `${passage.trim().split(/\s+/).length} words selected` : 'At the cursor'}</span>
+        <span>
+          {phase === 'result' && action ? action.label
+            : hasSelection ? `${words} ${words === 1 ? 'word' : 'words'} selected`
+              : 'At the cursor'}
+        </span>
         <IconButton className="ml-auto" onClick={onClose} aria-label="Close"><X className="h-3.5 w-3.5" /></IconButton>
       </div>
 
@@ -144,18 +161,24 @@ export function AiAssist({
         <div className="ai-assist-result">
           <pre className="ai-assist-preview">{result}</pre>
           <div className="ai-assist-actions">
+            {/* A rewrite belongs back in the document; an explanation is
+                something you read, so pushing it into the page is the wrong
+                thing to highlight. */}
             {action.replaces && hasSelection && (
               <button className="ai-btn ai-btn--primary" onClick={() => { onReplace(result); onClose(); }}>
                 <Check className="h-3 w-3" /> Replace
               </button>
             )}
             <button
-              className={`ai-btn${action.replaces && hasSelection ? '' : ' ai-btn--primary'}`}
+              className={`ai-btn${action.replaces && !hasSelection ? ' ai-btn--primary' : ''}`}
               onClick={() => { onInsertAfter(result); onClose(); }}
             >
               <CornerDownLeft className="h-3 w-3" /> Insert below
             </button>
-            <button className="ai-btn" onClick={() => copyText(result).then(() => toast.success('Copied'))}>
+            <button
+              className={`ai-btn${action.replaces ? '' : ' ai-btn--primary'}`}
+              onClick={() => copyText(result).then(() => toast.success('Copied'))}
+            >
               <Copy className="h-3 w-3" /> Copy
             </button>
             <button className="ai-btn" onClick={() => run(action, instruction)}>

@@ -21,6 +21,7 @@ import { CoAuthorsDialog } from './components/CoAuthorsDialog';
 import { ImageDialog } from './components/ImageDialog';
 import { PeerCursors } from './components/PeerCursors';
 import { activeNode, buildOutline } from './lib/outline';
+import { stripLeadingHeading } from './lib/plan';
 import { countWords, documentStats } from './lib/stats';
 import { caretPosition, caretIndexFromPoint, insertBlock, lineAt, offsetOfLine, separatorFor } from './lib/textOps';
 import type { EditorAction } from './lib/actions';
@@ -41,6 +42,7 @@ export function EditorPage() {
   const doc = useDocument(user?.username || user?.given_name || 'Anonymous');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef('');
   const linesRef = useRef<HTMLPreElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,8 @@ export function EditorPage() {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showImage, setShowImage] = useState(false);
+
+  useEffect(() => { contentRef.current = doc.content; }, [doc.content]);
 
   useEffect(() => { setOptions(loadOptions()); }, []);
   const updateOptions = useCallback((patch: Partial<ViewOptions>) => {
@@ -131,6 +135,57 @@ export function EditorPage() {
     editing.apply(insertBlock(doc.content, text, at, separatorFor(doc.format)));
     if (message) toast.success(message);
   }, [doc.content, doc.format, editing]);
+
+  /**
+   * File a generated section under its own heading.
+   *
+   * Sections are written in whatever order they are clicked, so the heading
+   * may already be in the page — drafted from the outline — or not exist yet.
+   * Appending everything to the end would scatter sections away from the
+   * structure the writer just laid out.
+   */
+  const insertSection = useCallback((text: string, title: string, replace = false) => {
+    const current = contentRef.current;
+    const nodes = buildOutline(current, doc.format);
+    const target = nodes.find(
+      node => node.label.trim().toLowerCase() === title.trim().toLowerCase(),
+    );
+
+    // Nothing to file it under: the section keeps its own heading and lands
+    // at the end.
+    if (!target) {
+      const result = insertBlock(current, text.trim(), current.length, '\n\n');
+      contentRef.current = result.content;
+      editing.apply(result);
+      return;
+    }
+
+    // The heading is already on the page, so the copy the model wrote would be
+    // a duplicate. The body goes directly beneath its own heading — before the
+    // *next heading of any level*, not at the end of the whole section. A
+    // parent's introduction belongs above its subsections, not after them.
+    const body = stripLeadingHeading(text, title, doc.format).trim();
+    const following = nodes.find(node => node.offset > target.offset);
+    const sectionEnd = following ? following.offset : current.length;
+
+    // Rewriting a section that is already on the page replaces what is under
+    // that heading. Appending instead would leave two versions of the same
+    // section stacked on top of each other, which is never the intent behind
+    // clicking a finished row again.
+    if (replace) {
+      const lineEnd = current.indexOf('\n', target.offset);
+      const headingEnd = lineEnd === -1 ? current.length : lineEnd;
+      const cleared = current.slice(0, headingEnd) + '\n' + current.slice(sectionEnd);
+      const result = insertBlock(cleared, body, headingEnd + 1, '\n\n');
+      contentRef.current = result.content;
+      editing.apply(result);
+      return;
+    }
+
+    const result = insertBlock(current, body, sectionEnd, '\n\n');
+    contentRef.current = result.content;
+    editing.apply(result);
+  }, [doc.format, editing]);
 
   const replaceSelection = useCallback((text: string) => {
     const { start, end } = selection;
@@ -281,6 +336,7 @@ export function EditorPage() {
           projectName={doc.name}
           content={doc.content}
           onInsert={insertAtCaret}
+          onInsertSection={insertSection}
         />
 
         {showEditor && options.outline && (

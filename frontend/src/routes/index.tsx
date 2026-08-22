@@ -15,11 +15,11 @@ function ProductPreview() {
         <span className="preview-dot" />
         <span className="preview-dot" />
         <span className="preview-dot" />
-        <span className="ml-2 text-[11px] text-white/25">Photosynthesis — lesson plan</span>
+        <span className="ml-2 text-[11px] text-[var(--ink-ghost)]">Photosynthesis — lesson plan</span>
       </div>
       <div className="preview-body">
         <div className="preview-rail">
-          <div className="text-[10px] uppercase tracking-wider text-white/20 mb-2.5 px-1">Hierarchy</div>
+          <div className="text-[10px] uppercase tracking-wider text-[var(--ink-ghost)] mb-2.5 px-1">Hierarchy</div>
           <div className="preview-node">Light reactions</div>
           <div className="preview-node preview-node--sub">Photosystem II</div>
           <div className="preview-node preview-node--active">
@@ -59,7 +59,7 @@ function Home() {
           <h1 className="animate-fade-in font-brand leading-none mb-6 mt-4"
             style={{
               fontSize: 'clamp(3.5rem, 13vw, 9rem)',
-              background: 'linear-gradient(140deg, #e2e8f0 0%, #94a3b8 40%, #cbd5e1 70%, #e2e8f0 100%)',
+              background: 'linear-gradient(135deg, var(--ink), var(--ink-2))',
               backgroundSize: '300% 300%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -68,14 +68,14 @@ function Home() {
             Topical
           </h1>
 
-          <p className="animate-fade-in-delay-1 text-lg md:text-2xl font-light text-white/60 max-w-2xl leading-relaxed tracking-wide mb-4">
+          <p className="animate-fade-in-delay-1 text-lg md:text-2xl font-light text-[var(--ink-muted)] max-w-2xl leading-relaxed tracking-wide mb-4">
             Where the{' '}
-            <span className="text-white/90 font-medium">human brain</span>
+            <span className="text-[var(--ink)] font-medium">human brain</span>
             {' '}works with{' '}
-            <span className="text-white/90 font-medium">artificial intelligence</span>
+            <span className="text-[var(--ink)] font-medium">artificial intelligence</span>
           </p>
 
-          <p className="animate-fade-in-delay-2 text-sm md:text-base text-white/30 max-w-xl leading-relaxed mb-9">
+          <p className="animate-fade-in-delay-2 text-sm md:text-base text-[var(--ink-faint)] max-w-xl leading-relaxed mb-9">
             Turn any topic into a structured, publishable document — lesson plans,
             research papers, technical docs. You stay the editor.
           </p>
@@ -93,8 +93,8 @@ function Home() {
               </span>
             </a>
             <Link to="/community"
-              className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium text-white/35 hover:text-white/70 hover:border-white/15 transition-all duration-300"
-              style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium text-[var(--ink-faint)] hover:text-[var(--ink-2)] hover:border-[var(--line-strong)] transition-all duration-300"
+              style={{ border: '1px solid var(--line-soft)' }}>
               <Globe className="h-4 w-4" />
               Explore community
             </Link>
@@ -118,8 +118,8 @@ function Home() {
               <div key={n} className="step-card">
                 <span className="step-num">{n}</span>
                 <div className="bento-icon"><Icon className="h-4 w-4" /></div>
-                <h3 className="text-sm font-semibold text-white/80 mb-2">{title}</h3>
-                <p className="text-white/32 text-[13px] leading-relaxed">{desc}</p>
+                <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">{title}</h3>
+                <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -140,8 +140,8 @@ function Home() {
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="flex-1">
                   <div className="bento-icon"><Brain className="h-4 w-4" /></div>
-                  <h3 className="text-base font-semibold text-white/85 mb-2">Human + AI collaboration</h3>
-                  <p className="text-white/35 text-[13px] leading-relaxed max-w-lg">
+                  <h3 className="text-base font-semibold text-[var(--ink)] mb-2">Human + AI collaboration</h3>
+                  <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed max-w-lg">
                     AI generates structured content from across the web. Nothing lands in your
                     document until you put it there — you guide, edit, and arrange with full
                     creative control.
@@ -157,40 +157,40 @@ function Home() {
 
             <div className="bento-item bento-item--wide">
               <div className="bento-icon"><Zap className="h-4 w-4" /></div>
-              <h3 className="text-sm font-semibold text-white/80 mb-2">Instant generation</h3>
-              <p className="text-white/32 text-[13px] leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">Instant generation</h3>
+              <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">
                 Search a topic, get a full content hierarchy, then generate individual sections in seconds.
               </p>
             </div>
 
             <div className="bento-item bento-item--wide">
               <div className="bento-icon"><Layers className="h-4 w-4" /></div>
-              <h3 className="text-sm font-semibold text-white/80 mb-2">MDX &amp; LaTeX</h3>
-              <p className="text-white/32 text-[13px] leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">MDX &amp; LaTeX</h3>
+              <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">
                 Interactive MDX documents, or professional LaTeX for academia, engineering, and science.
               </p>
             </div>
 
             <div className="bento-item">
               <div className="bento-icon"><PenLine className="h-4 w-4" /></div>
-              <h3 className="text-sm font-semibold text-white/80 mb-2">Drop-in placement</h3>
-              <p className="text-white/32 text-[13px] leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">Drop-in placement</h3>
+              <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">
                 Drag any section straight into the document, exactly where your cursor is.
               </p>
             </div>
 
             <div className="bento-item">
               <div className="bento-icon"><Globe className="h-4 w-4" /></div>
-              <h3 className="text-sm font-semibold text-white/80 mb-2">Publish &amp; share</h3>
-              <p className="text-white/32 text-[13px] leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">Publish &amp; share</h3>
+              <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">
                 Make any project public so others can read and learn from it.
               </p>
             </div>
 
             <div className="bento-item">
               <div className="bento-icon"><BookOpen className="h-4 w-4" /></div>
-              <h3 className="text-sm font-semibold text-white/80 mb-2">Community library</h3>
-              <p className="text-white/32 text-[13px] leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--ink-2)] mb-2">Community library</h3>
+              <p className="text-[var(--ink-faint)] text-[13px] leading-relaxed">
                 Browse lesson plans, research summaries, and technical docs from others.
               </p>
             </div>
@@ -206,7 +206,7 @@ function Home() {
               <span className="eyebrow"><KeyRound className="h-3 w-3" /> Your key, your model</span>
             </div>
             <h2 className="section-title mb-3">Start with the model you already pay for</h2>
-            <p className="text-white/32 text-sm leading-relaxed mb-8 max-w-md mx-auto">
+            <p className="text-[var(--ink-faint)] text-sm leading-relaxed mb-8 max-w-md mx-auto">
               Add a provider key in your profile and start generating. Keys stay in your
               browser and are never stored on our servers.
             </p>
@@ -225,18 +225,18 @@ function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="py-10 mt-auto" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingInline: 'var(--gutter)' }}>
+      <footer className="py-10 mt-auto" style={{ borderTop: '1px solid var(--line-soft)', paddingInline: 'var(--gutter)' }}>
         <div className="mx-auto" style={{ maxWidth: '64rem' }}>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <span className="font-brand text-lg" style={{ background: 'linear-gradient(135deg,#94a3b8,#cbd5e1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Topical</span>
-              <span className="text-white/10 text-xs">·</span>
-              <span className="text-xs text-white/15">Where humans and AI create together</span>
+              <span className="font-brand text-lg" style={{ background: 'linear-gradient(135deg, var(--ink), var(--ink-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Topical</span>
+              <span className="text-[var(--ink-ghost)] text-xs">·</span>
+              <span className="text-xs text-[var(--ink-ghost)]">Where humans and AI create together</span>
             </div>
             <div className="flex gap-6 items-center">
-              <Link to="/community" className="text-xs text-white/20 hover:text-white/45 transition-colors">Community</Link>
-              <Link to="/about" className="text-xs text-white/20 hover:text-white/45 transition-colors">About</Link>
-              <div className="text-xs text-white/10">© {new Date().getFullYear()} Topical</div>
+              <Link to="/community" className="text-xs text-[var(--ink-ghost)] hover:text-[var(--ink-muted)] transition-colors">Community</Link>
+              <Link to="/about" className="text-xs text-[var(--ink-ghost)] hover:text-[var(--ink-muted)] transition-colors">About</Link>
+              <div className="text-xs text-[var(--ink-ghost)]">© {new Date().getFullYear()} Topical</div>
             </div>
           </div>
         </div>

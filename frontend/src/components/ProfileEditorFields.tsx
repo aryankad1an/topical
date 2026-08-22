@@ -75,8 +75,8 @@ export function ProfileEditorFields({
             )}
           </Avatar>
           {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[rgba(25,25,23,0.45)]">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--ink)]" />
             </div>
           )}
         </div>
@@ -102,7 +102,7 @@ export function ProfileEditorFields({
           value={username}
           onChange={(e) => onUsernameChange(e.target.value)}
           placeholder="Choose a unique username"
-          className="max-w-[280px] bg-black/40 border-white/10"
+          className="max-w-[280px] bg-[var(--surface)] border-[var(--line)]"
           disabled={disabled}
         />
       </div>
@@ -114,7 +114,7 @@ export function ProfileEditorFields({
           value={bio}
           onChange={(e) => onBioChange(e.target.value.slice(0, BIO_MAX_LENGTH))}
           placeholder="Tell the community a bit about yourself"
-          className="bg-black/40 border-white/10 resize-none"
+          className="bg-[var(--surface)] border-[var(--line)] resize-none"
           rows={3}
           disabled={disabled}
         />
