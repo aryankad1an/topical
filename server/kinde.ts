@@ -1,3 +1,16 @@
+/**
+ * Authentication, via Kinde's hosted authorization-code flow.
+ *
+ * Both Kinde and the database are optional at boot: a missing `KINDE_*` block
+ * warns and swaps in a `dev@localhost` user so the app is usable locally with
+ * no accounts to create, and `getUser` is still the only way a handler learns
+ * who is calling. Comment the `KINDE_*` lines out of `.env` to get that mock
+ * user back once real credentials are set.
+ *
+ * The session lives entirely in httpOnly cookies — there is no server-side
+ * session store to keep, and nothing to invalidate on restart.
+ */
+
 import {
   createKindeServerClient,
   GrantType,

@@ -1,3 +1,12 @@
+/**
+ * The database handle, or `null` when `DATABASE_URL` is unset.
+ *
+ * Null rather than a throw, so the server still boots for anyone who only
+ * wants the frontend: routes that need it mount `requireDb` (see
+ * `../middleware`), which answers 503 with an actionable message, and their
+ * handlers can then safely use `db!`.
+ */
+
 import { drizzle } from "drizzle-orm/postgres-js";
 
 import postgres from "postgres";

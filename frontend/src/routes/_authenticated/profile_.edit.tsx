@@ -36,6 +36,7 @@ function EditProfile() {
 
   const usernameError =
     username && username.length < 3 ? "At least 3 characters" :
+    username && username.length > 30 ? "At most 30 characters" :
     username && !/^[a-zA-Z0-9_-]+$/.test(username) ? "Letters, numbers, hyphen and underscore only" :
     null;
 

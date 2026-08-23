@@ -56,7 +56,7 @@ function ProvidersPage() {
           "X-AI-Model": resolvedModel,
           "X-AI-Api-Key": key,
         },
-        body: JSON.stringify({ query: "test", limit: 1 }),
+        body: JSON.stringify({ query: "test" }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);

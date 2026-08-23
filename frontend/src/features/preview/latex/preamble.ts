@@ -72,7 +72,7 @@ export function extractPreamble(src: string): Preamble {
 
     let params = 0;
     let optionalDefault: string | undefined;
-    let arity = readOptional(src, cursor);
+    const arity = readOptional(src, cursor);
     if (arity) {
       params = Number(arity.body.trim()) || 0;
       cursor = arity.end;

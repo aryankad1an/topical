@@ -1,4 +1,4 @@
-import { Slash, Sparkles, Upload } from 'lucide-react';
+import { ListTree, Slash, Upload } from 'lucide-react';
 import type { DocFormat } from '@/lib/types';
 import { Chip } from '@/components/ui/primitives';
 import { actionById, TOOLBAR_IDS, type EditorAction } from '../lib/actions';
@@ -7,9 +7,9 @@ interface Props {
   format: DocFormat;
   onRun: (action: EditorAction) => void;
   onUploadImage: () => void;
-  /** Whether the generation panel is showing. */
-  aiOpen: boolean;
-  onToggleAi: () => void;
+  /** Whether the outline rail is showing. */
+  outlineOpen: boolean;
+  onToggleOutline: () => void;
 }
 
 const SHORTCUT_HINT: Record<string, string> = {
@@ -18,7 +18,7 @@ const SHORTCUT_HINT: Record<string, string> = {
 };
 
 /** Formatting row. Every button is the same action the `/` menu runs. */
-export function Toolbar({ format, onRun, onUploadImage, aiOpen, onToggleAi }: Props) {
+export function Toolbar({ format, onRun, onUploadImage, outlineOpen, onToggleOutline }: Props) {
   return (
     <div className="editor-toolbar">
       <Chip tone={format === 'latex' ? 'latex' : 'accent'} mono>
@@ -27,15 +27,17 @@ export function Toolbar({ format, onRun, onUploadImage, aiOpen, onToggleAi }: Pr
 
       <div className="toolbar-divider" />
 
+      {/* The outline is the spine of the document here, so its toggle belongs
+          on the bar rather than three clicks deep in the view menu. */}
       <button
         className="toolbar-toggle"
-        data-active={aiOpen}
-        onClick={onToggleAi}
-        aria-pressed={aiOpen}
-        title={aiOpen ? 'Hide the generation panel' : 'Show the generation panel'}
+        data-active={outlineOpen}
+        onClick={onToggleOutline}
+        aria-pressed={outlineOpen}
+        title={outlineOpen ? 'Hide the outline  ⌘\\' : 'Show the outline  ⌘\\'}
       >
-        <Sparkles className="h-3.5 w-3.5" />
-        Generate
+        <ListTree className="h-3.5 w-3.5" />
+        Outline
       </button>
 
       <div className="toolbar-divider" />

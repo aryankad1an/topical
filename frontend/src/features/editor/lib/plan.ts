@@ -1,17 +1,17 @@
 /**
- * The generation plan — the editable outline in the AI panel.
+ * A proposed outline, and the heading markup an outline turns into.
  *
- * Distinct from `outline.ts`, which reads headings *out of* a finished
- * document. This is the other direction: a structure the writer edits before
- * any prose exists, which then becomes the document's headings.
+ * This is *not* the editor's outline — that is the document's own headings,
+ * read straight out of the text (see `sections.ts`). A `PlanItem[]` only ever
+ * represents structure that does not exist on the page yet: what a model has
+ * suggested and the writer has not accepted.
  *
- * Stored flat with an explicit level rather than as a nested tree. Nesting
- * makes indent, outdent and reorder into tree surgery; a flat list with a
- * depth number makes each of them a slice and a number change, and it maps
- * one-to-one onto the heading levels it ends up as.
+ * Flat, with an explicit level rather than nesting, because that is the shape
+ * headings actually have and it maps one-to-one onto `#`/`\section` depth.
  */
 
 import type { DocFormat, TopicHierarchy } from '@/lib/types';
+import { headingLabel } from './outline';
 
 export interface PlanItem {
   id: string;
@@ -57,121 +57,17 @@ export function normalise(items: PlanItem[]): PlanItem[] {
   });
 }
 
-/**
- * An item and everything nested under it. Indent, outdent, move and delete all
- * act on this range — moving a parent while leaving its children behind is
- * never what someone means by "move this section".
- */
-export function subtree(items: PlanItem[], index: number): number {
-  let end = index + 1;
-  while (end < items.length && items[end].level > items[index].level) end += 1;
-  return end;
-}
-
-export function indexOfId(items: PlanItem[], id: string): number {
-  return items.findIndex(item => item.id === id);
-}
-
-export function indent(items: PlanItem[], id: string): PlanItem[] {
-  const i = indexOfId(items, id);
-  // The first row has no previous sibling to nest under, so it cannot indent.
-  if (i <= 0) return items;
-  if (items[i].level > items[i - 1].level) return items; // already as deep as its parent allows
-  const end = subtree(items, i);
-  const next = items.map((item, j) =>
-    j >= i && j < end ? { ...item, level: Math.min(item.level + 1, MAX_PLAN_LEVEL) } : item);
-  return normalise(next);
-}
-
-export function outdent(items: PlanItem[], id: string): PlanItem[] {
-  const i = indexOfId(items, id);
-  if (i < 0 || items[i].level <= 1) return items;
-  const end = subtree(items, i);
-  const next = items.map((item, j) =>
-    j >= i && j < end ? { ...item, level: item.level - 1 } : item);
-  return normalise(next);
-}
-
-/**
- * Swap an item, with its children, past the sibling above or below it.
- *
- * Strictly between siblings: an item with no sibling in that direction stays
- * put rather than being hoisted out of its parent, which would silently
- * change its depth as well as its position.
- */
-export function move(items: PlanItem[], id: string, direction: -1 | 1): PlanItem[] {
-  const i = indexOfId(items, id);
-  if (i < 0) return items;
-  const level = items[i].level;
-  const end = subtree(items, i);
-  const block = items.slice(i, end);
-
-  if (direction === -1) {
-    // Walk back to the start of the previous block at this level, stopping if
-    // a shallower item appears first — that is this item's parent.
-    let start = -1;
-    for (let j = i - 1; j >= 0; j -= 1) {
-      if (items[j].level < level) break;
-      if (items[j].level === level) { start = j; break; }
-    }
-    if (start < 0) return items;
-    return normalise([
-      ...items.slice(0, start),
-      ...block,
-      ...items.slice(start, i),
-      ...items.slice(end),
-    ]);
-  }
-
-  // Moving down: the next sibling is whatever sits at `end`, provided it is
-  // still at this level rather than closing the parent out.
-  if (end >= items.length || items[end].level !== level) return items;
-  const afterSibling = subtree(items, end);
-  return normalise([
-    ...items.slice(0, i),
-    ...items.slice(end, afterSibling),
-    ...block,
-    ...items.slice(afterSibling),
-  ]);
-}
-
-/** A new sibling directly below the item, past any children it has. */
-export function addAfter(items: PlanItem[], id: string, title = ''): { items: PlanItem[]; created: PlanItem } {
-  const i = indexOfId(items, id);
-  const created = planItem(title, i < 0 ? 1 : items[i].level);
-  if (i < 0) return { items: normalise([...items, created]), created };
-  const end = subtree(items, i);
-  return { items: normalise([...items.slice(0, end), created, ...items.slice(end)]), created };
-}
-
-export function remove(items: PlanItem[], id: string): PlanItem[] {
-  const i = indexOfId(items, id);
-  if (i < 0) return items;
-  return normalise([...items.slice(0, i), ...items.slice(subtree(items, i))]);
-}
-
-export function rename(items: PlanItem[], id: string, title: string): PlanItem[] {
-  return items.map(item => (item.id === id ? { ...item, title } : item));
-}
-
-/** One heading, in whichever markup the document is written in. */
-export function headingFor(item: PlanItem, format: DocFormat): string {
+/** One heading line, in whichever markup the document is written in. */
+export function headingMarkup(title: string, level: number, format: DocFormat): string {
+  const depth = Math.max(1, Math.min(level, MAX_PLAN_LEVEL));
   if (format === 'latex') {
-    return `\\${LATEX_COMMANDS[Math.min(item.level, LATEX_COMMANDS.length) - 1]}{${item.title}}`;
+    return `\\${LATEX_COMMANDS[Math.min(depth, LATEX_COMMANDS.length) - 1]}{${title}}`;
   }
-  return `${'#'.repeat(Math.min(item.level, MAX_PLAN_LEVEL))} ${item.title}`;
-}
-
-/** The whole plan as a heading skeleton, ready to drop into the document. */
-export function planToDocument(items: PlanItem[], format: DocFormat): string {
-  return items
-    .filter(item => item.title.trim())
-    .map(item => headingFor(item, format))
-    .join('\n\n');
+  return `${'#'.repeat(depth)} ${title}`;
 }
 
 /** Indented plain text — what the model reads as "the rest of the document". */
-export function planToOutlineText(items: PlanItem[]): string {
+export function planToOutlineText(items: { title: string; level: number }[]): string {
   return items
     .filter(item => item.title.trim())
     .map(item => `${'  '.repeat(item.level - 1)}- ${item.title}`)
@@ -185,7 +81,9 @@ export function planToOutlineText(items: PlanItem[]): string {
  */
 export function stripLeadingHeading(text: string, title: string, format: DocFormat): string {
   const body = text.trimStart();
-  const wanted = title.trim().toLowerCase();
+  // Compared as labels: the model may emit `## **Topic**` for a section the
+  // outline calls `Topic`, and a raw comparison would leave both headings in.
+  const wanted = headingLabel(title).toLowerCase();
 
   const pattern = format === 'latex'
     ? /^\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?\{([^}]*)\}[^\S\n]*\n?/
@@ -193,6 +91,6 @@ export function stripLeadingHeading(text: string, title: string, format: DocForm
 
   const match = pattern.exec(body);
   if (!match) return body;
-  if (match[1].trim().toLowerCase() !== wanted) return body;
+  if (headingLabel(match[1]).toLowerCase() !== wanted) return body;
   return body.slice(match[0].length).trimStart();
 }

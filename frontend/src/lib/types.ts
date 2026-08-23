@@ -15,8 +15,6 @@ export interface SavedLessonTopic {
   isSubtopic: boolean;
   parentTopic?: string;
   mainTopic?: string;
-  /** Optional ordering hint, preserved from the generation hierarchy. */
-  order?: number;
 }
 
 export interface LessonPlan {

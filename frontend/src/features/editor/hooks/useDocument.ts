@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouterState } from '@tanstack/react-router';
+import type { EditorSearch } from '@/routes/_authenticated/editor';
 import { toast } from 'sonner';
 import { getLessonPlanById, saveLessonPlan } from '@/lib/api';
 import { stripFrontmatter } from '@/lib/utils';
@@ -69,12 +70,9 @@ export function useDocument(currentUsername: string): DocumentModel {
   // second document from the command palette or the community list reuses this
   // component, and a mount-only read would leave the previous document on
   // screen under the new title.
-  const search = useRouterState({ select: state => state.location.search }) as {
-    id?: string | number;
-    type?: string;
-  };
-  const documentId = search.id === undefined ? null : Number(search.id);
-  const requestedFormat = search.type === 'latex' ? 'latex' : 'mdx';
+  const search = useRouterState({ select: state => state.location.search }) as EditorSearch;
+  const documentId = search.id ?? null;
+  const requestedFormat = search.type ?? 'mdx';
 
   useEffect(() => {
     if (!documentId || Number.isNaN(documentId)) {

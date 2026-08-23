@@ -21,8 +21,11 @@ export interface AwarenessCursor {
   cursor?: { index: number; length: number };
 }
 
+// Literal hex only. These are interpolated into 8-digit hex for the cursor's
+// glow (`${color}50`), so a `var(--…)` entry here produced `var(--x)50` —
+// invalid CSS, silently dropping the shadow for whoever drew that colour.
 const COLORS = [
-  '#f472b6', '#fb923c', '#a78bfa', '#34d399', 'var(--latex-500)',
+  '#f472b6', '#fb923c', '#a78bfa', '#34d399', '#4a6fa5',
   '#fbbf24', '#e879f9', '#22d3ee', '#fb7185', '#a3e635',
 ];
 

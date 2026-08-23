@@ -1,0 +1,933 @@
+/* Editor — The writing screen: chrome, outline rail, and the code surface.
+
+   Split out of a single 3,700-line index.css; the import order in
+   index.css is the cascade order, so these files stay in sequence. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE EDITOR
+   A writing tool, so the chrome stays quiet and the text is the only thing
+   with real contrast. Every surface below composes from the shared tokens.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.editor-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.editor-loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 100vh; background: var(--bg);
+}
+
+/* ── Header ── */
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--ink-a02);
+}
+
+.editor-title {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 5px 9px;
+  border-radius: 8px;
+  min-width: 6ch;
+  max-width: 28ch;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.editor-title:hover { background: var(--ink-a04); }
+.editor-title:focus { background: var(--ink-a04); }
+
+.editor-byline {
+  display: flex; align-items: center; gap: 7px;
+  padding-left: 11px;
+  border-left: 1px solid var(--line);
+  font-size: 12px;
+  min-width: 0;
+}
+.editor-byline-label { color: var(--ink-ghost); }
+.editor-byline-name { color: var(--ink-2); font-weight: 500; }
+.editor-byline-co {
+  color: var(--ink-faint);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Overlapping avatars: the offset is a negative margin on each, since a
+   negative `gap` is not a thing. */
+.editor-peers { display: flex; align-items: center; padding-left: 10px; }
+.editor-peer {
+  height: 25px; width: 25px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10.5px; font-weight: 700;
+  color: var(--accent-ink);
+  border: 1.5px solid var(--bg);
+  margin-left: -6px;
+}
+.editor-peer--more { background: var(--ink-a08); color: var(--ink-2); box-shadow: none; }
+
+.editor-save { height: 30px; padding: 0 15px; font-size: 12px; border-radius: 9px; }
+
+/* One dismiss boundary around every header popover. */
+.editor-menus { display: flex; align-items: center; gap: 2px; }
+
+/* Popover menus in the header */
+.editor-menu-wrap { position: relative; }
+.editor-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 214px;
+  padding: 6px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px -20px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  animation: cmdk-rise 0.16s var(--ease-out);
+}
+.editor-menu-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--ink-ghost);
+  padding: 8px 9px 5px;
+}
+.editor-menu-item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.editor-menu-item:hover { background: var(--ink-a04); color: var(--ink); }
+.editor-menu-item[data-on='true'] { color: var(--accent-500); }
+.editor-menu-item svg { opacity: 0.75; }
+.editor-menu-spacer { width: 14px; }
+.editor-menu-row { display: flex; align-items: center; gap: 8px; padding: 4px 9px 8px; }
+.editor-menu-value {
+  flex: 1; text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px; color: var(--ink-muted);
+}
+
+/* ── Formatting toolbar ── */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  padding: 5px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--ink-a02);
+}
+.toolbar-btn {
+  height: 29px; width: 29px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  color: var(--ink-muted);
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.toolbar-btn:hover { color: var(--ink); background: var(--ink-a04); }
+.toolbar-btn[data-active='true'] { color: var(--accent-500); background: var(--accent-soft); }
+/* A toggle that says what it toggles — an unlabelled icon leaves you guessing
+   whether the click registered. */
+.toolbar-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 29px; padding: 0 11px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-muted);
+  border: 1px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.toolbar-toggle:hover { color: var(--ink); background: var(--ink-a04); }
+.toolbar-toggle[data-active='true'] {
+  color: var(--accent-500);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+.toolbar-divider { width: 1px; height: 18px; margin: 0 7px; background: var(--ink-a06); }
+.toolbar-hint {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: auto; padding-right: 4px;
+  font-size: 11px; color: var(--ink-ghost);
+}
+.toolbar-hint kbd {
+  font-family: var(--font-mono);
+  padding: 1px 5px; border-radius: 5px;
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+}
+
+/* ── Panes ── */
+.editor-main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+.editor-pane { position: relative; height: 100%; display: flex; flex-direction: column; min-width: 0; }
+.editor-preview { height: 100%; min-width: 0; overflow: hidden; display: flex; }
+
+.editor-divider {
+  width: 5px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  background: linear-gradient(to right, transparent 40%, var(--ink-a06) 40%, var(--ink-a06) 60%, transparent 60%);
+  transition: background var(--dur-fast) var(--ease-out);
+  z-index: 5;
+}
+.editor-divider:hover, .editor-divider:active {
+  background: linear-gradient(to right, transparent 33%, var(--accent-line) 33%, var(--accent-line) 67%, transparent 67%);
+}
+
+/* ═══ The editing surface ═══
+   A textarea over a highlighted mirror. Both must agree on every metric that
+   affects where a glyph lands, so they share one class. */
+.code-surface {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  --code-size: 16px;
+  --code-pad-x: 1.75rem;
+  --code-gutter: 0rem;
+}
+.code-surface[data-gutter='true'] { --code-gutter: 2.75rem; }
+
+.code-text {
+  position: absolute;
+  inset: 0;
+  /* Both layers reserve the scrollbar, or the textarea wraps a few characters
+     earlier than the mirror and the two drift apart line by line. */
+  scrollbar-gutter: stable;
+  margin: 0;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: var(--code-size);
+  line-height: 1.75;
+  letter-spacing: 0.005em;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* Room to type past the last line without the caret sitting on the bottom
+     edge — a fixed measure, not 40vh, which on a tall screen was half a
+     screenful of nothing to scroll through. */
+  padding: 1.75rem var(--code-pad-x) 12rem calc(var(--code-pad-x) + var(--code-gutter));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.code-mirror {
+  z-index: 0;
+  color: var(--ink-2);
+  pointer-events: none;
+  counter-reset: code-line;
+  overflow: hidden;
+}
+
+.code-input {
+  z-index: 1;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--accent-400);
+  resize: none;
+  outline: none;
+}
+.code-input::placeholder { color: var(--ink-ghost); }
+.code-input::selection { background: rgba(217,119,87,0.22); }
+
+/* One element per source line: gutter numbers hang in the padding, and focus
+   mode has something to dim. */
+.cl {
+  counter-increment: code-line;
+  position: relative;
+  min-height: calc(var(--code-size) * 1.75);
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+/* The number is its own box, matched to the height of one line so it sits on
+   the same optical row as the text. Inheriting the line-height would centre it
+   against its own smaller font instead, which reads as a constant offset. */
+.code-surface[data-gutter='true'] .cl::before {
+  content: counter(code-line);
+  position: absolute;
+  left: calc(-1 * var(--code-gutter));
+  top: 0;
+  width: 2rem;
+  height: calc(var(--code-size) * 1.75);
+  line-height: calc(var(--code-size) * 1.75);
+  text-align: right;
+  font-size: 0.72em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-ghost);
+  user-select: none;
+}
+.code-surface[data-focus='true'] .cl { opacity: 0.32; }
+.code-surface[data-focus='true'] .cl-active { opacity: 1; }
+.code-surface[data-focus='true'] .cl-active::before { color: var(--accent-400); }
+
+/* ── Tokens ── */
+.tok-head    { color: var(--accent-500); font-weight: 700; }
+.tok-strong  { color: var(--ink); font-weight: 700; }
+.tok-em      { color: var(--ink-2); font-style: italic; }
+.tok-del     { color: var(--ink-faint); text-decoration: line-through; }
+.tok-code    { color: var(--syn-code); }
+.tok-math    { color: var(--latex-500); }
+.tok-link    { color: var(--syn-link); }
+.tok-url     { color: rgba(193,95,60,0.45); }
+.tok-quote   { color: var(--ink-muted); font-style: italic; }
+.tok-marker  { color: var(--accent-500); }
+.tok-rule    { color: var(--ink-ghost); }
+.tok-tag     { color: var(--syn-tag); }
+.tok-cmd     { color: var(--syn-cmd); }
+.tok-env     { color: var(--latex-500); font-weight: 600; }
+.tok-comment { color: var(--ink-ghost); font-style: italic; }
+.tok-punct   { color: var(--ink-faint); }
+.tok-find {
+  background: rgba(217,119,87,0.18);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(217,119,87,0.3);
+}
+.tok-find-active {
+  background: rgba(217,119,87,0.4);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(217,119,87,0.7);
+}
+
+/* ── Outline rail ──
+   The document's structure and everything that acts on it: the writer edits
+   it by hand, the model proposes changes to it, and each row is the handle
+   for writing that section. Width is dragged, so it can be a thin navigator
+   or a wide working outline. */
+.outline-rail {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line-soft);
+  background: var(--ink-a02);
+  overflow: hidden;
+}
+.outline-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 12px 9px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.outline-count {
+  font-family: var(--font-mono);
+  padding: 1px 6px; border-radius: 100px;
+  background: var(--ink-a04);
+  color: var(--ink-faint);
+  letter-spacing: 0;
+}
+
+/* The drag handle sits over the border, not beside it, so the rail loses no
+   width to something you only touch occasionally. */
+.outline-resize {
+  position: absolute;
+  top: 0; right: -2px; bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 5;
+}
+.outline-resize:hover { background: var(--accent-line); }
+
+.outline-actions {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 0 10px 9px;
+  flex-shrink: 0;
+}
+.orail-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 0;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+  color: var(--ink-muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.orail-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--line-strong); }
+.orail-btn[data-active='true'] {
+  color: var(--accent-500);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.orail-btn:disabled { opacity: 0.4; }
+
+/* ── Inline prompts ── */
+.orail-prompt {
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 0 10px 10px;
+  padding: 9px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.orail-prompt-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.orail-input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  outline: none;
+}
+.orail-input:focus { border-color: var(--accent-400); box-shadow: 0 0 0 3px var(--accent-soft); }
+.orail-input::placeholder { color: var(--ink-ghost); }
+
+.orail-go {
+  min-height: 0;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 11px; font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-400);
+  border: 1px solid var(--accent-400);
+}
+.orail-go:hover:not(:disabled) { background: var(--accent-500); border-color: var(--accent-500); }
+.orail-go:disabled { opacity: 0.4; }
+
+.orail-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 0;
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.orail-link:hover:not(:disabled) { color: var(--accent-500); }
+.orail-link:disabled { opacity: 0.4; }
+
+/* ── Proposed restructure ──
+   Shown next to the reasoning that produced it. A restructure that lands
+   silently is one nobody can check, so nothing is applied until this is. */
+.orail-proposal {
+  margin: 0 10px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent-line);
+  background: var(--surface);
+  overflow: hidden;
+  flex-shrink: 0;
+  max-height: 46vh;
+  display: flex; flex-direction: column;
+}
+.orail-proposal-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 8px 8px 10px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--accent-500);
+  border-bottom: 1px solid var(--line-soft);
+}
+.orail-summary {
+  padding: 8px 10px;
+  font-size: 11.5px; line-height: 1.5;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line-soft);
+}
+.orail-preview {
+  padding: 7px 10px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--line-soft);
+}
+.orail-preview-row {
+  font-size: 11.5px; line-height: 1.7;
+  color: var(--ink-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.orail-changes { overflow-y: auto; padding: 4px 0; }
+.orail-change {
+  display: flex; gap: 7px;
+  padding: 6px 10px;
+}
+.orail-kind {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  background: var(--ink-a06);
+  border: 1px solid var(--line);
+}
+.orail-kind[data-kind='added']   { color: var(--status-success); background: rgba(61,125,90,0.12); border-color: rgba(61,125,90,0.3); }
+.orail-kind[data-kind='removed'] { color: var(--status-danger); background: rgba(188,76,60,0.12); border-color: rgba(188,76,60,0.3); }
+.orail-kind[data-kind='moved'],
+.orail-kind[data-kind='nested']  { color: var(--accent-500); background: var(--accent-soft); border-color: var(--accent-line); }
+.orail-change-title { font-size: 11.5px; font-weight: 600; color: var(--ink); }
+.orail-change-reason { font-size: 10.5px; line-height: 1.45; color: var(--ink-muted); }
+.orail-proposal-actions {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.outline-source { padding: 0 10px 9px; flex-shrink: 0; }
+.orail-urls { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+
+/* ── Rows ── */
+.outline-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 7px 8px; }
+
+.orow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 5px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--ink-muted);
+  transition: background var(--dur-fast) linear;
+}
+.orow:hover { background: var(--ink-a04); }
+.orow[data-active='true'] { background: var(--accent-soft); }
+
+/* ── Dragging ──
+   The grip is held open by its own width so revealing it on hover doesn't
+   shunt the title sideways. The drop line sits in the gap between rows, which
+   is the only place a "goes here" mark can mean one thing. */
+.orow-grip {
+  display: flex; align-items: center; justify-content: center;
+  width: 11px;
+  flex-shrink: 0;
+  color: var(--ink-ghost);
+  opacity: 0;
+  cursor: grab;
+  transition: opacity var(--dur-fast) linear;
+}
+.orow:hover .orow-grip { opacity: 1; }
+.orow-grip:active { cursor: grabbing; }
+
+.orow[data-dragging='true'] { opacity: 0.45; }
+
+.orow[data-drop='top']::before,
+.orow[data-drop='bottom']::after {
+  content: '';
+  position: absolute;
+  left: 4px; right: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-400);
+}
+.orow[data-drop='top']::before { top: -1px; }
+.orow[data-drop='bottom']::after { bottom: -1px; }
+
+.orow-mark {
+  height: 14px; width: 14px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  color: transparent;
+  transition: all var(--dur-base) var(--ease-out);
+}
+.orow[data-in-doc='true'] .orow-mark {
+  border-color: rgba(61,125,90,0.4);
+  background: rgba(61,125,90,0.12);
+  color: var(--status-success);
+}
+.orow[data-status='generating'] .orow-mark {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-500);
+}
+/* Failed reads as "still to do, and something went wrong" — it stays clickable
+   because clicking it is the retry. */
+.orow[data-status='failed'] .orow-mark {
+  border-color: rgba(188,76,60,0.4);
+  background: rgba(188,76,60,0.12);
+  color: var(--status-danger);
+}
+
+.orow-name {
+  flex: 1;
+  /* The base layer gives every button a 2.5rem tap target. That is right for
+     a lone button and wrong for a list row, which would triple in height. */
+  min-width: 0;
+  min-height: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 0;
+  color: inherit;
+  transition: color var(--dur-fast) linear;
+}
+.orow-name:hover:not(:disabled) { color: var(--accent-500); }
+.orow-name[data-empty='true'] { color: var(--ink-ghost); font-style: italic; }
+.orow-name:disabled { cursor: default; }
+.orow[data-in-doc='true'] .orow-name { color: var(--ink); }
+.orow[data-active='true'] .orow-name { color: var(--accent-500); font-weight: 600; }
+
+.orow-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--accent-line);
+  outline: none;
+}
+.orow-input::placeholder { color: var(--ink-ghost); }
+
+/* The rail stays hidden until the row is wanted — seven controls on every row
+   at rest turns the outline into a toolbar you have to read past. */
+.orow-tools {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast) linear;
+}
+.orow:hover .orow-tools,
+.orow:focus-within .orow-tools { opacity: 1; }
+
+.orow-tool {
+  height: 18px; width: 18px;
+  min-height: 0; min-width: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 5px;
+  color: var(--ink-faint);
+  transition: background var(--dur-fast) linear, color var(--dur-fast) linear;
+}
+.orow-tool:hover:not(:disabled) { background: var(--ink-a08); color: var(--ink); }
+.orow-tool:disabled { opacity: 0.25; cursor: default; }
+.orow-tool--go:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
+.orow-tool--add:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
+.orow-tool--danger:hover:not(:disabled) { background: rgba(188,76,60,0.12); color: var(--status-danger); }
+
+.outline-foot {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 9px 10px 11px;
+  border-top: 1px solid var(--line-soft);
+}
+.orail-add {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%;
+  min-height: 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-2);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.orail-add:hover {
+  color: var(--accent-500);
+  border-style: solid;
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.orail-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%;
+  min-height: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-400);
+  border: 1px solid var(--accent-400);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.orail-primary:hover:not(:disabled) { background: var(--accent-500); border-color: var(--accent-500); }
+.orail-primary:disabled { opacity: 0.4; }
+
+.outline-empty {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 11.5px; line-height: 1.6;
+  color: var(--ink-ghost);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+}
+.outline-empty b { color: var(--ink-muted); font-weight: 600; }
+.outline-empty .orail-add { width: auto; margin-top: 8px; }
+
+/* ── Find & replace ── */
+.find-bar {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(217,119,87,0.035);
+  animation: fadeInUp 0.16s var(--ease-out);
+}
+.find-input {
+  height: 27px;
+  min-width: 150px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  outline: none;
+}
+.find-input:focus { border-color: var(--accent-line); background: var(--ink-a06); }
+.find-input::placeholder { color: var(--ink-ghost); }
+.find-count {
+  min-width: 52px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.find-divider { width: 1px; height: 18px; margin: 0 6px; background: var(--ink-a06); }
+.find-btn {
+  height: 27px; padding: 0 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 8px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-muted);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.find-btn:hover:not(:disabled) { color: var(--ink); background: var(--ink-a06); }
+.find-btn:disabled { opacity: 0.35; }
+.icon-btn[data-active='true'] { color: var(--accent-500); background: var(--accent-soft); }
+
+/* ── Slash menu ── */
+.slash-menu {
+  position: absolute;
+  z-index: 70;
+  width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 26px 70px -22px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  animation: cmdk-rise 0.14s var(--ease-out);
+}
+.slash-group {
+  font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-ghost);
+  padding: 8px 9px 4px;
+}
+.slash-item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: left;
+}
+.slash-item[data-active='true'] { background: var(--ink-a06); color: var(--ink); }
+.slash-item[data-active='true'] .slash-icon { color: var(--accent-400); }
+.slash-icon { color: var(--ink-faint); flex-shrink: 0; }
+.slash-kbd {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 5px; border-radius: 5px;
+  background: var(--ink-a04);
+  color: var(--ink-faint);
+}
+.slash-empty { padding: 20px 12px; text-align: center; font-size: 12px; color: var(--ink-faint); }
+
+/* ── Inline AI ── */
+.ai-chip {
+  position: absolute;
+  z-index: 65;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 27px; padding: 0 11px;
+  border-radius: 100px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
+  box-shadow: 0 8px 22px -8px var(--accent-glow);
+  animation: fadeInUp 0.16s var(--ease-out);
+}
+.ai-chip kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 0 4px; border-radius: 4px;
+  background: var(--ink-a06);
+}
+.ai-chip:hover { filter: brightness(1.07); }
+
+.ai-assist {
+  position: absolute;
+  z-index: 72;
+  width: 340px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px -24px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  overflow: hidden;
+  animation: cmdk-rise 0.16s var(--ease-out);
+}
+.ai-assist-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 10px 9px 12px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--line-soft);
+}
+.ai-assist-list { max-height: 320px; overflow-y: auto; padding: 5px; }
+.ai-assist-item {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 9px;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.ai-assist-item:hover { background: var(--ink-a04); }
+.ai-assist-icon { color: var(--ink-faint); flex-shrink: 0; }
+.ai-assist-item:hover .ai-assist-icon { color: var(--accent-400); }
+.ai-assist-label { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.ai-assist-hint {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--ink-ghost);
+  text-align: right;
+  max-width: 47%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ai-assist-custom { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
+.ai-assist-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  outline: none;
+}
+.ai-assist-input:focus { border-color: var(--accent-line); }
+.ai-assist-running {
+  display: flex; align-items: center; gap: 9px;
+  padding: 18px 14px;
+  font-size: 12.5px; color: var(--ink-muted);
+}
+.ai-assist-result { padding: 11px; }
+.ai-assist-preview {
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 10px 11px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+}
+.ai-assist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.ai-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 28px; padding: 0 11px;
+  border-radius: 8px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-2);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.ai-btn:hover:not(:disabled) { color: var(--ink); background: var(--ink-a06); }
+.ai-btn:disabled { opacity: 0.4; }
+.ai-btn--primary {
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
+  border-color: transparent;
+}
+.ai-btn--primary:hover:not(:disabled) { filter: brightness(1.08); color: var(--accent-ink); }
+/* Why a disabled control is disabled, next to the control itself. */
+.ai-field-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--status-warning);
+  opacity: 0.85;
+}
+
+.method-switch { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--ink-a02); }
+.method-btn {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 0;
+  border-radius: 8px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--ink-faint);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.method-btn:hover { color: var(--ink-2); }
+.method-btn[data-active='true'] { color: var(--accent-500); background: var(--accent-soft); }
+
+/* ── Share dialog bits ── */
+.dialog-dark {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+}
+.share-results {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 4px;
+  border-radius: 11px;
+  max-height: 168px; overflow-y: auto;
+  background: var(--ink-a02);
+  border: 1px solid var(--line);
+}
+.share-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 8px;
+  border-radius: 9px;
+}
+.share-row:hover { background: var(--ink-a04); }
+.share-row--filled { background: var(--ink-a02); border: 1px solid var(--line-soft); }
+.share-name { flex: 1; font-size: 12.5px; color: var(--ink-2); }
+.share-heading {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--ink-faint);
+  margin-bottom: 7px;
+}
+.image-preview {
+  max-height: 150px;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--ink-a02);
+}
+

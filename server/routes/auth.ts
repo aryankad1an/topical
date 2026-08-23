@@ -1,3 +1,12 @@
+/**
+ * Sessions, the current user, and the public profile surface.
+ *
+ * Sign-in and sign-out are real redirects to Kinde, not XHR — the browser
+ * performs the navigation, so these handlers only start and finish it. `/me`
+ * answers 401 for an anonymous visitor rather than erroring, because that is
+ * the expected state on a first visit and the client treats it as "no session".
+ */
+
 import { Hono } from "hono";
 
 import { kindeClient, sessionManager, isKindeConfigured } from "../kinde";
@@ -6,6 +15,9 @@ import { db } from "../db";
 import { users as userTable } from "../db/schema/users";
 import { lessonPlans } from "../db/schema/lessonPlans";
 import { eq, ilike, and, or, desc, isNotNull } from "drizzle-orm";
+
+/** Usernames address a public profile at /u/<username>, so they must be URL-safe. */
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
 
 export const authRoute = new Hono()
   .get("/login", async (c) => {
@@ -148,8 +160,15 @@ export const authRoute = new Hono()
 
       if (body.username !== undefined) {
         const { username } = body;
-        if (typeof username !== "string" || username.length < 3) {
-          return c.json({ error: "Valid username of at least 3 characters is required" }, 400);
+        // The same rule the edit form applies. It was enforced only in the
+        // browser, so a direct PATCH could set a username containing a slash
+        // or a space — which then produced a /u/<name> profile link that could
+        // not resolve back to its own account.
+        if (typeof username !== "string" || !USERNAME_PATTERN.test(username)) {
+          return c.json(
+            { error: "Usernames are 3–30 characters, using letters, numbers, hyphen and underscore" },
+            400,
+          );
         }
         const existing = await db.select().from(userTable).where(eq(userTable.username, username)).limit(1);
         if (existing.length > 0 && existing[0].id !== c.var.user.id) {

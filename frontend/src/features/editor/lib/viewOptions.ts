@@ -4,6 +4,8 @@ export type ViewMode = 'code' | 'preview' | 'split';
 
 export interface ViewOptions {
   outline: boolean;
+  /** Width of the outline rail, in px — the writer drags it. */
+  outlineWidth: number;
   lineNumbers: boolean;
   focusMode: boolean;
   syncScroll: boolean;
@@ -12,6 +14,7 @@ export interface ViewOptions {
 
 export const DEFAULT_OPTIONS: ViewOptions = {
   outline: true,
+  outlineWidth: 300,
   lineNumbers: true,
   focusMode: false,
   syncScroll: true,
@@ -37,3 +40,7 @@ export function saveOptions(options: ViewOptions) {
     // Private mode and full quotas are not worth failing an edit over.
   }
 }
+
+/** The rail has to hold an editable tree without becoming the whole screen. */
+export const MIN_OUTLINE_WIDTH = 210;
+export const MAX_OUTLINE_WIDTH = 620;

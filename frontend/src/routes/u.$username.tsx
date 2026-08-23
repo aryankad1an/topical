@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, BookOpen, FileType2, FileCode2, Calendar, UserX } from "lucide-react";
 import { fetchPersonProfile, personName, type PublishedDoc } from "@/lib/api";
+import { formatOf } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState, PageHeader, IdentityBanner, DocTypeIcon } from "@/components/ui/primitives";
 
@@ -54,7 +55,7 @@ function PublicProfile() {
     : null;
 
   const openDoc = (doc: PublishedDoc) => {
-    navigate({ to: "/editor", search: { id: doc.id, type: doc.mainTopic.startsWith("latex:") ? "latex" : "mdx" } } as never);
+    navigate({ to: "/editor", search: { id: doc.id, type: formatOf(doc.mainTopic) } });
   };
 
   return (

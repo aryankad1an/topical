@@ -7,14 +7,12 @@
     "dev": "bun --watch server/index.ts",
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "bun server/db/migrate.ts",
-    "build:api": "esbuild api/index.src.ts --bundle --platform=node --target=node18 --outfile=api/index.js --format=cjs --packages=external",
     "vercel-build": "cd frontend && npm run build"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "0.20.18",
-    "esbuild": "^0.28.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
@@ -24,7 +22,6 @@
     "@hono/zod-validator": "^0.7.6",
     "@kinde-oss/kinde-typescript-sdk": "^2.13.2",
     "drizzle-orm": "^0.29.4",
-    "drizzle-zod": "^0.5.1",
     "hono": "^3.12.12",
     "lib0": "^0.2.117",
     "pg": "^8.20.0",

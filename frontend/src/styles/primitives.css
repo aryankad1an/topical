@@ -1,0 +1,146 @@
+/* Primitives — Shared surfaces, chips, buttons and empty states.
+
+   Split out of a single 3,700-line index.css; the import order in
+   index.css is the cascade order, so these files stay in sequence. */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PRIMITIVES — the single source of truth for surfaces
+   Every panel in the app composes from .surface. Card-like classes below
+   only add what makes them different, so a change to the base border,
+   radius, or hover applies everywhere at once.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.surface {
+  border-radius: 14px;
+  border: 1px solid var(--line-soft);
+  background: var(--ink-a02);
+  transition: border-color var(--dur-base) var(--ease-out),
+              background var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
+}
+.surface--lg { border-radius: 20px; }
+.surface--sm { border-radius: 11px; }
+
+/* Dashed: "nothing here yet" rather than "here is content" */
+.surface--dashed {
+  border-style: dashed;
+  border-color: var(--line);
+  background: var(--ink-a02);
+}
+
+/* Interactive surfaces lift and warm toward the accent on hover */
+.surface--interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--surface-accent-line, var(--line));
+  background: var(--surface-accent-soft, var(--ink-a02));
+}
+.surface--raised:hover { box-shadow: 0 24px 60px -28px rgb(var(--shadow-rgb) / var(--shadow-strength)); }
+
+/* Padding scale, so panels don't each invent their own */
+.surface-p-sm { padding: 0.85rem 1rem; }
+.surface-p-md { padding: 1.25rem 1.35rem; }
+.surface-p-lg { padding: 1.5rem 1.6rem; }
+.surface-p-xl { padding: 2.75rem 2rem; }
+
+/* ── Now compose the specific cards from the base ── */
+.step-card,
+.bento-item,
+.person-card,
+.pub-row,
+.doc-row,
+.provider-tile,
+.model-option,
+.brand-card {
+  /* base visuals come from .surface — these only differ in layout/accent */
+  border-radius: 14px;
+  border: 1px solid var(--line-soft);
+  background: var(--ink-a02);
+  transition: border-color var(--dur-base) var(--ease-out),
+              background var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
+}
+
+/* ── Unified avatar ──
+   Replaces four near-identical implementations (identity/person/comment/nav).
+   Size comes from a modifier; colour from a per-user hue. */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg,
+    hsl(var(--av-h, 40) 80% 62%),
+    hsl(calc(var(--av-h, 40) + 40) 80% 72%));
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+  overflow: hidden;
+  line-height: 1;
+}
+.avatar img { height: 100%; width: 100%; object-fit: cover; }
+.avatar--xs { height: 24px; width: 24px; border-radius: 7px;  font-size: 10px; }
+.avatar--sm { height: 30px; width: 30px; border-radius: 9px;  font-size: 12px; }
+.avatar--md { height: 44px; width: 44px; border-radius: 13px; font-size: 15px; }
+.avatar--lg { height: 64px; width: 64px; border-radius: 18px; font-size: 22px; }
+.avatar--xl {
+  height: 88px; width: 88px; border-radius: 24px; font-size: 2rem;
+  border-width: 2px;
+  box-shadow: 0 14px 44px -14px rgb(var(--shadow-rgb) / var(--shadow-strength));
+}
+
+/* ── Unified chip ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  background: var(--ink-a04);
+  color: var(--ink-muted);
+}
+.chip--accent { color: var(--accent-500); background: var(--accent-soft); border-color: var(--accent-line); }
+.chip--latex  { color: var(--latex-500); background: var(--latex-soft); border-color: rgba(74,111,165,0.34); }
+.chip--success{ color: var(--status-success); background: rgba(61,125,90,0.12); border-color: rgba(61,125,90,0.35); }
+.chip--danger { color: var(--status-danger); background: rgba(188,76,60,0.1); border-color: rgba(188,76,60,0.3); }
+.chip--mono   { font-family: var(--font-mono); }
+
+/* ── Page header rhythm ── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+}
+
+/* Secondary action. This exact border/background pair was repeated inline
+   across the profile, public profile and providers screens. */
+.btn-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.btn-subtle:hover {
+  color: var(--ink);
+  background: var(--ink-a06);
+  border-color: var(--line);
+}
+.btn-subtle--pill { border-radius: 100px; }
+

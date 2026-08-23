@@ -2,29 +2,35 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SearchTopicsRequest(BaseModel):
     query: str
-    limit: Optional[int] = None
 
 
-class GenerateMdxRequest(BaseModel):
-    selected_topic: str
+class GenerateSectionRequest(BaseModel):
+    """One section of a document, written in its own pass.
+
+    ``source`` chooses what the model is grounded in — its own knowledge, a web
+    search for the topic, or pages the writer named. That is the only thing
+    that varied across the six endpoints this replaced; the prompt, the
+    context, and the response were otherwise identical.
+
+    ``children`` are the sub-sections written separately in their own passes. A
+    parent that explains them produces the same prose twice, so it gets an
+    introduction instead of an article.
+    """
+
+    topic: str
     main_topic: str
-    topic: Optional[str] = None
-    num_results: Optional[int] = None
+    format: str = "mdx"
+    source: str = "llm"
+    urls: List[str] = Field(default_factory=list)
+    #: The whole outline as indented text, for cross-section awareness.
     hierarchy: Optional[str] = None
-
-
-class UrlsMdxRequest(BaseModel):
-    urls: List[str]
-    selected_topic: str
-    main_topic: str
-    topic: Optional[str] = None
-    use_llm_knowledge: Optional[bool] = None
-    hierarchy: Optional[str] = None
+    children: Optional[List[str]] = None
+    level: int = 1
 
 
 class TransformRequest(BaseModel):

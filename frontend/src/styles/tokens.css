@@ -1,0 +1,698 @@
+/* Tokens — Design tokens, themes and element defaults.
+
+   Split out of a single 3,700-line index.css; the import order in
+   index.css is the cascade order, so these files stay in sequence. */
+
+@layer base {
+  :root {
+    /* ── Claude palette ────────────────────────────────────────────────
+       Warm paper rather than neutral white: the whole system is built on
+       a cream ground (#FAF9F5) with a single terracotta accent. Greys are
+       warm too — a neutral grey next to this cream reads faintly blue and
+       makes the page look dirty. */
+
+    /* Ground and raised surfaces */
+    --bg:            #faf9f5; /* the page itself */
+    --bg-subtle:     #f5f3ec; /* recessed strips, table stripes */
+    --surface:       #ffffff; /* cards and popovers sit above the cream */
+    --surface-2:     #f0eee6; /* inset wells, secondary buttons */
+    --surface-3:     #e8e5da; /* hover on a secondary surface */
+
+    /* Hairlines. Claude separates with a line, not a shadow. */
+    --line-soft:     #edeae1;
+    --line:          #e5e2d9;
+    --line-strong:   #d6d2c4;
+
+    /* Warm ink ramp, darkest to lightest */
+    --ink:           #191917; /* primary text */
+    --ink-2:         #3d3d3a; /* secondary text */
+    --ink-muted:     #63635e; /* labels, metadata */
+    --ink-faint:     #8a8981; /* placeholders, disabled */
+    --ink-ghost:     #b0aea4; /* dividers that must still read as text */
+
+    /* Translucent ink, for overlays that must sit on an unknown surface.
+       On a light ground these replace the white-alpha overlays a dark UI
+       leans on — the direction of the tint has to flip with the theme. */
+    --ink-a02: rgba(25, 25, 23, 0.02);
+    --ink-a04: rgba(25, 25, 23, 0.04);
+    --ink-a06: rgba(25, 25, 23, 0.06);
+    --ink-a08: rgba(25, 25, 23, 0.08);
+    --ink-a12: rgba(25, 25, 23, 0.12);
+    --ink-a20: rgba(25, 25, 23, 0.20);
+    --ink-a40: rgba(25, 25, 23, 0.40);
+
+    /* ── The one accent ───────────────────────────────────────────────
+       Claude's terracotta. It is the only saturated hue in the product,
+       which is what makes "this is actionable" unmistakable — the moment
+       a second bright hue appears the signal is gone. */
+    --accent-200: #efc7b6;
+    --accent-300: #e09b80;
+    --accent-400: #d97757; /* the accent */
+    --accent-500: #c15f3c; /* hover / pressed */
+    --accent-600: #a34b2c;
+    --accent-ink:  #ffffff; /* text on a filled accent surface */
+    --accent-soft: rgba(217, 119, 87, 0.10);
+    --accent-line: rgba(217, 119, 87, 0.35);
+    --accent-glow: rgba(217, 119, 87, 0.18);
+
+    /* Secondary hue, reserved for LaTeX-typed documents. Desaturated so it
+       reads as a category marker and never competes with the accent. */
+    --latex-500: #4a6fa5;
+    --latex-300: #8ba6cc;
+    --latex-soft: rgba(74, 111, 165, 0.10);
+
+    /* Semantic status, muted to sit on cream without shouting */
+    --status-danger:  #bc4c3c;
+    --status-warning: #c77d2e;
+    --status-success: #3d7d5a;
+    --status-info:    #4a6fa5;
+
+    /* ── Code & prose syntax ──────────────────────────────────────────
+       Muted and warm. A light editor with a dark-theme syntax palette is
+       the fastest way to make a page look untouched by the redesign, so
+       these are picked for contrast on cream, not for vividness. */
+    --syn-link: #c15f3c;
+    --syn-code: #2f6f58;
+    --syn-tag:  #a8442f;
+    --syn-cmd:  #7a5ca8;
+    --hue-violet: #7a5ca8;
+
+    /* ── Type ─────────────────────────────────────────────────────────
+       A sans for the interface and a serif for display, the way Claude
+       pairs them: the serif appears only at large sizes, where its
+       warmth registers and its narrower shapes still read cleanly. */
+    --font-sans:  'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-serif: 'Source Serif 4', 'Tiempos Text', Georgia, 'Times New Roman', serif;
+    --font-mono:  ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.75rem;
+    --text-2xl: 2.5rem;
+    --text-3xl: 3.5rem;
+    --text-display: clamp(2.75rem, 9vw, 6rem);
+
+    /* ── Elevation ────────────────────────────────────────────────────
+       Barely-there. A card is defined by its hairline; the shadow only
+       stops it from floating free of the page. */
+    /* Channels, so a colour can be re-tinted with an alpha applied to it.
+       A hex token cannot be faded; these can. */
+    --bg-rgb: 250 249 245;
+    --shadow-rgb: 25 25 23;
+    /* Big elevation shadows share one strength so they read as one system —
+       and so dark mode can deepen all of them with a single number. */
+    --shadow-strength: 0.14;
+    /* Behind a modal. Stays dark in both themes: a scrim's job is to push the
+       page back, which a light veil cannot do. */
+    --scrim: rgba(25, 25, 23, 0.35);
+
+    --shadow-sm: 0 1px 2px rgba(25, 25, 23, 0.04);
+    --shadow:    0 1px 3px rgba(25, 25, 23, 0.06), 0 1px 2px rgba(25, 25, 23, 0.04);
+    --shadow-lg: 0 4px 16px rgba(25, 25, 23, 0.08);
+    --shadow-pop: 0 8px 28px rgba(25, 25, 23, 0.12);
+
+    /* ── Motion ───────────────────────────────────────────────────────
+       Transitions only — nothing loops, nothing breathes. */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+    --dur-fast: 110ms;
+    --dur-base: 180ms;
+    --dur-slow: 300ms;
+
+    --gutter: clamp(1.25rem, 5vw, 4rem);
+    --radius: 0.75rem;
+
+    /* ── shadcn bridge ────────────────────────────────────────────────
+       The primitives in components/ui consume these HSL triples; they are
+       the same palette expressed the way Tailwind wants it. */
+    --background: 48 33% 97%;
+    --foreground: 60 4% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 60 4% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 4% 9%;
+
+    --primary: 15 63% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 48 25% 92%;
+    --secondary-foreground: 60 4% 9%;
+
+    --muted: 48 25% 92%;
+    --muted-foreground: 60 3% 38%;
+
+    --accent: 48 25% 92%;
+    --accent-foreground: 60 4% 9%;
+
+    --destructive: 8 51% 49%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 45 19% 87%;
+    --input: 45 19% 87%;
+    --ring: 15 63% 60%;
+
+    /* Legacy aliases. The glass/iridescent look is gone, but these names
+       are still referenced in places; pointing them at flat values keeps
+       those rules honest instead of leaving blur and glow behind. */
+    --glass-bg: var(--surface);
+    --glass-border: var(--line);
+    --glass-highlight: transparent;
+    --glass-blur: 0px;
+    --glass-glow: transparent;
+    --iridescent-1: var(--ink);
+    --iridescent-2: var(--ink);
+    --iridescent-3: var(--ink);
+    --glow-primary: transparent;
+    --glow-secondary: transparent;
+  }
+
+  /* ── Dark ──────────────────────────────────────────────────────────────
+     Claude's dark mode is warm charcoal, not neutral grey and not black.
+     The attribute is always resolved to an explicit light/dark by the boot
+     script, so there is no `prefers-color-scheme` branch to keep in sync —
+     one place decides, and the CSS only has to answer to the attribute.
+
+     Two things genuinely invert rather than darken:
+     the translucent ink overlays (dark-on-light becomes light-on-dark), and
+     the accent's hover step, which has to get *lighter* here or the button
+     appears to recede when you press it. */
+  :root[data-theme='dark'] {
+    --bg:            #262624;
+    --bg-subtle:     #1f1e1d;
+    --surface:       #30302e;
+    --surface-2:     #3a3a37;
+    --surface-3:     #45443f;
+
+    --line-soft:     #33322f;
+    --line:          #3e3e3a;
+    --line-strong:   #55544e;
+
+    --ink:           #f5f4ee;
+    --ink-2:         #d6d4cc;
+    --ink-muted:     #a3a29a;
+    --ink-faint:     #82817a;
+    --ink-ghost:     #63625c;
+
+    /* Overlays flip direction: on a dark ground, "slightly raised" is light.
+       The steps are a touch stronger than their light counterparts because
+       white-on-dark reads weaker than black-on-light at the same alpha. */
+    --ink-a02: rgba(255, 255, 255, 0.03);
+    --ink-a04: rgba(255, 255, 255, 0.05);
+    --ink-a06: rgba(255, 255, 255, 0.07);
+    --ink-a08: rgba(255, 255, 255, 0.09);
+    --ink-a12: rgba(255, 255, 255, 0.13);
+    --ink-a20: rgba(255, 255, 255, 0.20);
+    --ink-a40: rgba(255, 255, 255, 0.38);
+
+    /* The accent itself is the constant across both themes — it is the brand.
+       Only the steps around it move. */
+    --accent-200: #7a3a24;
+    --accent-300: #a34b2c;
+    --accent-400: #d97757;
+    --accent-500: #e0906f;
+    --accent-600: #eaa88b;
+    --accent-ink:  #ffffff;
+    --accent-soft: rgba(217, 119, 87, 0.16);
+    --accent-line: rgba(217, 119, 87, 0.42);
+    --accent-glow: rgba(217, 119, 87, 0.26);
+
+    --latex-500: #7fa3d4;
+    --latex-300: #a8c2e2;
+    --latex-soft: rgba(127, 163, 212, 0.14);
+
+    --status-danger:  #e2705c;
+    --status-warning: #d99a4e;
+    --status-success: #6aa987;
+    --status-info:    #7fa3d4;
+
+    --syn-link: #e0906f;
+    --syn-code: #7fc4a4;
+    --syn-tag:  #e2705c;
+    --syn-cmd:  #b39ddb;
+    --hue-violet: #b39ddb;
+
+    --bg-rgb: 38 38 36;
+    --shadow-rgb: 0 0 0;
+    --shadow-strength: 0.55;
+    --scrim: rgba(0, 0, 0, 0.62);
+
+    /* A shadow on a dark ground has to be much deeper to register at all. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --shadow:    0 1px 3px rgba(0, 0, 0, 0.38), 0 1px 2px rgba(0, 0, 0, 0.28);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.42);
+    --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.52);
+
+    /* shadcn bridge — the same palette as HSL triples. */
+    --background: 60 3% 15%;
+    --foreground: 51 26% 95%;
+    --card: 60 2% 18%;
+    --card-foreground: 51 26% 95%;
+    --popover: 60 2% 18%;
+    --popover-foreground: 51 26% 95%;
+    --primary: 15 63% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 3% 22%;
+    --secondary-foreground: 51 26% 95%;
+    --muted: 60 3% 22%;
+    --muted-foreground: 53 5% 62%;
+    --accent: 60 3% 22%;
+    --accent-foreground: 51 26% 95%;
+    --destructive: 9 68% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 60 3% 24%;
+    --input: 60 3% 24%;
+    --ring: 15 63% 60%;
+  }
+}
+
+/* Respect the OS reduced-motion setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    background: var(--bg);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 1rem;
+    line-height: 1.65;
+    overflow-x: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  input,
+  textarea {
+    cursor: text;
+  }
+
+  /* Display sizes take the serif; anything smaller stays in the sans,
+     where the serif would just look like a different website. */
+  h1, h2 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.15;
+  }
+  h2 {
+    font-size: clamp(1.375rem, 3vw, 2rem);
+    line-height: 1.25;
+  }
+  h3 {
+    font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+    line-height: 1.3;
+  }
+
+  button,
+  .btn,
+  a.btn,
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+
+  /* Keyboard-only focus ring. */
+  :focus-visible {
+    outline: 2px solid var(--accent-400);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: rgba(217, 119, 87, 0.22);
+    color: var(--ink);
+  }
+}
+
+
+/* ─── Theme switching ───
+   Two mechanisms, because one of them isn't everywhere yet.
+
+   Where the View Transitions API exists, the new theme is wiped in as a
+   circle growing from the button you pressed — the switch reads as one
+   deliberate act rather than the page blinking. The default crossfade is
+   turned off so only that clip-path animation runs.
+
+   Everywhere else, `.theme-switching` is hung on <html> for the length of
+   the change and cross-fades the colour properties. It is scoped to that
+   class, and removed straight after, because a permanent global transition
+   makes every hover in the app feel laggy. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* The outgoing theme stays put and the incoming one is revealed over it. */
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color 260ms var(--ease-out),
+              border-color 260ms var(--ease-out),
+              color 260ms var(--ease-out),
+              fill 260ms var(--ease-out),
+              box-shadow 260ms var(--ease-out) !important;
+}
+
+/* Native scrollbars, form controls and the caret follow the theme too. */
+html { color-scheme: light; }
+html[data-theme='dark'] { color-scheme: dark; }
+
+/* ─── Code highlighting ───
+   `rehype-highlight` emits .hljs-* classes and the imported GitHub theme
+   colours them for a light page only. Mapping them onto the syntax tokens
+   instead means one definition serves both themes and stays in the same
+   muted range as the rest of the palette. */
+.hljs { color: var(--ink); background: transparent; }
+.hljs-comment,
+.hljs-quote        { color: var(--ink-faint); font-style: italic; }
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-doctag,
+.hljs-type         { color: var(--syn-cmd); }
+.hljs-string,
+.hljs-regexp,
+.hljs-addition     { color: var(--syn-code); }
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-meta         { color: var(--status-warning); }
+.hljs-title,
+.hljs-section,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class { color: var(--syn-link); }
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable { color: var(--syn-tag); }
+.hljs-built_in,
+.hljs-class .hljs-title { color: var(--latex-500); }
+.hljs-deletion     { color: var(--status-danger); }
+.hljs-emphasis     { font-style: italic; }
+.hljs-strong       { font-weight: 700; }
+
+/* ─── Theme toggle ───
+   The icon shows the destination, not the current state: the control is a
+   verb, and its label says "switch to dark". Both icons are always mounted
+   and stacked, so the change is a rotate-and-fade between them rather than a
+   swap that pops. */
+.theme-toggle {
+  position: relative;
+  height: 30px;
+  width: 30px;
+  min-height: 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--ink-muted);
+  border: 1px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.theme-toggle:hover {
+  color: var(--accent-500);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.theme-icon {
+  position: absolute;
+  transition: opacity var(--dur-base) var(--ease-out),
+              transform var(--dur-slow) var(--ease-spring);
+}
+.theme-icon--moon { opacity: 1; transform: none; }
+.theme-icon--sun  { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+
+:root[data-theme='dark'] .theme-icon--moon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+:root[data-theme='dark'] .theme-icon--sun  { opacity: 1; transform: none; }
+
+/* ─── Brand wordmark ─── */
+.font-brand {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ─── Page ground ───
+   Was a field of animated concentric silver rings. Claude's pages are plain
+   paper: the content is the only thing on them. The element is kept so the
+   route shells don't have to change, but it now paints a flat ground. */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--bg);
+}
+
+.grid-bg::before,
+.grid-bg::after {
+  content: none;
+}
+
+/* ─── Card ───
+   A card is a white sheet on cream, separated by a hairline. The shadow is
+   there only to stop it floating free of the page, never to glow. */
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+
+.glass-card::before { content: none; }
+
+.glass-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+/* ─── Display text ───
+   Previously an animated silver gradient. Solid warm ink reads better and
+   is the only treatment that survives at small sizes. */
+.gradient-text {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ─── Mount transition ───
+   Short and small. Long travel on load is the thing that makes an interface
+   feel like it is performing rather than appearing. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.animate-fade-in {
+  animation: fadeInUp var(--dur-slow) var(--ease-out) forwards;
+}
+
+.animate-fade-in-delay-1 {
+  animation: fadeInUp var(--dur-slow) var(--ease-out) 60ms forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fadeInUp var(--dur-slow) var(--ease-out) 120ms forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-delay-3 {
+  animation: fadeInUp var(--dur-slow) var(--ease-out) 180ms forwards;
+  opacity: 0;
+}
+
+/* ─── Secondary button ─── */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.625rem;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+
+.glass-btn::after { content: none; }
+
+.glass-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+}
+
+.glass-btn:active { background: var(--surface-3); }
+
+/* ─── Primary button ───
+   The filled terracotta. This is the only element on a page allowed to be
+   this saturated, which is what makes it findable without a shadow. */
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 0.625rem;
+  background: var(--accent-400);
+  border: 1px solid var(--accent-400);
+  color: var(--accent-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+
+.cta-btn::before { content: none; }
+
+.cta-btn:hover {
+  background: var(--accent-500);
+  border-color: var(--accent-500);
+}
+
+.cta-btn:active { background: var(--accent-600); border-color: var(--accent-600); }
+
+.cta-btn:hover .cta-arrow { transform: translateX(2px); }
+
+.cta-arrow {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* Kept as a name only — the arrow no longer bounces on a loop. */
+@keyframes arrowBounce {
+  from { transform: none; }
+  to   { transform: none; }
+}
+
+.cta-arrow-animated { transition: transform var(--dur-fast) var(--ease-out); }
+
+/* ─── Input ─── */
+.glass-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.625rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.glass-input::placeholder { color: var(--ink-faint); }
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent-400);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Decorative blur orb — removed. */
+@keyframes orbFloat { from { transform: none; } to { transform: none; } }
+.green-orb { display: none !important; }
+
+/* ─── Scrollbar ───
+   Warm ink rather than a coloured accent: a scrollbar is furniture, and
+   accenting it spends the one saturated hue on something nobody clicks. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ink-a12);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-a20);
+  background-clip: content-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-a12) transparent;
+}
+
+/* ─── Liquid Shimmer Loader ─── */
+/* ─── AI Loading Progress Slider ─── */
+/* ─── Glow pulse for hero ─── */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* The pulsing hero glow is gone; the class stays inert so any leftover
+   markup renders as a plain element rather than a missing style. */
+.glow-pulse { animation: none; }
+
+/* ─── Mobile menu ─── */
+.mobile-menu-overlay {
+  background: var(--bg);
+}
+
+/* ── LaTeX Preview ── */
+
+/* ─── Home page — title shimmer ─── */

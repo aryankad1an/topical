@@ -1,11 +1,13 @@
 """Prompt construction for every AI operation the editor exposes.
 
 Kept apart from the route layer so wording can be tuned without touching HTTP
-plumbing, and so the MDX and LaTeX variants of an operation stay side by side
-where drift is easy to spot.
+plumbing. Operations that exist in both output formats are written *once*: the
+per-format differences live in `SECTION_FORMATS`, so a wording change cannot
+land in MDX and be forgotten in LaTeX.
 """
 
-from typing import Optional
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Tuple
 
 FORMAT_RULES = {
     "mdx": (
@@ -37,45 +39,159 @@ def _hierarchy_context(topic: str, hierarchy: str) -> str:
     )
 
 
-def mdx_content_prompt(topic: str, main_topic: str, context: str = "", hierarchy: str = "") -> str:
-    ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
+LATEX_LEVEL_COMMANDS = ["section", "subsection", "subsubsection", "paragraph", "subparagraph"]
+
+
+def _latex_command(level: int) -> str:
+    return LATEX_LEVEL_COMMANDS[max(1, min(level, len(LATEX_LEVEL_COMMANDS))) - 1]
+
+
+def _mdx_heading(topic: str, level: int) -> str:
+    return "#" * max(1, min(level, 6)) + " " + topic
+
+
+def _latex_heading(topic: str, level: int) -> str:
+    return "\\" + _latex_command(level) + "{" + topic + "}"
+
+
+def _leave_to_children(children: Optional[List[str]]) -> str:
+    """The instruction that stops a parent from writing its children's sections.
+
+    Without it, asking for "Photosynthesis" returns a whole article covering
+    light reactions and the Calvin cycle — and then those sections get written
+    again in their own passes, so the document says everything twice. The list
+    is spelled out rather than described, because "don't cover the subsections"
+    is not something a model can check itself against.
+    """
+    if not children:
+        return ""
+    listed = "\n".join("- " + child for child in children)
     return (
-        f"You are an expert technical writer creating educational MDX content.\n\n"
-        f"Generate comprehensive MDX content for: \"{topic}\"\n"
-        f"Part of a lesson plan about: \"{main_topic}\"\n"
-        f"{_hierarchy_context(topic, hierarchy)}\n"
-        f"{ctx}\n"
-        f"Requirements:\n"
-        f"- MDX format (Markdown with optional JSX, no custom components)\n"
-        f"- Start with # {topic}\n"
-        f"- 3-5 sections with ## headings\n"
-        f"- STRICTLY relevant to \"{topic}\". Do not overlap with or redundantly cover other subtopics in the hierarchy.\n"
-        f"- Use bullet points, numbered lists, code blocks where appropriate\n"
-        f"- Use $...$ / $$...$$ for any mathematics\n"
-        f"- Educational, clear, well-structured\n"
-        f"- 400-800 words\n"
-        f"- No frontmatter\n"
-        f"- Return ONLY the MDX content"
+        "\nThese sub-sections sit directly below this text and are written "
+        "separately, each in its own pass:\n"
+        f"<subsections>\n{listed}\n</subsections>\n"
     )
 
 
-def latex_content_prompt(topic: str, main_topic: str, context: str = "", hierarchy: str = "") -> str:
+@dataclass(frozen=True)
+class _SectionFormat:
+    """Everything the section prompt has to say differently per output format.
+
+    MDX and LaTeX ask for the same document — same length, same structure, same
+    prohibition on covering a child's material — in two notations. Holding the
+    differences in one table keeps the shared instructions literally shared, so
+    a wording fix cannot land in one format and be forgotten in the other.
+    """
+
+    name: str
+    #: The bullet that pins down the notation itself.
+    syntax_rule: str
+    #: How this format spells a heading at a given depth.
+    heading: Callable[[str, int], str]
+    #: How it names the sub-headings a full section should contain.
+    deeper_rule: Callable[[int], str]
+    #: The structural devices worth reaching for.
+    devices: str
+    #: Rules that exist only in this format.
+    extra_rules: Tuple[str, ...]
+    #: The closing "return only ..." instruction.
+    closing: str
+    #: What an introduction must not contain.
+    intro_ban: str
+
+
+SECTION_FORMATS: Dict[str, _SectionFormat] = {
+    "mdx": _SectionFormat(
+        name="MDX",
+        syntax_rule="MDX format (Markdown with optional JSX, no custom components)",
+        heading=_mdx_heading,
+        deeper_rule=lambda level: f"3-5 sub-headings one level deeper ({'#' * min(level + 1, 6)})",
+        devices="Use bullet points, numbered lists, code blocks where appropriate",
+        extra_rules=("Use $...$ / $$...$$ for any mathematics", "No frontmatter"),
+        closing="Return ONLY the MDX content",
+        intro_ban="No sub-headings, no lists, no code blocks.",
+    ),
+    "latex": _SectionFormat(
+        name="LaTeX",
+        syntax_rule="Pure LaTeX body syntax (NOT a full document — no \\documentclass, no \\begin{document})",
+        heading=_latex_heading,
+        deeper_rule=lambda level: f"3-5 subsections one level deeper (\\{_latex_command(level + 1)}{{}})",
+        devices="Use itemize/enumerate, equations, tables where appropriate",
+        extra_rules=(),
+        closing="Return ONLY the LaTeX content (no preamble, no \\begin{document})",
+        intro_ban="No further sectioning commands, no lists.",
+    ),
+}
+
+
+def section_format(fmt: str) -> _SectionFormat:
+    return SECTION_FORMATS.get(fmt, SECTION_FORMATS["mdx"])
+
+
+def _rules_block(rules: List[str]) -> str:
+    return "Requirements:\n" + "\n".join("- " + rule for rule in rules)
+
+
+def section_prompt(
+    fmt: str,
+    topic: str,
+    main_topic: str,
+    context: str = "",
+    hierarchy: str = "",
+    children: Optional[List[str]] = None,
+    level: int = 1,
+) -> str:
+    """Ask for one section of a document, in whichever notation it is written.
+
+    A section with children gets an *introduction* — its sub-sections are
+    written in their own passes, and a parent that explains them puts the same
+    prose in the document twice.
+    """
+    spec = section_format(fmt)
     ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
+    heading = spec.heading(topic, level)
+
+    if children:
+        return (
+            "You are an expert technical writer working through a document one section at a time.\n\n"
+            f'Write the OPENING of the section "{topic}" — its introduction, not the section itself.\n'
+            f'Part of a document about: "{main_topic}"\n'
+            f"{_hierarchy_context(topic, hierarchy)}\n"
+            f"{_leave_to_children(children)}"
+            f"{ctx}\n"
+            + _rules_block([
+                spec.syntax_rule,
+                f"Start with {heading}",
+                f"Then 80-150 words of plain prose. {spec.intro_ban}",
+                "Orient the reader: what this section covers, why it matters, and how the "
+                "sub-sections above relate to each other.",
+                "Define any term the sub-sections will assume the reader already knows.",
+                "Do NOT explain, summarise, or preview the sub-sections listed above, or anything "
+                "nested beneath them. They are written separately, and covering them here puts the "
+                "same material in the document twice.",
+                *spec.extra_rules,
+                spec.closing,
+            ])
+        )
+
     return (
-        f"You are an expert technical writer creating educational LaTeX content.\n\n"
-        f"Generate comprehensive LaTeX content for: \"{topic}\"\n"
-        f"Part of a document about: \"{main_topic}\"\n"
+        f"You are an expert technical writer creating educational {spec.name} content.\n\n"
+        f'Generate comprehensive {spec.name} content for the section: "{topic}"\n'
+        f'Part of a document about: "{main_topic}"\n'
         f"{_hierarchy_context(topic, hierarchy)}\n"
         f"{ctx}\n"
-        f"Requirements:\n"
-        f"- Pure LaTeX format (NOT a full document — no \\documentclass, \\begin{{document}}, etc.)\n"
-        f"- Start with \\section{{{topic}}}\n"
-        f"- 3-5 subsections with \\subsection{{}}\n"
-        f"- STRICTLY relevant to \"{topic}\". Do not overlap with or redundantly cover other subtopics.\n"
-        f"- Use itemize/enumerate, equations, tables where appropriate\n"
-        f"- Educational, clear, well-structured\n"
-        f"- 400-800 words\n"
-        f"- Return ONLY the LaTeX content (no preamble, no \\begin{{document}})\n"
+        + _rules_block([
+            spec.syntax_rule,
+            f"Start with {heading}",
+            spec.deeper_rule(level),
+            f'STRICTLY relevant to "{topic}". Do not overlap with or redundantly cover other '
+            "sections in the outline — each of them is written separately.",
+            spec.devices,
+            *spec.extra_rules,
+            "Educational, clear, well-structured",
+            "400-800 words",
+            spec.closing,
+        ])
     )
 
 

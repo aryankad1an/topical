@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  // Theming is driven by `data-theme` on <html> (see src/lib/theme.ts), not by
+  // a class. Declared so that a `dark:` utility, if one is ever written, keys
+  // off the same attribute the stylesheet does — the default here is `media`,
+  // which would quietly disagree with the switch.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     'index.html',
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
   prefix: "",

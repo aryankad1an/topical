@@ -37,8 +37,8 @@ Built for lesson plans, research summaries, and technical documentation.
   your choice per section.
 - **Bring your own model.** Gemini, OpenAI, Anthropic, xAI, or Mistral. Keys are
   per-user and never leave your browser except as a request header.
-- **Place content where you want it.** Generated sections drop in at your
-  cursor — drag them into position or insert at the caret.
+- **Light and dark.** Follows the OS until you say otherwise; switching wipes
+  across the page from the button you pressed.
 - **Export.** Download the source as `.md`/`.tex` (LaTeX comes wrapped in a
   compilable document), copy it, or print the rendered document to PDF.
 - **Real-time collaboration.** CRDT-backed multiplayer editing (Yjs) with live
@@ -158,7 +158,8 @@ immediately rather than at generation time.
 bun run dev                  # backend only, with watch
 cd frontend && npm run dev   # frontend only
 bun run db:generate          # generate a migration from schema changes
-npx tsc --noEmit             # typecheck (run inside frontend/)
+npx tsc --noEmit             # typecheck (run at the root, and inside frontend/)
+cd frontend && npm run lint  # lint
 ```
 
 ### Layout
@@ -166,14 +167,18 @@ npx tsc --noEmit             # typecheck (run inside frontend/)
 ```
 frontend/src/
   features/editor/        the writing screen
-    components/           header, toolbar, code surface, outline, AI panels
-    hooks/                document + collaboration, editing, find, scroll sync
+    components/           header, toolbar, code surface, outline rail, AI panels
+    hooks/                document + collaboration, editing, find, scroll sync,
+                          outline rows, section writing, drag-to-resize
     lib/                  pure text operations, highlighting, outline, export
   features/preview/       rendering, shared by editor / reader / community
     latex/                parser → preamble → renderer pipeline
   components/ui/          shared primitives (Surface, Avatar, Chip, IconButton…)
+  styles/                 the stylesheet, split by what the rules describe;
+                          index.css lists them in cascade order
 ai_service/
   main.py                 routes only
+  models.py               request bodies
   prompts.py              every prompt, including the inline-edit actions
   providers.py            credentials, completion, error translation
   crawl.py                web crawling
@@ -186,9 +191,9 @@ the `/` menu and the AI panels all drive the same behaviour.
 ### Toolchain notes
 
 - **Drizzle is pinned** to `drizzle-orm` 0.29.5 with `drizzle-kit` 0.20.18.
-  Don't upgrade `drizzle-orm` alone — `drizzle-zod` 0.5.1 and the schema files
-  use the older `createInsertSchema(table, {...})` refinement API, which breaks
-  in newer releases.
+  Request bodies are validated with plain `zod`, so nothing depends on
+  `drizzle-zod`'s old refinement API any more — but the config is still
+  0.20-style (`driver: "pg"`, `generate:pg`), so upgrade the pair together.
 - `run.sh` picks the first Python ≥ 3.10 it finds. To pin one, create
   `ai_service/venv` yourself before the first run.
 
@@ -201,14 +206,15 @@ reads the provider, model, and key from the `X-AI-Provider`, `X-AI-Model`, and
 | Endpoint | Purpose |
 |---|---|
 | `search-topics` | Build the topic hierarchy for a subject |
-| `generate-mdx-llm-only-raw` | MDX from model knowledge alone |
-| `single-topic-raw` | MDX grounded in a live web crawl |
-| `generate-mdx-from-urls-raw` | MDX grounded in URLs you supply |
-| `generate-latex-llm-only-raw` | LaTeX from model knowledge alone |
-| `generate-latex-crawl-raw` | LaTeX grounded in a live web crawl |
-| `generate-latex-from-urls-raw` | LaTeX grounded in URLs you supply |
 | `outline-from-document` | The outline an existing draft is reaching for |
+| `refine-outline` | Restructure an outline, with a reason for each change |
+| `generate-section` | Write one section of a document |
 | `transform` | Rewrite, extend or explain one selected passage |
+
+`generate-section` takes `format` (`mdx` \| `latex`) and `source` (`llm` for
+the model's own knowledge, `web` for a live crawl of the topic, `urls` for
+pages you name). It replaced six endpoints that differed only in those two
+fields — which is why the LaTeX crawl used to skip a fallback the MDX one had.
 
 Provider failures map to real HTTP statuses — `401` for a rejected key, `429`
 for rate limits, `404` for an unknown model, `504` on timeout — each with a

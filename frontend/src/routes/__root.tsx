@@ -1,3 +1,11 @@
+/**
+ * The shell every route renders inside: navigation, command palette,
+ * onboarding, and the toast surface.
+ *
+ * The editor route opts out of the page padding and top margin — it manages
+ * its own full-height layout, and the shared chrome would push it off-screen.
+ */
+
 import {
   createRootRouteWithContext,
   Link,
@@ -11,6 +19,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, Home, FolderOpen, Users, UserRound, Command } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -162,6 +171,8 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           <Command className="h-3 w-3" />K
         </button>
 
+        <ThemeToggle className="ml-1" />
+
         {isAuthenticated ? (
           <Link to="/profile" style={{ marginLeft: 8, textDecoration: 'none' }} title="Profile" aria-label="Profile">
             <span className="nav-avatar">
@@ -211,14 +222,17 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
             WebkitTextFillColor: 'transparent',
           }}>Topical</span>
         </Link>
-        <button
-          className="p-2 rounded-full text-[var(--ink-muted)]"
-          style={{ background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            className="p-2 rounded-full text-[var(--ink-muted)]"
+            style={{ background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -317,7 +331,9 @@ function Root() {
       <Toaster
         toastOptions={{
           style: {
-            background: 'rgba(25,25,23,0.4)',
+            // Tokens, not literals: this was a fixed dark rgba, which read as
+            // a smudge on the light theme's cream page.
+            background: 'var(--surface)',
             border: '1px solid var(--line)',
             color: 'var(--ink)',
             borderRadius: '14px',

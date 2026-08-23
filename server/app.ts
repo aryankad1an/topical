@@ -1,3 +1,12 @@
+/**
+ * The HTTP surface: every API route, then the built frontend.
+ *
+ * `apiRoutes` is exported as a type so the browser client (`frontend/src/lib/api.ts`)
+ * gets Hono's end-to-end typing of the routes it calls. The two `serveStatic`
+ * lines are ordered deliberately — assets first, then a catch-all to
+ * `index.html` so client-side routes survive a hard refresh.
+ */
+
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { serveStatic } from "hono/bun";

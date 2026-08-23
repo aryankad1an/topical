@@ -88,16 +88,45 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
 const STORAGE_KEY = "topical_ai_credentials";
 const LEGACY_GEMINI_KEY = "gemini_api_key";
 
-function readRaw(): AiCredential[] {
+/**
+ * Every access is guarded.
+ *
+ * `localStorage` is not merely unreliable here, it can *throw* — private
+ * windows and "block all cookies" make even a read raise. An unguarded read
+ * on this path took the whole app down before any of it rendered, since the
+ * API client reads credentials on the way to every request.
+ */
+function readStored(key: string): string | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    return localStorage.getItem(key);
   } catch {
-    // fall through to legacy migration / empty list
+    return null;
+  }
+}
+
+function writeStored(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Private mode and full quotas are not worth failing a request over.
+  }
+}
+
+function readRaw(): AiCredential[] {
+  const raw = readStored(STORAGE_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      // Anything but a list means the entry is corrupt; a non-array would
+      // reach `.find`/`.filter` below and throw on every later call.
+      if (Array.isArray(parsed)) return parsed as AiCredential[];
+    } catch {
+      // Unparseable — fall through and start clean.
+    }
   }
 
   // Auto-migrate a pre-existing single Gemini key so nobody loses it.
-  const legacy = localStorage.getItem(LEGACY_GEMINI_KEY);
+  const legacy = readStored(LEGACY_GEMINI_KEY);
   if (legacy) {
     const migrated: AiCredential[] = [
       {
@@ -109,7 +138,7 @@ function readRaw(): AiCredential[] {
         isDefault: true,
       },
     ];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+    writeStored(STORAGE_KEY, JSON.stringify(migrated));
     return migrated;
   }
 
@@ -121,7 +150,7 @@ export function getCredentials(): AiCredential[] {
 }
 
 function write(creds: AiCredential[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(creds));
+  writeStored(STORAGE_KEY, JSON.stringify(creds));
 }
 
 export function saveCredential(cred: Omit<AiCredential, "id"> & { id?: string }): AiCredential[] {

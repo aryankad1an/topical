@@ -90,10 +90,7 @@ export async function updateProfile(update: ProfileUpdate) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(update),
   });
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody?.error || "Failed to update profile");
-  }
+  await ensureOk(res, "Failed to update profile");
   return res.json();
 }
 
@@ -102,48 +99,69 @@ export async function uploadFile(file: File): Promise<string> {
   const fd = new FormData();
   fd.append("file", file);
   const res = await fetch("/api/files/upload", { method: "POST", body: fd });
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody?.error || "Upload failed");
-  }
+  await ensureOk(res, "Upload failed");
   const { url } = (await res.json()) as { url: string };
   return url;
 }
 
-// ── AI generation — MDX ───────────────────────────────────────────────────
+// ── AI ────────────────────────────────────────────────────────────────────
 
-/** Generate a topic hierarchy for a query. Returns the raw API envelope. */
-export async function searchTopics(query: string, limit?: number) {
-  const res = await api.ai["search-topics"].$post({ json: { query, limit } });
-  await ensureOk(res, "Failed to search topics");
-  return res.json();
+/**
+ * POST to an AI route; `customFetch` attaches the user's provider credentials.
+ *
+ * Every AI call goes through here, so the JSON body, the headers and the error
+ * unwrapping exist once. They used to be spread across three idioms — the Hono
+ * RPC client, a LaTeX-only helper, and bare `fetch` — which is how the same
+ * failure reached the user with three different messages.
+ */
+async function postAi(path: string, body: unknown, failure: string) {
+  const res = await customFetch(`/api/ai/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return ensureOk(res, failure);
 }
 
-export async function generateSingleTopicRaw(selectedTopic: string, mainTopic: string, numResults?: number, hierarchy?: string) {
-  const res = await api.ai["single-topic-raw"].$post({
-    json: { selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, num_results: numResults, hierarchy },
-  });
-  await ensureOk(res, "Failed to generate MDX content");
+/** The envelope both hierarchy endpoints return: a ```json fence inside JSON. */
+export type HierarchyEnvelope = { status: string; data?: { topics?: string } };
+
+/** Ask for a topic hierarchy for a subject the writer names. */
+export async function searchTopics(query: string) {
+  const res = await postAi("search-topics", { query }, "Failed to search topics");
+  return res.json() as Promise<HierarchyEnvelope>;
+}
+
+/** Derive an outline from a draft that already exists. */
+export async function outlineFromDocument(document: string, format: DocFormat) {
+  const res = await postAi("outline-from-document", { document, format }, "Failed to outline this document");
+  return res.json() as Promise<HierarchyEnvelope>;
+}
+
+/** Where a section's reference material comes from. */
+export type GenerationSource = "web" | "llm" | "urls";
+
+/** The wire body of a section request — one endpoint for every format/source. */
+export interface SectionBody {
+  topic: string;
+  main_topic: string;
+  format: DocFormat;
+  source: GenerationSource;
+  /** Pages to ground the section in. Read only when `source` is "urls". */
+  urls?: string[];
+  /** The whole outline as indented text, for cross-section awareness. */
+  hierarchy?: string;
+  /** Sub-sections written separately; a parent must not cover them. */
+  children?: string[];
+  /** Heading depth, so the section opens at the right level. */
+  level?: number;
+}
+
+/** Write one section of a document. Returns the model's raw markup. */
+export async function requestSection(body: SectionBody): Promise<string> {
+  const res = await postAi("generate-section", body, "Failed to generate the section");
   return res.text();
 }
-
-export async function generateMdxLlmOnlyRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  const res = await api.ai["generate-mdx-llm-only-raw"].$post({
-    json: { selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy },
-  });
-  await ensureOk(res, "Failed to generate MDX content");
-  return res.text();
-}
-
-export async function generateMdxFromUrlsRaw(urls: string[], selectedTopic: string, mainTopic: string, topic?: string, useLlmKnowledge?: boolean, hierarchy?: string) {
-  const res = await api.ai["generate-mdx-from-urls-raw"].$post({
-    json: { urls, selected_topic: selectedTopic, main_topic: mainTopic, topic, use_llm_knowledge: useLlmKnowledge, hierarchy },
-  });
-  await ensureOk(res, "Failed to generate MDX from URLs");
-  return res.text();
-}
-
-// ── AI editing — inline transforms on a passage ───────────────────────────
 
 export interface TransformRequest {
   action: string;
@@ -159,54 +177,36 @@ export interface TransformRequest {
 
 /** Rewrite, extend, or explain one passage. Returns the model's plain text. */
 export async function transformSelection(req: TransformRequest): Promise<string> {
-  const res = await customFetch("/api/ai/transform", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req),
-  });
-  await ensureOk(res, "The AI edit failed");
+  const res = await postAi("transform", req, "The AI edit failed");
   return res.text();
 }
 
-/** Derive an outline from a draft that already exists. */
-export async function outlineFromDocument(document: string, format: DocFormat) {
-  const res = await customFetch("/api/ai/outline-from-document", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ document, format }),
-  });
-  await ensureOk(res, "Failed to outline this document");
-  return res.json() as Promise<{ status: string; data?: { topics?: string } }>;
+/** One row of a model-proposed restructure, with its justification. */
+export interface OutlineChange {
+  title: string;
+  kind: string;
+  reason: string;
 }
 
-// ── AI generation — LaTeX ─────────────────────────────────────────────────
-
-async function postLatexRaw(path: string, body: unknown): Promise<string> {
-  const res = await customFetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  await ensureOk(res, "Failed to generate LaTeX");
-  return res.text();
+export interface RefinedOutline {
+  summary: string;
+  outline: { title: string; level: number }[];
+  changes: OutlineChange[];
 }
 
-export function generateLatexLlmOnlyRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  return postLatexRaw("/api/ai/generate-latex-llm-only-raw", {
-    selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy,
-  });
-}
-
-export function generateLatexCrawlRaw(selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  return postLatexRaw("/api/ai/generate-latex-crawl-raw", {
-    selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy,
-  });
-}
-
-export function generateLatexFromUrlsRaw(urls: string[], selectedTopic: string, mainTopic: string, hierarchy?: string) {
-  return postLatexRaw("/api/ai/generate-latex-from-urls-raw", {
-    urls, selected_topic: selectedTopic, main_topic: mainTopic, topic: selectedTopic, hierarchy,
-  });
+/** Ask for a better-organised outline, and the reasoning behind each move. */
+export async function refineOutline(
+  outline: { title: string; level: number }[],
+  subject: string,
+  instruction: string,
+  format: DocFormat,
+): Promise<RefinedOutline> {
+  const res = await postAi(
+    "refine-outline",
+    { outline, subject, instruction, format },
+    "Could not refine the outline",
+  );
+  return res.json() as Promise<RefinedOutline>;
 }
 
 // ── Lesson plans ──────────────────────────────────────────────────────────

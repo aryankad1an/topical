@@ -1,0 +1,11 @@
+/* Tailwind's own output.
+
+   Imported from index.css rather than written there, so every stylesheet in
+   this directory can be pulled in by an `@import` — which CSS requires to come
+   before any other statement. Its position in that list is the cascade
+   position of every utility class: they land here, before the app's own rules,
+   so a component class still wins a tie against a utility. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

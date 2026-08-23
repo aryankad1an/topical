@@ -4,6 +4,7 @@ import {
   Settings2, SplitSquareHorizontal, Undo2, Users, ListTree, Check,
 } from 'lucide-react';
 import { IconButton } from '@/components/ui/primitives';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { AwarenessCursor } from '@/hooks/useYjsCollab';
 import type { ViewMode, ViewOptions } from '../lib/viewOptions';
 
@@ -127,6 +128,8 @@ export function EditorHeader(props: Props) {
       </div>
 
       <div className="editor-menus" ref={menuRef}>
+        <ThemeToggle />
+
         <div className="editor-menu-wrap">
           <button
             className="toolbar-btn"

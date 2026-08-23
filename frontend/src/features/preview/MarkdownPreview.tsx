@@ -132,7 +132,7 @@ export function MarkdownPreview({ content, trackSource }: Props) {
 
           img: ({ node, ...props }) => <img className="md-img" loading="lazy" {...props} />,
 
-          a: ({ node, href, children }) => (
+          a: ({ href, children }) => (
             <a
               href={href}
               target={href?.startsWith('#') ? undefined : '_blank'}

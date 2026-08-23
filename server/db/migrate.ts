@@ -1,3 +1,8 @@
+/**
+ * Apply the SQL in `drizzle/` to the configured database. Run via
+ * `bun run db:migrate`; generate new files with `bun run db:generate`.
+ */
+
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";

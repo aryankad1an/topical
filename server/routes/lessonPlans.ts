@@ -4,27 +4,12 @@ import { getUser } from "../kinde";
 import { db } from "../db";
 import {
     lessonPlans as lessonPlanTable,
-    insertLessonPlanSchema,
+    lessonPlanInputSchema,
 } from "../db/schema/lessonPlans.ts";
 import { users as userTable } from "../db/schema/users.ts";
 import { eq, desc, and, or, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireDb } from "../middleware";
-
-// Define the create lesson plan schema for API validation
-const createLessonPlanSchema = z.object({
-    name: z.string().min(1),
-    mainTopic: z.string().min(1),
-    topics: z.array(z.object({
-        topic: z.string().min(1),
-        mdxContent: z.string(),
-        isSubtopic: z.boolean(),
-        parentTopic: z.string().optional(),
-        mainTopic: z.string().optional()
-    })),
-    coAuthors: z.array(z.string()).optional().default([]),
-    isPublic: z.boolean().default(false)
-});
 
 export const lessonPlansRoute = new Hono()
     // Guard: ensure DB is available for all lesson plan routes
@@ -54,7 +39,7 @@ export const lessonPlansRoute = new Hono()
         }
 
         // Batch-resolve co-author usernames
-        let usernameMap: Record<string, string> = {};
+        const usernameMap: Record<string, string> = {};
         if (allCoAuthorIds.size > 0) {
             const coAuthorUsers = await db!
                 .select({ id: userTable.id, username: userTable.username })
@@ -163,20 +148,14 @@ export const lessonPlansRoute = new Hono()
     })
 
     // Create a new lesson plan
-    .post("/", getUser, zValidator("json", createLessonPlanSchema), async (c) => {
-        const lessonPlanData = await c.req.valid("json");
+    .post("/", getUser, zValidator("json", lessonPlanInputSchema), async (c) => {
+        // Already validated by zValidator above; the session supplies the owner.
+        const lessonPlanData = c.req.valid("json");
         const user = c.var.user;
-        const validatedLessonPlan = insertLessonPlanSchema.parse({
-            ...lessonPlanData,
-            userId: user.id,
-        });
 
-        // drizzle-zod 0.5's createInsertSchema infers every field as optional
-        // (even required ones), so the parsed result needs a precise cast back
-        // to drizzle's own insert type — .parse() already validated it above.
         const result = await db!
             .insert(lessonPlanTable)
-            .values(validatedLessonPlan as typeof lessonPlanTable.$inferInsert)
+            .values({ ...lessonPlanData, userId: user.id })
             .returning()
             .then((res) => res[0]);
 
@@ -185,8 +164,8 @@ export const lessonPlansRoute = new Hono()
     })
 
     // Update an existing lesson plan
-    .put("/:id", getUser, zValidator("json", createLessonPlanSchema), async (c) => {
-        const lessonPlanData = await c.req.valid("json");
+    .put("/:id", getUser, zValidator("json", lessonPlanInputSchema), async (c) => {
+        const lessonPlanData = c.req.valid("json");
         const user = c.var.user;
         const id = parseInt(c.req.param("id"));
 

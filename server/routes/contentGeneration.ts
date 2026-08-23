@@ -1,3 +1,12 @@
+/**
+ * Proxy to the Python AI service.
+ *
+ * The browser never talks to that service directly: this hop is what applies
+ * `getUser`, and it forwards the caller's own provider credentials rather than
+ * holding any of its own. The generous timeout is deliberate — a crawl plus a
+ * long-form generation genuinely takes tens of seconds.
+ */
+
 import { Hono } from "hono";
 import { getUser } from "../kinde";
 

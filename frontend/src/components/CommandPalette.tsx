@@ -43,9 +43,9 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
     if (!isAuthenticated) return base;
     return [
       { id: 'new-mdx', label: 'New MDX document', hint: 'Interactive, with live preview', group: 'Create', icon: FilePlus2,
-        run: () => { navigate({ to: '/editor', search: { type: 'mdx' } as never }); onClose(); } },
+        run: () => { navigate({ to: '/editor', search: { type: 'mdx' } }); onClose(); } },
       { id: 'new-latex', label: 'New LaTeX document', hint: 'For mathematical or scientific writing', group: 'Create', icon: FileCode2,
-        run: () => { navigate({ to: '/editor', search: { type: 'latex' } as never }); onClose(); } },
+        run: () => { navigate({ to: '/editor', search: { type: 'latex' } }); onClose(); } },
       { id: 'projects', label: 'Projects', group: 'Go to', icon: FolderOpen, run: go('/projects') },
       ...base,
       { id: 'lessons', label: 'Public lessons', group: 'Go to', icon: BookOpen, run: go('/community') },

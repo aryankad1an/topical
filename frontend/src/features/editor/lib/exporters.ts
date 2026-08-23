@@ -46,6 +46,29 @@ export function printPreview(): void {
 }
 
 /**
+ * TeX's ten special characters, so a document name can be a document name.
+ *
+ * A project called "Cost & Benefit" or "50% Faster" produced a `\title{}` that
+ * would not compile — which defeats the point of an export meant to go
+ * straight into a TeX toolchain.
+ *
+ * One pass, via a lookup. Chained `.replace()` calls corrupt each other here:
+ * escaping the backslash first emits `\textbackslash{}`, whose braces the
+ * brace rule then escapes in turn.
+ */
+const LATEX_ESCAPES: Record<string, string> = {
+  '\\': '\\textbackslash{}',
+  '&': '\\&', '%': '\\%', '$': '\\$', '#': '\\#', '_': '\\_',
+  '{': '\\{', '}': '\\}',
+  '~': '\\textasciitilde{}',
+  '^': '\\textasciicircum{}',
+};
+
+function escapeLatex(text: string): string {
+  return text.replace(/[\\&%$#_{}~^]/g, ch => LATEX_ESCAPES[ch] ?? ch);
+}
+
+/**
  * A minimal LaTeX document wrapping the body, so what the editor holds can be
  * compiled by a real TeX toolchain without hand-editing.
  */
@@ -54,7 +77,7 @@ export function wrapLatexDocument(name: string, body: string): string {
   return [
     '\\documentclass[11pt]{article}',
     '\\usepackage{amsmath,amssymb,graphicx,hyperref}',
-    `\\title{${name}}`,
+    `\\title{${escapeLatex(name)}}`,
     '\\begin{document}',
     '\\maketitle',
     '',

@@ -1,3 +1,11 @@
+/**
+ * The projects workspace: the documents you own or co-author.
+ *
+ * A project's format is carried in its `mainTopic` (a `latex:` prefix), not a
+ * separate column, so `formatOf` in `@/lib/types` is the single place that
+ * decides — see the note there.
+ */
+
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -143,7 +151,7 @@ function ProjectsPage() {
       if ('error' in result) throw new Error(result.error);
       queryClient.invalidateQueries({ queryKey: ['user-lesson-plans'] });
       setShowNameDialog(false);
-      navigate({ to: '/editor', search: { id: result.id, type: projectType } } as any);
+      navigate({ to: '/editor', search: { id: result.id, type: projectType } });
       toast.success(`Project "${name}" created`);
     } catch {
       toast.error('Failed to create project');
@@ -153,7 +161,7 @@ function ProjectsPage() {
   const handleView = (id: number) => {
     const plan = projects.find(p => p.id === id);
     const type = plan ? getType(plan) : 'mdx';
-    navigate({ to: '/editor', search: { id, type } } as any);
+    navigate({ to: '/editor', search: { id, type } });
   };
 
   const handleRead = async (id: number) => {

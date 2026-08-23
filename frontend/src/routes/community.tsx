@@ -1,3 +1,9 @@
+/**
+ * The community screen: a published-document library and a discussion forum,
+ * switched by tab. Opening a document you own goes to the editor; anything
+ * else opens the read-only reader.
+ */
+
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -111,7 +117,7 @@ function CommunityPage() {
 
   // Yours opens in the editor; everyone else's opens in the reader.
   const handleViewLesson = (id: number, ownerId: string) => {
-    if (ownerId === user?.id) navigate({ to: '/editor', search: { id } as never });
+    if (ownerId === user?.id) navigate({ to: '/editor', search: { id } });
     else navigate({ to: '/read', search: { id } as never });
   };
 

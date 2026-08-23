@@ -23,7 +23,7 @@ function docText(doc: DocLike): string {
 }
 
 export function wordCount(doc: DocLike): number {
-  const t = docText(doc).replace(/[#*`_>\-\[\]()]/g, ' ').trim();
+  const t = docText(doc).replace(/[#*`_>\-[\]()]/g, " ").trim();
   return t ? t.split(/\s+/).length : 0;
 }
 

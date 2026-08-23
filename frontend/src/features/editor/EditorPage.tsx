@@ -7,6 +7,7 @@ import { useDocument } from './hooks/useDocument';
 import { useTextEditing } from './hooks/useTextEditing';
 import { useFindReplace } from './hooks/useFindReplace';
 import { useScrollSync } from './hooks/useScrollSync';
+import { useDragResize } from './hooks/useDragResize';
 import { EditorHeader } from './components/EditorHeader';
 import { Toolbar } from './components/Toolbar';
 import { CodeSurface } from './components/CodeSurface';
@@ -16,14 +17,16 @@ import { StatusBar } from './components/StatusBar';
 import { FindBar } from './components/FindBar';
 import { SlashMenu } from './components/SlashMenu';
 import { AiAssist } from './components/AiAssist';
-import { AiPanel } from './components/AiPanel';
 import { CoAuthorsDialog } from './components/CoAuthorsDialog';
 import { ImageDialog } from './components/ImageDialog';
 import { PeerCursors } from './components/PeerCursors';
 import { activeNode, buildOutline } from './lib/outline';
-import { stripLeadingHeading } from './lib/plan';
+import {
+  addSectionAfter, applyOutline, dropSection, moveSectionTo, placeSection,
+  renameSection, sectionWordCount, shiftSection,
+} from './lib/sections';
 import { countWords, documentStats } from './lib/stats';
-import { caretPosition, caretIndexFromPoint, insertBlock, lineAt, offsetOfLine, separatorFor } from './lib/textOps';
+import { caretPosition, caretIndexFromPoint, insertBlock, lineAt, offsetOfLine, separatorFor, type EditResult } from './lib/textOps';
 import type { EditorAction } from './lib/actions';
 import { copyText, downloadSource, printPreview, wrapLatexDocument } from './lib/exporters';
 import { DEFAULT_OPTIONS, loadOptions, saveOptions, type ViewMode, type ViewOptions } from './lib/viewOptions';
@@ -46,6 +49,7 @@ export function EditorPage() {
   const linesRef = useRef<HTMLPreElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [options, setOptions] = useState<ViewOptions>(DEFAULT_OPTIONS);
@@ -54,7 +58,6 @@ export function EditorPage() {
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const [slash, setSlash] = useState<{ start: number; query: string } | null>(null);
   const [assistOpen, setAssistOpen] = useState(false);
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showImage, setShowImage] = useState(false);
 
@@ -92,6 +95,10 @@ export function EditorPage() {
   const outline = useMemo(() => buildOutline(doc.content, doc.format), [doc.content, doc.format]);
   const stats = useMemo(() => documentStats(doc.content, doc.format), [doc.content, doc.format]);
   const position = useMemo(() => caretPosition(doc.content, caret), [doc.content, caret]);
+  const activeLabel = useMemo(() => {
+    const id = activeNode(outline, caret);
+    return outline.find(node => node.id === id)?.label ?? null;
+  }, [caret, outline]);
   const selectedWords = useMemo(
     () => (selection.end > selection.start ? countWords(doc.content.slice(selection.start, selection.end), doc.format) : 0),
     [doc.content, doc.format, selection],
@@ -129,63 +136,97 @@ export function EditorPage() {
   });
 
   // ── Placement helpers ───────────────────────────────────────────────────
-  const insertAtCaret = useCallback((text: string, message?: string) => {
-    const ta = textareaRef.current;
-    const at = ta ? ta.selectionStart : doc.content.length;
-    editing.apply(insertBlock(doc.content, text, at, separatorFor(doc.format)));
-    if (message) toast.success(message);
-  }, [doc.content, doc.format, editing]);
-
   /**
-   * File a generated section under its own heading.
+   * Apply an edit that was computed against the newest text.
    *
-   * Sections are written in whatever order they are clicked, so the heading
-   * may already be in the page — drafted from the outline — or not exist yet.
-   * Appending everything to the end would scatter sections away from the
-   * structure the writer just laid out.
+   * "Generate all sections" inserts many sections without this component
+   * re-rendering between them, so a value captured from `doc.content` goes
+   * stale after the first one. Every section-level edit reads and writes
+   * through the ref instead.
    */
-  const insertSection = useCallback((text: string, title: string, replace = false) => {
-    const current = contentRef.current;
-    const nodes = buildOutline(current, doc.format);
-    const target = nodes.find(
-      node => node.label.trim().toLowerCase() === title.trim().toLowerCase(),
-    );
-
-    // Nothing to file it under: the section keeps its own heading and lands
-    // at the end.
-    if (!target) {
-      const result = insertBlock(current, text.trim(), current.length, '\n\n');
-      contentRef.current = result.content;
-      editing.apply(result);
-      return;
-    }
-
-    // The heading is already on the page, so the copy the model wrote would be
-    // a duplicate. The body goes directly beneath its own heading — before the
-    // *next heading of any level*, not at the end of the whole section. A
-    // parent's introduction belongs above its subsections, not after them.
-    const body = stripLeadingHeading(text, title, doc.format).trim();
-    const following = nodes.find(node => node.offset > target.offset);
-    const sectionEnd = following ? following.offset : current.length;
-
-    // Rewriting a section that is already on the page replaces what is under
-    // that heading. Appending instead would leave two versions of the same
-    // section stacked on top of each other, which is never the intent behind
-    // clicking a finished row again.
-    if (replace) {
-      const lineEnd = current.indexOf('\n', target.offset);
-      const headingEnd = lineEnd === -1 ? current.length : lineEnd;
-      const cleared = current.slice(0, headingEnd) + '\n' + current.slice(sectionEnd);
-      const result = insertBlock(cleared, body, headingEnd + 1, '\n\n');
-      contentRef.current = result.content;
-      editing.apply(result);
-      return;
-    }
-
-    const result = insertBlock(current, body, sectionEnd, '\n\n');
+  const applyToDocument = useCallback((result: EditResult) => {
     contentRef.current = result.content;
     editing.apply(result);
-  }, [doc.format, editing]);
+  }, [editing]);
+
+  /** File a generated section under its own heading, or append it. */
+  const insertSection = useCallback((text: string, title: string, replace = false) => {
+    applyToDocument(placeSection(contentRef.current, doc.format, title, text, replace));
+  }, [applyToDocument, doc.format]);
+
+  /** Remove a section and everything nested under it. */
+  const deleteSection = useCallback((title: string) => {
+    const result = dropSection(contentRef.current, doc.format, title);
+    if (result) applyToDocument(result);
+  }, [applyToDocument, doc.format]);
+
+  /**
+   * The outline rail's structural edits, applied to the document itself.
+   *
+   * The rail renders the document's headings rather than a copy of them, so
+   * reshaping the outline *is* editing the page. There is no second structure
+   * to reconcile, which is the only way the two stay in step under arbitrary
+   * editing — including edits typed straight into the text.
+   */
+  const renameHeading = useCallback((offset: number, next: string) => {
+    const result = renameSection(contentRef.current, doc.format, offset, next);
+    if (result) applyToDocument(result);
+  }, [applyToDocument, doc.format]);
+
+  const shiftHeading = useCallback((offset: number, delta: 1 | -1) => {
+    const result = shiftSection(contentRef.current, doc.format, offset, delta);
+    if (result) applyToDocument(result);
+  }, [applyToDocument, doc.format]);
+
+  const moveHeading = useCallback((offset: number, target: number, edge: 'top' | 'bottom') => {
+    const result = moveSectionTo(contentRef.current, doc.format, offset, target, edge);
+    if (result) applyToDocument(result);
+  }, [applyToDocument, doc.format]);
+
+  /** Returns where the new heading landed, so the rail can open it to type in. */
+  const addHeading = useCallback((afterOffset: number | null) => {
+    const result = addSectionAfter(contentRef.current, doc.format, afterOffset);
+    applyToDocument(result);
+    return result.headingOffset;
+  }, [applyToDocument, doc.format]);
+
+  /**
+   * Rewrite the document so its headings match a proposed outline.
+   *
+   * Sections the proposal leaves out keep their prose and are moved to the end
+   * rather than deleted — the writer is told how many, and can remove them
+   * deliberately.
+   */
+  const applyProposedOutline = useCallback((plan: { title: string; level: number }[]) => {
+    const { result, orphans } = applyOutline(contentRef.current, doc.format, plan);
+    applyToDocument(result);
+    if (orphans.length) {
+      toast.info(
+        `Structure updated — ${orphans.length} section${orphans.length === 1 ? '' : 's'} not in the outline moved to the end`,
+        { description: orphans.slice(0, 4).join(', ') },
+      );
+    } else {
+      toast.success('Structure updated');
+    }
+  }, [applyToDocument, doc.format]);
+
+  /** How much prose a delete would take with it, for the warning. */
+  const measureSection = useCallback(
+    (title: string) => sectionWordCount(contentRef.current, doc.format, title),
+    [doc.format],
+  );
+
+  /** The split between editor and preview, as a percentage of the shared row. */
+  const startSplitDrag = useDragResize({
+    from: () => splitRatio,
+    to: (dx, start) => {
+      // Measured against the row rather than the window, so the divider keeps
+      // up with the pointer at any window size.
+      const row = mainRef.current?.getBoundingClientRect().width ?? 1;
+      return Math.min(Math.max(22, start + (dx / Math.max(row, 1)) * 100), 78);
+    },
+    onChange: setSplitRatio,
+  });
 
   const replaceSelection = useCallback((text: string) => {
     const { start, end } = selection;
@@ -248,6 +289,7 @@ export function EditorPage() {
       const key = event.key.toLowerCase();
 
       if (key === 's') { event.preventDefault(); doc.save(); }
+      if (key === '\\') { event.preventDefault(); updateOptions({ outline: !options.outline }); }
       if (key === 'f') { event.preventDefault(); find.setOpen(true); }
       // ⌘J both opens and dismisses — the same key that summoned it should
       // put it away, without reaching for Escape or the close button.
@@ -264,7 +306,7 @@ export function EditorPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [assistOpen, doc, find, syncSelection]);
+  }, [assistOpen, doc, find, options.outline, syncSelection, updateOptions]);
 
   // ── Export ──────────────────────────────────────────────────────────────
   const handleExport = useCallback((kind: 'source' | 'copy' | 'print') => {
@@ -321,30 +363,33 @@ export function EditorPage() {
           format={doc.format}
           onRun={editing.run}
           onUploadImage={() => setShowImage(true)}
-          aiOpen={aiPanelOpen}
-          onToggleAi={() => setAiPanelOpen(open => !open)}
+          outlineOpen={options.outline}
+          onToggleOutline={() => updateOptions({ outline: !options.outline })}
         />
       )}
 
       <FindBar find={find} />
 
-      <div className="editor-main">
-        <AiPanel
-          open={aiPanelOpen}
-          onClose={() => setAiPanelOpen(false)}
-          format={doc.format}
-          projectName={doc.name}
-          content={doc.content}
-          onInsert={insertAtCaret}
-          onInsertSection={insertSection}
-        />
-
+      <div className="editor-main" ref={mainRef}>
         {showEditor && options.outline && (
           <OutlineRail
-            nodes={outline}
-            activeId={activeNode(outline, caret)}
-            onJump={node => revealOffset(node.offset)}
+            format={doc.format}
+            projectName={doc.name}
+            content={doc.content}
+            documentNodes={outline}
+            activeLabel={activeLabel}
+            width={options.outlineWidth}
+            onWidth={next => updateOptions({ outlineWidth: next })}
             onClose={() => updateOptions({ outline: false })}
+            onJump={node => revealOffset(node.offset)}
+            onInsertSection={insertSection}
+            onDeleteSection={deleteSection}
+            measureSection={measureSection}
+            onRenameHeading={renameHeading}
+            onShiftHeading={shiftHeading}
+            onMoveHeading={moveHeading}
+            onAddHeading={addHeading}
+            onApplyOutline={applyProposedOutline}
           />
         )}
 
@@ -418,24 +463,7 @@ export function EditorPage() {
         {showEditor && showPreview && (
           <div
             className="editor-divider"
-            onMouseDown={event => {
-              event.preventDefault();
-              const startX = event.clientX;
-              const startRatio = splitRatio;
-              // Measure against the row the panes actually share, not the
-              // window — the outline rail and the AI panel are not in it.
-              const row = (event.currentTarget.parentElement as HTMLElement).getBoundingClientRect().width;
-              const onMove = (move: MouseEvent) => {
-                const delta = ((move.clientX - startX) / Math.max(row, 1)) * 100;
-                setSplitRatio(Math.min(Math.max(22, startRatio + delta), 78));
-              };
-              const onUp = () => {
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-              };
-              document.addEventListener('mousemove', onMove);
-              document.addEventListener('mouseup', onUp);
-            }}
+            onMouseDown={startSplitDrag}
             role="separator"
             aria-label="Resize panes"
           />

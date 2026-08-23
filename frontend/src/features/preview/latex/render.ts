@@ -459,7 +459,7 @@ function splitItems(body: string): { option: string; content: string }[] {
           items.push(current);
         }
         buffer = '';
-        let cursor = i + 5;
+        const cursor = i + 5;
         const optional = readOptional(body, cursor);
         current = { option: optional?.body ?? '', content: '' };
         i = optional ? optional.end : cursor;
