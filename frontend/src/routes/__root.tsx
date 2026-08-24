@@ -30,7 +30,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
-  const { isAuthenticated, loginUrl, loginAction, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
@@ -181,9 +181,8 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           </Link>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
-            <a
-              href={loginUrl}
-              onClick={loginAction}
+            <Link
+              to="/login"
               className="accent-btn"
               style={{
                 display: 'flex',
@@ -197,7 +196,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
               }}
             >
               Sign in
-            </a>
+            </Link>
           </div>
         )}
       </nav>
@@ -253,13 +252,13 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
                 <Link key={link.to} to={link.to} className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>{link.label}</Link>
               ))}
               {!isAuthenticated && (
-                <a
-                  href={loginUrl}
+                <Link
+                  to="/login"
                   className="mobile-nav-link"
-                  onClick={(e) => { setIsMobileMenuOpen(false); loginAction(e); }}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Sign in
-                </a>
+                </Link>
               )}
             </div>
           </div>
@@ -271,9 +270,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 
 
 function Root() {
-  const { isLoading, isAuthenticated } = useAuth();
-  const searchParams = new URL(window.location.href).searchParams;
-  const isAuthCallback = searchParams.get('auth_success') === '1';
+  const { isAuthenticated } = useAuth();
 
   // All hooks must run unconditionally on every render (Rules of Hooks) — in
   // particular, before the early return below, which only some renders take.
@@ -292,28 +289,6 @@ function Root() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-
-  useEffect(() => {
-    if (isAuthCallback && !isLoading) {
-      // Remove auth_success from URL without reloading the page
-      const url = new URL(window.location.href);
-      url.searchParams.delete('auth_success');
-      window.history.replaceState({}, '', url);
-    }
-  }, [isAuthCallback, isLoading]);
-
-  // If returning from Kinde, show a loading screen while resolving cache
-  if (isAuthCallback && isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center relative">
-        <div className="grid-bg" />
-        <div className="z-10 flex flex-col items-center gap-4 text-[var(--ink)]">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--line-strong)] border-t-[var(--accent-400)] animate-spin" />
-          <p className="opacity-70 text-sm">Completing authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col relative">

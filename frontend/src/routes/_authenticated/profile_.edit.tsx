@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 // The server enforces this same rule on PATCH /api/profile.
-import { usernameProblem } from "@server/validation";
+import { usernameProblem } from "@/lib/validation";
 import { ProfileEditorFields } from "@/components/ProfileEditorFields";
 import { PageHeader, Surface } from "@/components/ui/primitives";
 

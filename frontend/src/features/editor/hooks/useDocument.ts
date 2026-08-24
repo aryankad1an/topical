@@ -135,7 +135,6 @@ export function useDocument(currentUsername: string): DocumentModel {
     setIsSaving(true);
     try {
       const result = await saveLessonPlan(planFor());
-      if ('error' in result) throw new Error(result.error);
       setProjectId(result.id);
       setIsDirty(false);
       setLastSavedAt(Date.now());

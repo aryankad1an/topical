@@ -1,12 +1,14 @@
 import { createContext, useContext, ReactNode, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { userQueryOptions } from './api';
-
-const AUTH_ROUTES = {
-  login: '/api/login',
-  register: '/api/register',
-  logout: '/api/logout',
-} as const;
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  loginWithPassword,
+  logoutSession,
+  registerAccount,
+  userQueryOptions,
+  type Credentials,
+  type Registration,
+  type SessionResponse,
+} from './api';
 
 // Define the shape of our user object
 export interface User {
@@ -27,15 +29,15 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isNewUser: boolean;
-  /** True the instant a login/register/logout action has been triggered but the
-   *  full-page navigation hasn't happened yet — use for immediate button feedback. */
+  /** True while a sign-in, sign-up or sign-out is in flight — use for
+   *  immediate button feedback. */
   isNavigating: boolean;
   hasRole: (role: string) => boolean;
   refetchUser?: () => Promise<void>;
-  loginUrl: string;
-  registerUrl: string;
-  loginAction: (e?: React.MouseEvent) => void;
-  registerAction: (e?: React.MouseEvent) => void;
+  /** Sign in with an email and password. Throws with the server's reason. */
+  login: (credentials: Credentials) => Promise<void>;
+  /** Create an account. The response is already signed in. */
+  register: (registration: Registration) => Promise<void>;
   logout: () => void;
 }
 
@@ -47,19 +49,20 @@ const AuthContext = createContext<AuthContextType>({
   isNewUser: false,
   isNavigating: false,
   hasRole: () => false,
-  loginUrl: AUTH_ROUTES.login,
-  registerUrl: AUTH_ROUTES.register,
-  loginAction: () => {},
-  registerAction: () => {},
+  login: async () => {},
+  register: async () => {},
   logout: () => {},
 });
 
 // Create a provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Flips true the moment a login/register/logout click is handled, purely so
-  // buttons can show instant feedback — the actual navigation is a real <a
-  // href> or window.location.assign, never something this flag gates.
+  // Flips true while an auth request is in flight, purely so buttons can show
+  // instant feedback.
   const [isNavigating, setIsNavigating] = useState(false);
+  // Set by register(), and cleared once the client has run onboarding. The
+  // server reports it on exactly one response, so it cannot be re-read.
+  const [justRegistered, setJustRegistered] = useState(false);
+  const queryClient = useQueryClient();
 
   // No persisted cache to go stale: every full page load fetches /api/me
   // fresh, so this always reflects the server's actual session state.
@@ -67,8 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const user = (data?.user as unknown as User) || null;
   const isAuthenticated = !!user;
-  // True only on the /api/me response right after a user's very first login.
-  const isNewUser = !!(data as { isNewUser?: boolean } | undefined)?.isNewUser;
+  const isNewUser = justRegistered || !!(data as { isNewUser?: boolean } | undefined)?.isNewUser;
 
   const hasRole = (role: string) => !!user?.roles?.includes(role);
 
@@ -76,17 +78,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refetch();
   };
 
-  // Login/register links are real <a href> elements — the browser's native
-  // navigation is the actual mechanism, this just flags "pending" for UI
-  // feedback. Deliberately does NOT preventDefault or reimplement navigation.
-  const loginAction = (_e?: React.MouseEvent) => setIsNavigating(true);
-  const registerAction = (_e?: React.MouseEvent) => setIsNavigating(true);
+  /**
+   * Adopt a session response as the current user.
+   *
+   * Seeding the cache rather than refetching: the sign-in response already
+   * carries the user, and a refetch would leave the screen unauthenticated for
+   * one more round trip after the password was accepted.
+   */
+  const adopt = (session: SessionResponse) => {
+    queryClient.setQueryData(userQueryOptions.queryKey, session);
+  };
 
-  // Logout is triggered from a plain <button> (no href to fall back on), so
-  // it has to navigate itself.
+  const login = async (credentials: Credentials) => {
+    setIsNavigating(true);
+    try {
+      adopt(await loginWithPassword(credentials));
+      setJustRegistered(false);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
+  const register = async (registration: Registration) => {
+    setIsNavigating(true);
+    try {
+      adopt(await registerAccount(registration));
+      setJustRegistered(true);
+    } finally {
+      setIsNavigating(false);
+    }
+  };
+
   const logout = () => {
     setIsNavigating(true);
-    window.location.assign(AUTH_ROUTES.logout);
+    // The cache is cleared before the navigation so no signed-in data survives
+    // into the next page, even if the request itself fails.
+    void logoutSession()
+      .catch(() => {})
+      .finally(() => {
+        queryClient.clear();
+        window.location.assign('/');
+      });
   };
 
   return (
@@ -99,10 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isNavigating,
         hasRole,
         refetchUser,
-        loginUrl: AUTH_ROUTES.login,
-        registerUrl: AUTH_ROUTES.register,
-        loginAction,
-        registerAction,
+        login,
+        register,
         logout,
       }}
     >

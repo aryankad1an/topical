@@ -1,0 +1,41 @@
+# The backend's Python dependencies. Install into a virtualenv:
+#
+#     python3 -m venv .venv && source .venv/bin/activate
+#     pip install -r requirements.txt
+#     crawl4ai-setup          # one-off: downloads the headless browser
+#
+# Python 3.10 or newer is required (crawl4ai does not import on 3.9).
+
+# ── Web framework ──
+fastapi
+uvicorn[standard]
+pydantic
+# EmailStr, for validating an address at registration.
+pydantic[email]
+python-multipart          # multipart/form-data, for image uploads
+python-dotenv
+
+# ── Database ──
+sqlalchemy[asyncio]
+asyncpg                   # the async Postgres driver SQLAlchemy uses
+alembic                   # schema migrations
+
+# ── Authentication ──
+# Argon2id password hashing. In-house auth: there is no identity provider.
+argon2-cffi
+
+# ── Collaborative editing ──
+# The Yjs CRDT in Python, so the server holds real document state rather than
+# relaying updates blindly. See backend/realtime/yjs.py.
+pycrdt
+
+# ── AI content generation ──
+unclecode-litellm==1.81.13
+crawl4ai
+# Imported directly by crawl.py's fallback fetcher. It arrives with crawl4ai
+# today, but the fallback exists exactly for hosts where crawl4ai is not
+# usable — so it cannot rely on that.
+beautifulsoup4
+
+# ── Files ──
+aiofiles                  # non-blocking writes for uploaded images

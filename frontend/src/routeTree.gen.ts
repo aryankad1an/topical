@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReadRouteImport } from './routes/read'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -21,9 +23,19 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEditorRouteImport } from './routes/_authenticated/editor'
 import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile_.edit'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReadRoute = ReadRouteImport.update({
   id: '/read',
   path: '/read',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -81,7 +93,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
   '/read': typeof ReadRoute
+  '/register': typeof RegisterRoute
   '/editor': typeof AuthenticatedEditorRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -93,7 +107,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
   '/read': typeof ReadRoute
+  '/register': typeof RegisterRoute
   '/editor': typeof AuthenticatedEditorRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -107,7 +123,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/login': typeof LoginRoute
   '/read': typeof ReadRoute
+  '/register': typeof RegisterRoute
   '/_authenticated/editor': typeof AuthenticatedEditorRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -121,7 +139,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/community'
+    | '/login'
     | '/read'
+    | '/register'
     | '/editor'
     | '/profile'
     | '/projects'
@@ -133,7 +153,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/community'
+    | '/login'
     | '/read'
+    | '/register'
     | '/editor'
     | '/profile'
     | '/projects'
@@ -146,7 +168,9 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/community'
+    | '/login'
     | '/read'
+    | '/register'
     | '/_authenticated/editor'
     | '/_authenticated/profile'
     | '/_authenticated/projects'
@@ -160,17 +184,33 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   CommunityRoute: typeof CommunityRoute
+  LoginRoute: typeof LoginRoute
   ReadRoute: typeof ReadRoute
+  RegisterRoute: typeof RegisterRoute
   UUsernameRoute: typeof UUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/read': {
       id: '/read'
       path: '/read'
       fullPath: '/read'
       preLoaderRoute: typeof ReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -271,7 +311,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   CommunityRoute: CommunityRoute,
+  LoginRoute: LoginRoute,
   ReadRoute: ReadRoute,
+  RegisterRoute: RegisterRoute,
   UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport

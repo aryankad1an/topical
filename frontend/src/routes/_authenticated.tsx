@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { userQueryOptions } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -40,19 +40,23 @@ function VerifyingSession() {
   );
 }
 
-/** Both links are real navigations to Kinde, not XHR — hence `<a>`, not onClick. */
+/**
+ * Both screens are routes in this application, so these are client-side
+ * `Link`s — the sign-in form renders without a round trip, and the page the
+ * visitor was blocked from is carried along so they land back on it.
+ */
 function SignInPrompt() {
-  const { loginUrl, registerUrl, loginAction, registerAction } = useAuth();
+  const { pathname } = useLocation();
   return (
     <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60vh]">
       <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-      <p className="text-muted-foreground mb-6">Please login or register to access this content</p>
+      <p className="text-muted-foreground mb-6">Please sign in or create an account to access this content</p>
       <div className="flex gap-4">
         <Button asChild size="lg">
-          <a href={loginUrl} onClick={loginAction}>Login</a>
+          <Link to="/login" search={{ redirect: pathname }}>Sign in</Link>
         </Button>
         <Button asChild variant="outline" size="lg">
-          <a href={registerUrl} onClick={registerAction}>Register</a>
+          <Link to="/register">Create account</Link>
         </Button>
       </div>
     </div>

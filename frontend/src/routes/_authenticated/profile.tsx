@@ -6,13 +6,14 @@ import { Loader2, Mail, User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Ey
 import { useState, useEffect } from "react";
 import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
 import { IdentityBanner, EmptyState } from "@/components/ui/primitives";
+import { ChangePasswordCard } from "@/components/auth/ChangePasswordCard";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: Profile,
 });
 
 function Profile() {
-  const { user, isLoading, isNavigating, loginUrl, logout, loginAction } = useAuth();
+  const { user, isLoading, isNavigating, logout } = useAuth();
 
   // AI provider credentials
   const [credentials, setCredentials] = useState<AiCredential[]>([]);
@@ -33,7 +34,7 @@ function Profile() {
       <div className="text-center p-8">
         <h2 className="text-2xl font-bold mb-2">Authentication Error</h2>
         <p className="text-muted-foreground mb-4">Unable to load user profile</p>
-        <Button asChild><a href={loginUrl} onClick={loginAction}>Login Again</a></Button>
+        <Button asChild><Link to="/login">Sign in again</Link></Button>
       </div>
     );
   }
@@ -171,22 +172,7 @@ function Profile() {
           </CardContent>
         </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your account preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                Your account is managed through Kinde authentication service.
-              </p>
-              <Button asChild variant="outline" className="w-full">
-                <a href={loginUrl} target="_blank" rel="noopener noreferrer">
-                  Manage Account Settings
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
+          <ChangePasswordCard />
         </div>
       </div>
     </div>

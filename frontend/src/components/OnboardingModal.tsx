@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 
-/** Shown once, right after a brand-new user's first Kinde login. */
+/** Shown once, right after a brand-new account is created. */
 export function OnboardingModal() {
   const { user, isNewUser, refetchUser } = useAuth();
   const [open, setOpen] = useState(false);

@@ -86,7 +86,6 @@ function ProjectsPage() {
     try {
       const mainTopic = projectType === 'latex' ? `${LATEX_PREFIX}${name}` : name;
       const result = await saveLessonPlan({ name, mainTopic, topics: [] });
-      if ('error' in result) throw new Error(result.error);
       queryClient.invalidateQueries({ queryKey: ['user-lesson-plans'] });
       setShowNameDialog(false);
       navigate({ to: '/editor', search: { id: result.id, type: projectType } });
