@@ -1,10 +1,47 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { userQueryOptions } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
+import { userQueryOptions } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 
-const Login = () => {
+/**
+ * The gate every signed-in screen sits behind.
+ *
+ * `beforeLoad` warms the user query so the child route has an answer on its
+ * first render, and swallows the failure rather than throwing: an anonymous
+ * visitor is an expected state here, not an error, and letting it throw would
+ * replace the sign-in prompt with the router's error boundary.
+ */
+export const Route = createFileRoute("/_authenticated")({
+  beforeLoad: async ({ context }) => {
+    try {
+      return await context.queryClient.fetchQuery(userQueryOptions);
+    } catch {
+      return { user: null };
+    }
+  },
+  component: AuthenticatedLayout,
+});
+
+function AuthenticatedLayout() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <VerifyingSession />;
+  if (!user) return <SignInPrompt />;
+  return <Outlet />;
+}
+
+function VerifyingSession() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+      <p className="text-muted-foreground">Verifying authentication...</p>
+    </div>
+  );
+}
+
+/** Both links are real navigations to Kinde, not XHR — hence `<a>`, not onClick. */
+function SignInPrompt() {
   const { loginUrl, registerUrl, loginAction, registerAction } = useAuth();
   return (
     <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60vh]">
@@ -20,41 +57,4 @@ const Login = () => {
       </div>
     </div>
   );
-};
-
-const LoadingState = () => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-      <p className="text-muted-foreground">Verifying authentication...</p>
-    </div>
-  );
-};
-
-const Component = () => {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (!user) {
-    return <Login />;
-  }
-
-  return <Outlet />;
-};
-
-// src/routes/_authenticated.tsx
-export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ context }) => {
-    const queryClient = context.queryClient;
-    try {
-      const data = await queryClient.fetchQuery(userQueryOptions);
-      return data;
-    } catch (e) {
-      return { user: null };
-    }
-  },
-  component: Component,
-});
+}

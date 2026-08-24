@@ -1,8 +1,9 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
+/** Merge Tailwind class lists, with later classes winning conflicts. */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /** Best-effort human-readable message from a caught value of unknown shape. */
@@ -11,23 +12,37 @@ export function errorMessage(error: unknown, fallback: string): string {
 }
 
 /**
- * Removes frontmatter from MDX content
- * Frontmatter is the section between --- markers at the beginning of the content
+ * A leading `---` … `---` block, with both delimiters on their own lines.
+ *
+ * This shape alone is not enough to call something frontmatter — see
+ * `stripFrontmatter`.
  */
-export function stripFrontmatter(mdxContent: string): string {
-  if (!mdxContent) return '';
+const LEADING_BLOCK = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
-  // Check if the content starts with frontmatter (---)
-  if (mdxContent.trim().startsWith('---')) {
-    // Find the end of the frontmatter (the second ---)
-    const secondDashIndex = mdxContent.indexOf('---', 3);
+/** A `key: value` line, a `- list item`, or an indented continuation of either. */
+const YAML_LINE = /^(?:[A-Za-z_][\w.-]*[ \t]*:|-[ \t]|[ \t]+\S)/;
 
-    if (secondDashIndex !== -1) {
-      // Return everything after the second --- and any following whitespace
-      return mdxContent.substring(secondDashIndex + 3).trim();
-    }
-  }
+/**
+ * Drop the YAML frontmatter block from generated markup.
+ *
+ * Models add one despite being asked not to, and the editor renders raw text —
+ * so an unstripped block shows up in the document as literal `title: …` lines.
+ *
+ * The delimiters are not sufficient evidence on their own. A document that
+ * opens with a horizontal rule and contains another one later has exactly the
+ * same shape, and this app writes that shape itself: stored documents are
+ * topics joined by `\n\n---\n\n`. So the block's contents must also read as
+ * YAML before any of it is thrown away — losing a real section of someone's
+ * writing is far worse than leaving three stray metadata lines in view.
+ */
+export function stripFrontmatter(content: string): string {
+  if (!content) return '';
 
-  // If no frontmatter found or format is unexpected, return the original content
-  return mdxContent;
+  const match = LEADING_BLOCK.exec(content);
+  if (!match) return content.trim();
+
+  const lines = match[1].split(/\r?\n/).filter(line => line.trim());
+  const isYaml = lines.length > 0 && lines.every(line => YAML_LINE.test(line));
+
+  return (isYaml ? content.slice(match[0].length) : content).trim();
 }

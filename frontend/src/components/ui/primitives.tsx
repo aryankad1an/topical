@@ -208,6 +208,51 @@ export function IconButton({ tone = 'neutral', revealOnHover, className, ...rest
   );
 }
 
+/* ─────────────────────────── PillToggle ─────────────────────────── */
+
+export interface PillToggleProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  /** Names the setting for screen readers — the switch carries no visible text. */
+  label?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+/**
+ * A switch for one on/off setting.
+ *
+ * A `<div role="switch">` rather than a `<button>`: the browser's default
+ * button styling (its own border, background and active state) fought the
+ * track on every platform, and there is nothing to submit. Keyboard support
+ * is therefore supplied by hand — Enter and Space both toggle, as they would
+ * on a real button.
+ *
+ * All of its geometry and motion live in `.pill-toggle`; the checked state is
+ * carried on `aria-checked`, so the same attribute drives assistive tech and
+ * the styling, and the two cannot fall out of step.
+ */
+export function PillToggle({ checked, onChange, label, disabled, className }: PillToggleProps) {
+  return (
+    <div
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : 0}
+      className={cn('pill-toggle', className)}
+      onClick={() => !disabled && onChange(!checked)}
+      onKeyDown={event => {
+        if (disabled || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        onChange(!checked);
+      }}
+    >
+      <span className="pill-toggle-thumb" />
+    </div>
+  );
+}
+
 /* ─────────────────────────── IdentityBanner ─────────────────────────── */
 
 export interface IdentityBannerProps {

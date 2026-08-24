@@ -1,11 +1,21 @@
+/**
+ * The community forum: posts, votes and comments.
+ *
+ * Nothing here is linked at the schema level — votes and comments carry a
+ * `postId` with no foreign key behind it — so each handler that writes one
+ * checks the post exists first, and deleting a post takes its votes and
+ * comments with it. An orphaned row is invisible and permanent.
+ */
+
 import { Hono } from "hono";
 import { getUser } from "../kinde";
 import { db } from "../db";
-import { posts, postComments, postVotes } from "../db/schema/posts.ts";
+import { posts, postComments, postVotes } from "../db/schema/posts";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { requireDb } from "../middleware";
+import { authorName as displayName, idParam } from "../http";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
@@ -18,22 +28,11 @@ const createCommentSchema = z.object({
   body: z.string().min(1).max(2000),
 });
 
-/**
- * A positive integer route parameter, or null.
- *
- * `Number("abc")` is NaN, and handing NaN to Postgres for an integer column
- * raises rather than matching nothing — so an unguarded `/posts/abc` answered
- * 500 where it should answer 400.
- */
-function idParam(raw: string | undefined): number | null {
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
+/** A user's standing vote on a post: up, down, or none. */
+type VoteValue = 1 | -1 | 0;
 
-/** Display name for a post/comment author: given name, else email handle, else "Member". */
-function resolveAuthorName(user: { given_name?: string; email?: string }): string {
-  return user.given_name?.trim() || user.email?.split("@")[0] || "Member";
-}
+/** 1 when this vote counts toward `side`'s tally, else 0. */
+const tally = (value: VoteValue, side: 1 | -1): number => (value === side ? 1 : 0);
 
 export const postsRoute = new Hono()
   .use("*", requireDb)
@@ -52,7 +51,7 @@ export const postsRoute = new Hono()
   .post("/", getUser, zValidator("json", createPostSchema), async (c) => {
     const user = c.var.user;
     const data = c.req.valid("json");
-    const authorName = resolveAuthorName(user);
+    const authorName = displayName(user);
     const [post] = await db!.insert(posts).values({
       userId: user.id,
       authorName,
@@ -77,49 +76,45 @@ export const postsRoute = new Hono()
   })
 
   // ── VOTE ──
+  // Voting the same way twice clears the vote; voting the other way switches
+  // it. Both counters are then adjusted by the difference between the old
+  // state and the new one, in a single statement — this used to be a nested
+  // if/else over six near-identical UPDATEs, one per transition, and the two
+  // "switch" branches were the only ones that touched both columns.
   .post("/:id/vote", getUser, zValidator("json", z.object({ vote: z.union([z.literal(1), z.literal(-1)]) })), async (c) => {
     const user = c.var.user;
     const postId = idParam(c.req.param("id"));
     if (postId === null) return c.json({ error: "Invalid post id" }, 400);
     const { vote } = c.req.valid("json");
 
-    // The post has to exist first: nothing links votes to posts at the schema
-    // level, so voting on a missing id used to leave a row pointing nowhere.
     const [target] = await db!.select({ id: posts.id }).from(posts).where(eq(posts.id, postId));
     if (!target) return c.json({ error: "Post not found" }, 404);
 
-    // Check existing vote
     const [existing] = await db!.select().from(postVotes)
       .where(and(eq(postVotes.postId, postId), eq(postVotes.userId, user.id)));
 
-    if (existing) {
-      if (existing.vote === vote) {
-        // Undo vote
-        await db!.delete(postVotes).where(eq(postVotes.id, existing.id));
-        if (vote === 1) {
-          await db!.update(posts).set({ upvotes: sql`GREATEST(${posts.upvotes} - 1, 0)` }).where(eq(posts.id, postId));
-        } else {
-          await db!.update(posts).set({ downvotes: sql`GREATEST(${posts.downvotes} - 1, 0)` }).where(eq(posts.id, postId));
-        }
-      } else {
-        // Switch vote
-        await db!.update(postVotes).set({ vote }).where(eq(postVotes.id, existing.id));
-        if (vote === 1) {
-          await db!.update(posts).set({ upvotes: sql`${posts.upvotes} + 1`, downvotes: sql`GREATEST(${posts.downvotes} - 1, 0)` }).where(eq(posts.id, postId));
-        } else {
-          await db!.update(posts).set({ upvotes: sql`GREATEST(${posts.upvotes} - 1, 0)`, downvotes: sql`${posts.downvotes} + 1` }).where(eq(posts.id, postId));
-        }
-      }
+    const before: VoteValue = existing ? (existing.vote as 1 | -1) : 0;
+    const after: VoteValue = before === vote ? 0 : vote;
+
+    if (after === 0) {
+      await db!.delete(postVotes).where(eq(postVotes.id, existing.id));
+    } else if (existing) {
+      await db!.update(postVotes).set({ vote: after }).where(eq(postVotes.id, existing.id));
     } else {
-      await db!.insert(postVotes).values({ postId, userId: user.id, vote });
-      if (vote === 1) {
-        await db!.update(posts).set({ upvotes: sql`${posts.upvotes} + 1` }).where(eq(posts.id, postId));
-      } else {
-        await db!.update(posts).set({ downvotes: sql`${posts.downvotes} + 1` }).where(eq(posts.id, postId));
-      }
+      await db!.insert(postVotes).values({ postId, userId: user.id, vote: after });
     }
 
-    const [updated] = await db!.select().from(posts).where(eq(posts.id, postId));
+    const [updated] = await db!.update(posts)
+      .set({
+        // GREATEST floors at zero: a count that drifted negative — which a
+        // half-applied vote in the old branching version could do — renders
+        // as "-1 upvotes".
+        upvotes: sql`GREATEST(${posts.upvotes} + ${tally(after, 1) - tally(before, 1)}, 0)`,
+        downvotes: sql`GREATEST(${posts.downvotes} + ${tally(after, -1) - tally(before, -1)}, 0)`,
+      })
+      .where(eq(posts.id, postId))
+      .returning();
+
     return c.json({ post: updated });
   })
 
@@ -129,7 +124,7 @@ export const postsRoute = new Hono()
     const postId = idParam(c.req.param("id"));
     if (postId === null) return c.json({ error: "Invalid post id" }, 400);
     const { body } = c.req.valid("json");
-    const authorName = resolveAuthorName(user);
+    const authorName = displayName(user);
 
     // Same reason as voting: an orphaned comment is invisible but permanent.
     const [target] = await db!.select({ id: posts.id }).from(posts).where(eq(posts.id, postId));

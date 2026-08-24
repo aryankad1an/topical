@@ -27,6 +27,20 @@ const apiRoutes = app.basePath("/api")
   .route("/posts", postsRoute)
   .route("/", authRoute);
 
+/**
+ * Anything a handler throws becomes a JSON 500, logged with its route.
+ *
+ * Handlers used to wrap their own bodies in try/catch to achieve this, which
+ * meant every one of them carried four lines of identical plumbing and the
+ * ones that forgot answered with Hono's plain-text default — which the browser
+ * client then showed to the user as an unparsed blob, because it expects the
+ * `{ error }` shape every other failure uses.
+ */
+app.onError((error, c) => {
+  console.error(`${c.req.method} ${c.req.path} failed:`, error);
+  return c.json({ error: "Something went wrong. Please try again." }, 500);
+});
+
 app.get("*", serveStatic({ root: "./frontend/dist" }));
 app.get("*", serveStatic({ path: "./frontend/dist/index.html" }));
 

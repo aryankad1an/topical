@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, BookOpen, FileType2, FileCode2, Calendar, UserX } from "lucide-react";
 import { fetchPersonProfile, personName, type PublishedDoc } from "@/lib/api";
 import { formatOf } from "@/lib/types";
+import { formatDate, formatMonthYear } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState, PageHeader, IdentityBanner, DocTypeIcon } from "@/components/ui/primitives";
 
@@ -50,9 +51,7 @@ function PublicProfile() {
   const { person, published } = data;
   const isSelf = user?.id === person.id;
   const name = personName(person);
-  const joined = person.createdAt
-    ? new Date(person.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-    : null;
+  const joined = formatMonthYear(person.createdAt);
 
   const openDoc = (doc: PublishedDoc) => {
     navigate({ to: "/editor", search: { id: doc.id, type: formatOf(doc.mainTopic) } });
@@ -110,16 +109,17 @@ function PublicProfile() {
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
           {published.map(doc => {
-            const isLatex = doc.mainTopic.startsWith("latex:");
+            const format = formatOf(doc.mainTopic);
+            const isLatex = format === "latex";
             const Icon = isLatex ? FileCode2 : FileType2;
             return (
               <button key={doc.id} className="pub-row" onClick={() => openDoc(doc)}>
-                <DocTypeIcon type={isLatex ? "latex" : "mdx"} icon={Icon} />
+                <DocTypeIcon type={format} icon={Icon} />
                 <span className="min-w-0 flex-1 text-left">
                   <span className="block text-[13px] font-medium text-[var(--ink)] truncate">{doc.name}</span>
                   <span className="block text-[11px] text-[var(--ink-ghost)]">
                     {isLatex ? "LaTeX" : "MDX"}
-                    {doc.updatedAt && ` · ${new Date(doc.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+                    {doc.updatedAt && ` · ${formatDate(doc.updatedAt)}`}
                   </span>
                 </span>
               </button>

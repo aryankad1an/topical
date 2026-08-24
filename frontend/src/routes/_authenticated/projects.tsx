@@ -12,14 +12,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getLessonPlans, deleteLessonPlan, saveLessonPlan, getLessonPlanById, LessonPlanResponse } from '@/lib/api';
-import { stripFrontmatter } from '@/lib/utils';
+import { documentContent } from '@/lib/documents';
+import { formatDate } from '@/lib/format';
+import { formatOf, LATEX_PREFIX, type DocFormat } from '@/lib/types';
 import { MarkdownPreview } from '@/features/preview/MarkdownPreview';
 import { LatexPreview } from '@/features/preview/LatexPreview';
 import {
   FileType2, FileCode2, Plus, Loader2, Search, FolderOpen, X, LayoutGrid, List,
 } from 'lucide-react';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { PageHeader, StatStrip, EmptyState } from '@/components/ui/primitives';
+import { PageHeader, StatStrip, EmptyState, PillToggle } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,68 +30,6 @@ import {
 
 export const Route = createFileRoute('/_authenticated/projects')({ component: ProjectsPage });
 
-/* ─── Custom animated pill toggle ─── */
-function PillToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  // Using div instead of button to bypass any browser user-agent defaults.
-  // width: 44, height: 24, border: 1, padding: 2.
-  // inner width = 44 - 2(borders) - 4(padding) = 38.
-  // Thumb is 18. Travel = 38 - 18 = 20.
-  const TRAVEL = 20;
-  return (
-    <div
-      role="switch"
-      aria-checked={checked}
-      tabIndex={0}
-      onClick={() => onChange(!checked)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange(!checked); } }}
-      style={{
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        width: 44,
-        height: 24,
-        borderRadius: 24,
-        padding: '2px',
-        cursor: 'pointer',
-        border: `1px solid ${checked ? 'var(--ink-a12)' : 'var(--ink-a06)'}`,
-        background: checked
-          ? 'linear-gradient(135deg, var(--ink-a08) 0%, var(--ink-a06) 100%)'
-          : 'var(--ink-a04)',
-        boxShadow: checked ? '0 0 10px var(--ink-a06), inset 0 1px 1px var(--ink-a06)' : 'none',
-        transition: 'background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease',
-        flexShrink: 0,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Track shimmer */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'inherit',
-        background: 'linear-gradient(135deg, var(--ink-a04) 0%, transparent 60%)',
-        pointerEvents: 'none',
-      }} />
-      {/* Sliding thumb pill */}
-      <div style={{
-        width: 18,
-        height: 18,
-        borderRadius: '50%',
-        flexShrink: 0,
-        background: checked
-          ? 'var(--accent-400)'
-          : 'var(--ink-a08)',
-        boxShadow: checked
-          ? '0 1px 6px var(--ink-a12), inset 0 1px 1px var(--surface)'
-          : '0 1px 3px rgba(25,25,23,0.25), inset 0 1px 1px var(--ink-a06)',
-        transform: checked ? `translateX(${TRAVEL}px)` : 'translateX(0px)',
-        transition: 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), background 0.32s ease, box-shadow 0.32s ease',
-      }} />
-    </div>
-  );
-}
-
-
 function ProjectsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -97,7 +37,7 @@ function ProjectsPage() {
 
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [projectName, setProjectName] = useState('');
-  const [projectType, setProjectType] = useState<'mdx' | 'latex'>('mdx');
+  const [projectType, setProjectType] = useState<DocFormat>('mdx');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -106,7 +46,7 @@ function ProjectsPage() {
 
 
   // Read modal
-  const [readProject, setReadProject] = useState<{ name: string; content: string; type: 'mdx' | 'latex' } | null>(null);
+  const [readProject, setReadProject] = useState<{ name: string; content: string; type: DocFormat } | null>(null);
   const [isLoadingRead, setIsLoadingRead] = useState(false);
 
   const { data: projectsData, isLoading } = useQuery({
@@ -117,8 +57,6 @@ function ProjectsPage() {
 
   const projects = projectsData?.lessonPlans || [];
   const filtered = projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-
-  const getType = (p: { mainTopic: string }): 'mdx' | 'latex' => p.mainTopic.startsWith('latex:') ? 'latex' : 'mdx';
 
   // Workspace stats — a document count alone said little about the work itself.
   const totalWords = projects.reduce((n, p) => n + wordCount(p), 0);
@@ -136,7 +74,7 @@ function ProjectsPage() {
     return 'Good evening';
   })();
 
-  const openCreateDialog = (type: 'mdx' | 'latex') => {
+  const openCreateDialog = (type: DocFormat) => {
     setProjectType(type);
     setProjectName('');
     setShowNameDialog(true);
@@ -146,7 +84,7 @@ function ProjectsPage() {
     const name = projectName.trim();
     if (!name) { toast.error('Please enter a project name'); return; }
     try {
-      const mainTopic = projectType === 'latex' ? `latex:${name}` : name;
+      const mainTopic = projectType === 'latex' ? `${LATEX_PREFIX}${name}` : name;
       const result = await saveLessonPlan({ name, mainTopic, topics: [] });
       if ('error' in result) throw new Error(result.error);
       queryClient.invalidateQueries({ queryKey: ['user-lesson-plans'] });
@@ -160,7 +98,7 @@ function ProjectsPage() {
 
   const handleView = (id: number) => {
     const plan = projects.find(p => p.id === id);
-    const type = plan ? getType(plan) : 'mdx';
+    const type = formatOf(plan?.mainTopic);
     navigate({ to: '/editor', search: { id, type } });
   };
 
@@ -169,8 +107,7 @@ function ProjectsPage() {
     try {
       const res = await getLessonPlanById(id);
       if ('error' in res) throw new Error(res.error);
-      const combined = res.topics.filter(t => t.mdxContent?.trim()).map(t => stripFrontmatter(t.mdxContent)).join('\n\n---\n\n');
-      setReadProject({ name: res.name, content: combined, type: getType(res) });
+      setReadProject({ name: res.name, content: documentContent(res.topics), type: formatOf(res.mainTopic) });
     } catch {
       toast.error('Failed to load project');
     } finally {
@@ -200,8 +137,6 @@ function ProjectsPage() {
       toast.success(toPublic ? 'Project is now public' : 'Project is now private');
     } catch { toast.error('Failed to update'); }
   };
-
-  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
 
   const dialogStyle = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px' };
 
@@ -310,7 +245,8 @@ function ProjectsPage() {
                     {user?.id === plan.userId && (
                       <PillToggle
                         checked={!!plan.isPublic}
-                        onChange={(v) => togglePublic(plan as LessonPlanResponse, v)}
+                        label={`Publish "${plan.name}" to the community`}
+                        onChange={next => togglePublic(plan as LessonPlanResponse, next)}
                       />
                     )}
                   </DocumentCard>

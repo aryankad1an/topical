@@ -5,310 +5,272 @@
  * performs the navigation, so these handlers only start and finish it. `/me`
  * answers 401 for an anonymous visitor rather than erroring, because that is
  * the expected state on a first visit and the client treats it as "no session".
+ *
+ * Both Kinde and the database are optional at boot (see `../kinde` and
+ * `../db`), so most handlers here need a guard saying which one they depend
+ * on. Those guards are middleware — `requireKinde` and `requireDb` — rather
+ * than an `if` at the top of each handler, which is what they were: the same
+ * four lines written out nine times, in three different wordings.
  */
 
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
+import { and, desc, eq, ilike, isNotNull, or } from "drizzle-orm";
 
-import { kindeClient, sessionManager, isKindeConfigured } from "../kinde";
-import { getUser } from "../kinde";
 import { db } from "../db";
-import { users as userTable } from "../db/schema/users";
+import { getUser, kindeClient, sessionManager } from "../kinde";
+import { requireDb } from "../middleware";
 import { lessonPlans } from "../db/schema/lessonPlans";
-import { eq, ilike, and, or, desc, isNotNull } from "drizzle-orm";
+import { users as userTable } from "../db/schema/users";
+// The same rules the edit form applies — see ../validation.
+import { MAX_BIO_LENGTH, USERNAME_PATTERN, USERNAME_RULE } from "../validation";
 
-/** Usernames address a public profile at /u/<username>, so they must be URL-safe. */
-const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
+/** Refuse the request when Kinde was never configured. */
+const requireKinde = createMiddleware(async (c, next) => {
+  if (!kindeClient) {
+    return c.json({ error: "Auth is not configured. Set Kinde env vars in .env" }, 503);
+  }
+  await next();
+});
+
+/**
+ * The columns a profile card needs.
+ *
+ * Written out once: the browse list and the single-profile lookup return the
+ * same person and had two copies of this list, so a column added to one was
+ * missing from the other.
+ */
+const publicUserColumns = {
+  id: userTable.id,
+  username: userTable.username,
+  givenName: userTable.givenName,
+  familyName: userTable.familyName,
+  bio: userTable.bio,
+  avatarUrl: userTable.avatarUrl,
+  createdAt: userTable.createdAt,
+};
 
 export const authRoute = new Hono()
-  .get("/login", async (c) => {
-    if (!kindeClient) {
-      return c.json({ error: "Auth is not configured. Set Kinde env vars in .env" }, 503);
-    }
-    const loginUrl = await kindeClient.login(sessionManager(c));
-    return c.redirect(loginUrl.toString());
-  })
-  .get("/register", async (c) => {
-    if (!kindeClient) {
-      return c.json({ error: "Auth is not configured. Set Kinde env vars in .env" }, 503);
-    }
-    const registerUrl = await kindeClient.register(sessionManager(c));
-    return c.redirect(registerUrl.toString());
-  })
-  .get("/callback", async (c) => {
-    if (!kindeClient) {
-      return c.json({ error: "Auth is not configured" }, 503);
-    }
-    // get called every time we login or register
-    const url = new URL(c.req.url);
-    await kindeClient.handleRedirectToApp(sessionManager(c), url);
+  // ── Session ──
+  .get("/login", requireKinde, async (c) =>
+    c.redirect((await kindeClient!.login(sessionManager(c))).toString()))
+
+  .get("/register", requireKinde, async (c) =>
+    c.redirect((await kindeClient!.register(sessionManager(c))).toString()))
+
+  // Kinde sends the browser back here after every login and registration.
+  .get("/callback", requireKinde, async (c) => {
+    await kindeClient!.handleRedirectToApp(sessionManager(c), new URL(c.req.url));
     return c.redirect("/?auth_success=1");
   })
+
+  // No guard: with Kinde unconfigured there is no session to end, and sending
+  // someone to an error page for signing out would be absurd.
   .get("/logout", async (c) => {
-    if (!kindeClient) {
-      return c.redirect("/");
-    }
-    const logoutUrl = await kindeClient.logout(sessionManager(c));
-    return c.redirect(logoutUrl.toString());
+    if (!kindeClient) return c.redirect("/");
+    return c.redirect((await kindeClient.logout(sessionManager(c))).toString());
   })
+
+  // ── The signed-in user ──
+  // Deliberately usable without a database: the identity comes from Kinde, and
+  // the row here is only a cache of it plus the fields Kinde does not hold.
   .get("/me", getUser, async (c) => {
     const user = c.var.user;
-    let dbUser: typeof userTable.$inferSelect | null = null;
+    let profile: typeof userTable.$inferSelect | null = null;
     let isNewUser = false;
 
-    // Skip DB caching if database is not available
     if (db) {
       try {
-        // Check if user already exists in the database
-        const existingUser = await db
-          .select()
-          .from(userTable)
-          .where(eq(userTable.id, user.id))
-          .limit(1);
+        [profile] = await db.select().from(userTable).where(eq(userTable.id, user.id)).limit(1);
 
-        // If user doesn't exist, insert them — this is the very first time
-        // we've seen this Kinde user, so flag it as a fresh signup.
-        if (!existingUser.length) {
+        if (!profile) {
+          // First time this Kinde account has been seen — flag it so the
+          // client can run onboarding.
           isNewUser = true;
-          const inserted = await db.insert(userTable).values({
+          [profile] = await db.insert(userTable).values({
             id: user.id,
             givenName: user.given_name,
             familyName: user.family_name,
             email: user.email,
           }).returning();
-          dbUser = inserted[0];
-        }
-        // If user exists but information might have changed, update them
-        else {
-          dbUser = existingUser[0];
-          if (
-            existingUser[0].givenName !== user.given_name ||
-            existingUser[0].familyName !== user.family_name ||
-            existingUser[0].email !== user.email
-          ) {
-            const updated = await db
-              .update(userTable)
-              .set({
-                givenName: user.given_name,
-                familyName: user.family_name,
-                email: user.email,
-                updatedAt: new Date()
-              })
-              .where(eq(userTable.id, user.id))
-              .returning();
-            dbUser = updated[0];
-          }
+        } else if (
+          profile.givenName !== user.given_name ||
+          profile.familyName !== user.family_name ||
+          profile.email !== user.email
+        ) {
+          // Kinde is the authority on these three; refresh the cache when it
+          // has moved on.
+          [profile] = await db.update(userTable)
+            .set({
+              givenName: user.given_name,
+              familyName: user.family_name,
+              email: user.email,
+              updatedAt: new Date(),
+            })
+            .where(eq(userTable.id, user.id))
+            .returning();
         }
       } catch (error) {
+        // Caching is not worth failing a session check over.
         console.error("Error caching user information:", error);
-        // Continue anyway, as this is just for caching
       }
     }
 
     return c.json({
       user: {
         ...user,
-        username: dbUser?.username || null,
-        bio: dbUser?.bio || null,
-        avatarUrl: dbUser?.avatarUrl || null,
+        username: profile?.username ?? null,
+        bio: profile?.bio ?? null,
+        avatarUrl: profile?.avatarUrl ?? null,
       },
       isNewUser,
     });
   })
-  // Get user information by ID (for public display)
-  .get("/user/:id", async (c) => {
-    const userId = c.req.param("id");
 
-    if (!db) {
-      return c.json({ error: "Database not configured" }, 503);
-    }
+  // ── One user, by id, for attribution on someone else's work ──
+  .get("/user/:id", requireDb, async (c) => {
+    const [user] = await db!
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, c.req.param("id")))
+      .limit(1);
 
-    try {
-      // Try to get user from our database cache first
-      const user = await db
-        .select()
-        .from(userTable)
-        .where(eq(userTable.id, userId))
-        .limit(1)
-        .then(res => res[0]);
+    if (!user) return c.json({ error: "User not found" }, 404);
 
-      if (!user) {
-        return c.json({ error: "User not found" }, 404);
-      }
-
-      // Return only the necessary public information
-      return c.json({
-        user: {
-          id: user.id,
-          given_name: user.givenName || null,
-          family_name: user.familyName || null,
-          username: user.username || null,
-          avatar_url: user.avatarUrl || null,
-        }
-      });
-    } catch (error) {
-      console.error("Error fetching user by ID:", error);
-      return c.json({ error: "Failed to fetch user information" }, 500);
-    }
+    // Only what a byline needs — no email, no bio.
+    return c.json({
+      user: {
+        id: user.id,
+        given_name: user.givenName,
+        family_name: user.familyName,
+        username: user.username,
+        avatar_url: user.avatarUrl,
+      },
+    });
   })
-  // Update the current user's profile — any subset of username/bio/avatarUrl
-  .patch("/profile", getUser, async (c) => {
-    if (!db) return c.json({ error: "Database not configured" }, 503);
 
-    try {
-      const body = await c.req.json();
-      const updates: Record<string, unknown> = {};
-
-      if (body.username !== undefined) {
-        const { username } = body;
-        // The same rule the edit form applies. It was enforced only in the
-        // browser, so a direct PATCH could set a username containing a slash
-        // or a space — which then produced a /u/<name> profile link that could
-        // not resolve back to its own account.
-        if (typeof username !== "string" || !USERNAME_PATTERN.test(username)) {
-          return c.json(
-            { error: "Usernames are 3–30 characters, using letters, numbers, hyphen and underscore" },
-            400,
-          );
-        }
-        const existing = await db.select().from(userTable).where(eq(userTable.username, username)).limit(1);
-        if (existing.length > 0 && existing[0].id !== c.var.user.id) {
-          return c.json({ error: "Username is already taken" }, 409);
-        }
-        updates.username = username;
-      }
-
-      if (body.bio !== undefined) {
-        const { bio } = body;
-        if (bio !== null && (typeof bio !== "string" || bio.length > 280)) {
-          return c.json({ error: "Bio must be 280 characters or fewer" }, 400);
-        }
-        updates.bio = bio;
-      }
-
-      if (body.avatarUrl !== undefined) {
-        const { avatarUrl } = body;
-        if (avatarUrl !== null && typeof avatarUrl !== "string") {
-          return c.json({ error: "Invalid avatar URL" }, 400);
-        }
-        updates.avatarUrl = avatarUrl;
-      }
-
-      if (Object.keys(updates).length === 0) {
-        return c.json({ error: "No fields to update" }, 400);
-      }
-
-      updates.updatedAt = new Date();
-      const [updated] = await db.update(userTable)
-        .set(updates)
-        .where(eq(userTable.id, c.var.user.id))
-        .returning();
-
-      return c.json({
-        success: true,
-        user: {
-          username: updated.username,
-          bio: updated.bio,
-          avatarUrl: updated.avatarUrl,
-        },
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      return c.json({ error: "Failed to update profile" }, 500);
+  // ── Edit your own profile ──
+  // Any subset of username/bio/avatarUrl; anything absent is left alone.
+  .patch("/profile", requireDb, getUser, async (c) => {
+    const body = await c.req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return c.json({ error: "Expected a JSON object" }, 400);
     }
-  })
-  .get("/search/username", getUser, async (c) => {
-    if (!db) return c.json({ error: "Database not configured" }, 503);
-    const query = c.req.query("q");
-    if (!query || query.length < 2) return c.json({ users: [] });
 
-    try {
-      const matchedUsers = await db
-        .select({ id: userTable.id, username: userTable.username, givenName: userTable.givenName })
+    const updates: Partial<typeof userTable.$inferInsert> = {};
+
+    if (body.username !== undefined) {
+      // The same rule the edit form applies. It was enforced only in the
+      // browser, so a direct PATCH could set a username containing a slash or
+      // a space — which then produced a /u/<name> profile link that could not
+      // resolve back to its own account.
+      if (typeof body.username !== "string" || !USERNAME_PATTERN.test(body.username)) {
+        return c.json({ error: USERNAME_RULE }, 400);
+      }
+      const [taken] = await db!
+        .select({ id: userTable.id })
         .from(userTable)
-        .where(ilike(userTable.username, `%${query}%`))
-        .limit(10);
-      return c.json({ users: matchedUsers });
-    } catch (error) {
-      console.error("Error searching users:", error);
-      return c.json({ error: "Failed to search users" }, 500);
+        .where(eq(userTable.username, body.username))
+        .limit(1);
+      if (taken && taken.id !== c.var.user.id) {
+        return c.json({ error: "Username is already taken" }, 409);
+      }
+      updates.username = body.username;
     }
+
+    if (body.bio !== undefined) {
+      if (body.bio !== null && (typeof body.bio !== "string" || body.bio.length > MAX_BIO_LENGTH)) {
+        return c.json({ error: `Bio must be ${MAX_BIO_LENGTH} characters or fewer` }, 400);
+      }
+      updates.bio = body.bio;
+    }
+
+    if (body.avatarUrl !== undefined) {
+      if (body.avatarUrl !== null && typeof body.avatarUrl !== "string") {
+        return c.json({ error: "Invalid avatar URL" }, 400);
+      }
+      updates.avatarUrl = body.avatarUrl;
+    }
+
+    if (!Object.keys(updates).length) {
+      return c.json({ error: "No fields to update" }, 400);
+    }
+
+    const [updated] = await db!.update(userTable)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userTable.id, c.var.user.id))
+      .returning();
+
+    return c.json({
+      success: true,
+      user: {
+        username: updated.username,
+        bio: updated.bio,
+        avatarUrl: updated.avatarUrl,
+      },
+    });
+  })
+
+  // ── Username autocomplete, for the co-author picker ──
+  // Narrower than /people on purpose: it is a picker, not a directory.
+  .get("/search/username", requireDb, getUser, async (c) => {
+    const query = c.req.query("q") ?? "";
+    if (query.length < 2) return c.json({ users: [] });
+
+    const users = await db!
+      .select({ id: userTable.id, username: userTable.username, givenName: userTable.givenName })
+      .from(userTable)
+      .where(ilike(userTable.username, `%${query}%`))
+      .limit(10);
+    return c.json({ users });
   })
 
   // ── Browse people ──
-  // Richer than /search/username (which backs the co-author picker): carries
-  // the fields a profile card needs, and lists everyone when q is empty.
-  .get("/people", async (c) => {
-    if (!db) return c.json({ error: "Database not configured" }, 503);
-    const q = (c.req.query("q") || "").trim();
+  // Only users who claimed a username are listed — a username is what makes a
+  // profile addressable and publishable.
+  .get("/people", requireDb, async (c) => {
+    const query = (c.req.query("q") ?? "").trim();
 
-    try {
-      const columns = {
-        id: userTable.id,
-        username: userTable.username,
-        givenName: userTable.givenName,
-        familyName: userTable.familyName,
-        bio: userTable.bio,
-        avatarUrl: userTable.avatarUrl,
-        createdAt: userTable.createdAt,
-      };
-      // Only users who claimed a username are listed — a username is what
-      // makes a profile addressable and publishable.
-      const base = db.select(columns).from(userTable);
-      const people = q
-        ? await base.where(and(
-            isNotNull(userTable.username),
-            or(
-              ilike(userTable.username, `%${q}%`),
-              ilike(userTable.givenName, `%${q}%`),
-              ilike(userTable.familyName, `%${q}%`),
-            ),
-          )).limit(50)
-        : await base.where(isNotNull(userTable.username)).limit(50);
+    const people = await db!
+      .select(publicUserColumns)
+      .from(userTable)
+      .where(and(
+        isNotNull(userTable.username),
+        query
+          ? or(
+              ilike(userTable.username, `%${query}%`),
+              ilike(userTable.givenName, `%${query}%`),
+              ilike(userTable.familyName, `%${query}%`),
+            )
+          : undefined,
+      ))
+      .limit(50);
 
-      return c.json({ people });
-    } catch (error) {
-      console.error("Error listing people:", error);
-      return c.json({ error: "Failed to list people" }, 500);
-    }
+    return c.json({ people });
   })
 
-  // ── Public profile by username ──
-  .get("/people/:username", async (c) => {
-    if (!db) return c.json({ error: "Database not configured" }, 503);
-    const username = c.req.param("username");
+  // ── One public profile, by username ──
+  .get("/people/:username", requireDb, async (c) => {
+    const [person] = await db!
+      .select(publicUserColumns)
+      .from(userTable)
+      .where(eq(userTable.username, c.req.param("username")))
+      .limit(1);
 
-    try {
-      const [person] = await db
-        .select({
-          id: userTable.id,
-          username: userTable.username,
-          givenName: userTable.givenName,
-          familyName: userTable.familyName,
-          bio: userTable.bio,
-          avatarUrl: userTable.avatarUrl,
-          createdAt: userTable.createdAt,
-        })
-        .from(userTable)
-        .where(eq(userTable.username, username));
+    if (!person) return c.json({ error: "Profile not found" }, 404);
 
-      if (!person) return c.json({ error: "Profile not found" }, 404);
+    // Their published work is the substance of a public profile.
+    const published = await db!
+      .select({
+        id: lessonPlans.id,
+        name: lessonPlans.name,
+        mainTopic: lessonPlans.mainTopic,
+        createdAt: lessonPlans.createdAt,
+        updatedAt: lessonPlans.updatedAt,
+      })
+      .from(lessonPlans)
+      .where(and(eq(lessonPlans.userId, person.id), eq(lessonPlans.isPublic, true)))
+      .orderBy(desc(lessonPlans.updatedAt));
 
-      // Their published work is the substance of a public profile.
-      const published = await db
-        .select({
-          id: lessonPlans.id,
-          name: lessonPlans.name,
-          mainTopic: lessonPlans.mainTopic,
-          createdAt: lessonPlans.createdAt,
-          updatedAt: lessonPlans.updatedAt,
-        })
-        .from(lessonPlans)
-        .where(and(eq(lessonPlans.userId, person.id), eq(lessonPlans.isPublic, true)))
-        .orderBy(desc(lessonPlans.updatedAt));
-
-      return c.json({ person, published });
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      return c.json({ error: "Failed to load profile" }, 500);
-    }
+    return c.json({ person, published });
   });

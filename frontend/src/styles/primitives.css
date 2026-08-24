@@ -42,23 +42,17 @@
 .surface-p-lg { padding: 1.5rem 1.6rem; }
 .surface-p-xl { padding: 2.75rem 2rem; }
 
-/* ── Now compose the specific cards from the base ── */
-.step-card,
-.bento-item,
-.person-card,
-.pub-row,
-.doc-row,
-.provider-tile,
-.model-option,
-.brand-card {
-  /* base visuals come from .surface — these only differ in layout/accent */
-  border-radius: 14px;
-  border: 1px solid var(--line-soft);
-  background: var(--ink-a02);
-  transition: border-color var(--dur-base) var(--ease-out),
-              background var(--dur-base) var(--ease-out),
-              transform var(--dur-base) var(--ease-out);
-}
+/* The card classes (.step-card, .bento-item, .person-card, .pub-row, .doc-row,
+   .provider-tile, .model-option, .brand-card) declare their own border,
+   background, radius and transition in pages.css.
+
+   They used to be re-listed here as well, "composing from the base" — but this
+   file loads *after* pages.css, so the copy won every one of those properties
+   and each card silently rendered at 14px regardless of what it asked for:
+   .model-option (10px), .pub-row (11px), .doc-row (12px) and .brand-card
+   (13px) all lost their radius, and .provider-tile lost its gradient
+   background to a flat fill. Their real values live in pages.css; adding them
+   back here would override them again. */
 
 /* ── Unified avatar ──
    Replaces four near-identical implementations (identity/person/comment/nav).
@@ -144,3 +138,78 @@
 }
 .btn-subtle--pill { border-radius: 100px; }
 
+
+/* ── Pill toggle ──
+   A switch for a single on/off document setting (public / private).
+   Lived as ~60 lines of inline style objects inside the workspace route,
+   which is why nothing else could use it and why its geometry was explained
+   in a comment instead of being expressed in the rules.
+
+   The travel is derived, not hard-coded: the thumb slides the track's inner
+   width less its own width, so changing --pill-w or --pill-h here keeps the
+   thumb landing flush against the far edge. */
+.pill-toggle {
+  --pill-w: 44px;
+  --pill-h: 24px;
+  --pill-pad: 2px;
+  --pill-thumb: calc(var(--pill-h) - (var(--pill-pad) * 2) - 2px);
+
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: var(--pill-w);
+  height: var(--pill-h);
+  padding: var(--pill-pad);
+  border-radius: var(--pill-h);
+  border: 1px solid var(--ink-a06);
+  background: var(--ink-a04);
+  cursor: pointer;
+  overflow: hidden;
+  transition: background var(--dur-slow) var(--ease-out),
+              border-color var(--dur-slow) var(--ease-out),
+              box-shadow var(--dur-slow) var(--ease-out);
+}
+
+/* Sheen across the track, so the "off" state isn't a flat grey slot. */
+.pill-toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--ink-a04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.pill-toggle[aria-checked='true'] {
+  border-color: var(--ink-a12);
+  background: linear-gradient(135deg, var(--ink-a08) 0%, var(--ink-a06) 100%);
+  box-shadow: 0 0 10px var(--ink-a06), inset 0 1px 1px var(--ink-a06);
+}
+
+.pill-toggle:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+.pill-toggle-thumb {
+  width: var(--pill-thumb);
+  height: var(--pill-thumb);
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-a08);
+  box-shadow: 0 1px 3px var(--ink-a12), inset 0 1px 1px var(--ink-a06);
+  /* Track inner width minus the thumb — the whole distance, never a guess. */
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background var(--dur-slow) var(--ease-out),
+              box-shadow var(--dur-slow) var(--ease-out);
+}
+
+.pill-toggle[aria-checked='true'] .pill-toggle-thumb {
+  background: var(--accent-400);
+  box-shadow: 0 1px 6px var(--ink-a12), inset 0 1px 1px var(--surface);
+  transform: translateX(calc(
+    var(--pill-w) - (var(--pill-pad) * 2) - 2px - var(--pill-thumb)
+  ));
+}
