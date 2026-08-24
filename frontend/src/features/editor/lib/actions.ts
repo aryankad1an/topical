@@ -163,13 +163,26 @@ const LATEX_ACTIONS: EditorAction[] = [
 ];
 
 /** Ids the toolbar shows, in order. Everything else lives in the `/` menu. */
-export const TOOLBAR_IDS = [
-  'bold', 'italic', 'code', '|',
-  'h1', 'h2', 'h3', '|',
-  'ul', 'ol', 'quote', '|',
-  'codeblock', 'link', 'image', 'table', '|',
-  'math-inline', 'math-block',
-] as const;
+/**
+ * The formatting bar, as named groups.
+ *
+ * Named rather than separated by bare `'|'` markers because the bar is a
+ * WAI-ARIA toolbar: each group is announced ("Text style, group") before its
+ * buttons, which is what makes eighteen unlabelled icons navigable by
+ * keyboard. The visual dividers fall out of the same structure, so the
+ * grouping a sighted reader sees and the one a screen reader hears cannot
+ * drift apart.
+ */
+export const TOOLBAR_GROUPS: { label: string; ids: string[] }[] = [
+  { label: 'Text style', ids: ['bold', 'italic', 'code'] },
+  { label: 'Headings', ids: ['h1', 'h2', 'h3'] },
+  { label: 'Lists and quotes', ids: ['ul', 'ol', 'quote'] },
+  { label: 'Blocks', ids: ['codeblock', 'link', 'image', 'table'] },
+  { label: 'Maths', ids: ['math-inline', 'math-block'] },
+];
+
+/** Flat order, for anything that just needs the ids. */
+export const TOOLBAR_IDS = TOOLBAR_GROUPS.flatMap(g => g.ids);
 
 export function actionsFor(format: DocFormat): EditorAction[] {
   return format === 'latex' ? LATEX_ACTIONS : MDX_ACTIONS;

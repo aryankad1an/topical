@@ -29,13 +29,46 @@ def format_rules(fmt: str) -> str:
 # ---------------------------------------------------------------------------
 # Long-form generation
 # ---------------------------------------------------------------------------
-def _hierarchy_context(topic: str, hierarchy: str) -> str:
+def _hierarchy_context(topic: str, hierarchy: str, number: str = "") -> str:
+    """The rest of the document, and where in it this section sits.
+
+    The outline arrives numbered and annotated — each row carries its address
+    ("2.3") and whether it is written yet. Both matter. "Do not repeat the
+    other sections" is not an instruction a model can follow against a bare
+    list of titles: it has no way to tell which of those sections already
+    contain prose, so the safe reading is to cover everything, which is exactly
+    what produced documents that said the same thing four times.
+    """
     if not hierarchy:
         return ""
+    address = f' (section {number})' if number else ""
     return (
-        f"\nHere is the full topic hierarchy for context:\n<hierarchy>\n{hierarchy}\n</hierarchy>\n"
-        f"Strictly focus ONLY on the topic '{topic}' and do not explain other topics from the "
-        f"hierarchy to avoid redundant content."
+        f"\nHere is the whole document outline. Rows are numbered by position, and "
+        f"marked with whether they already contain prose:\n"
+        f"<outline>\n{hierarchy}\n</outline>\n"
+        f"You are writing '{topic}'{address} and nothing else. Every other row is written in "
+        f"its own pass — the ones marked [written] already exist in the document, so repeating "
+        f"their material puts it in twice, and the ones marked [not written yet] are someone "
+        f"else's job, so covering them now writes them twice over."
+    )
+
+
+def _placement(ancestors: Optional[List[str]]) -> str:
+    """The headings this section is nested under, spelled out.
+
+    Without it every section is written as though it opened the document: a
+    level-3 section re-introduces the field, re-defines the terms its parent
+    just defined, and re-motivates the subject, because nothing in the prompt
+    said a parent existed.
+    """
+    if not ancestors:
+        return ""
+    trail = " > ".join(ancestors)
+    return (
+        f"\nThis section is nested under: {trail}.\n"
+        f"Those sections come before it in the document and have already introduced the "
+        f"subject at their level. Continue from there — do not re-introduce the topic, "
+        f"re-motivate it, or redefine terms they will have defined.\n"
     )
 
 
@@ -139,6 +172,8 @@ def section_prompt(
     context: str = "",
     hierarchy: str = "",
     children: Optional[List[str]] = None,
+    ancestors: Optional[List[str]] = None,
+    section_number: str = "",
     level: int = 1,
 ) -> str:
     """Ask for one section of a document, in whichever notation it is written.
@@ -156,7 +191,8 @@ def section_prompt(
             "You are an expert technical writer working through a document one section at a time.\n\n"
             f'Write the OPENING of the section "{topic}" — its introduction, not the section itself.\n'
             f'Part of a document about: "{main_topic}"\n'
-            f"{_hierarchy_context(topic, hierarchy)}\n"
+            f"{_hierarchy_context(topic, hierarchy, section_number)}\n"
+            f"{_placement(ancestors)}"
             f"{_leave_to_children(children)}"
             f"{ctx}\n"
             + _rules_block([
@@ -178,7 +214,8 @@ def section_prompt(
         f"You are an expert technical writer creating educational {spec.name} content.\n\n"
         f'Generate comprehensive {spec.name} content for the section: "{topic}"\n'
         f'Part of a document about: "{main_topic}"\n'
-        f"{_hierarchy_context(topic, hierarchy)}\n"
+        f"{_hierarchy_context(topic, hierarchy, section_number)}\n"
+        f"{_placement(ancestors)}"
         f"{ctx}\n"
         + _rules_block([
             spec.syntax_rule,
@@ -195,12 +232,27 @@ def section_prompt(
     )
 
 
+#: The nesting rule shared by both hierarchy prompts.
+#:
+#: A subtopic may be a name or another node, so the tree can go deeper where
+#: the subject actually does. The wire shape used to be a flat list of strings,
+#: which capped every generated outline at two levels however the model was
+#: asked — the rail draws six, and a third level had nowhere to land.
+_NESTED_JSON_SHAPE = (
+    'A subtopic is either a name, or an object with its own subtopics:\n'
+    '[{"topic": "Main topic", "subtopics": ["Sub 1", '
+    '{"topic": "Sub 2", "subtopics": ["Sub 2a", "Sub 2b"]}]}]\n'
+)
+
+
 def topic_hierarchy_prompt(query: str) -> str:
     return (
         f'Generate a structured topic hierarchy for learning about "{query}".\n\n'
         f"Return ONLY valid JSON in this format:\n"
-        f'[{{"topic": "Main topic", "subtopics": ["Sub 1", "Sub 2"]}}]\n\n'
-        f"Rules: 4-6 main topics, 2-4 subtopics each, logical progression, clear names."
+        f"{_NESTED_JSON_SHAPE}\n"
+        f"Rules: 4-6 main topics, 2-4 subtopics each, logical progression, clear names. "
+        f"Nest a third level only where a subtopic genuinely splits into parts worth "
+        f"writing separately — never to pad the outline out. Depth 3 at most."
     )
 
 
@@ -211,9 +263,10 @@ def outline_from_document_prompt(document: str, fmt: str) -> str:
         "the sections it is missing.\n\n"
         f"<document>\n{document[:12000]}\n</document>\n\n"
         "Return ONLY valid JSON in this format:\n"
-        '[{"topic": "Main section", "subtopics": ["Sub 1", "Sub 2"]}]\n\n'
+        f"{_NESTED_JSON_SHAPE}\n"
         "Rules: 3-6 main sections, 2-4 subtopics each, follow the document's own "
-        "vocabulary, and keep names short enough to fit a sidebar."
+        "vocabulary, keep names short enough to fit a sidebar, and nest a third "
+        "level only where the draft itself already goes that deep."
     )
 
 
@@ -230,9 +283,14 @@ def refine_outline_prompt(outline: str, subject: str = "", instruction: str = ""
     return (
         "You are an editor restructuring the outline of a document.\n"
         f"{about}"
-        "Here is the current outline, indented by depth:\n"
+        "Here is the current outline, indented by depth. A word count means that "
+        "section is already written; sections with no count are empty headings:\n"
         f"<outline>\n{outline}\n</outline>\n"
         f"{extra}"
+        "\nMoving or renaming a written section is not free — its prose travels with "
+        "it, and a rename that no longer describes what is underneath leaves the "
+        "document wrong. Restructure empty headings freely; touch written ones only "
+        "where the structure is genuinely at fault, and say so in the reason.\n"
         "\nImprove the structure: fix the ordering so it builds logically, regroup "
         "topics that belong together, adjust depth where a heading is really a "
         "sub-point of its neighbour, split anything that covers two ideas, and add "

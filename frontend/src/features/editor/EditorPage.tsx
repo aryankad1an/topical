@@ -10,6 +10,7 @@ import { useScrollSync } from './hooks/useScrollSync';
 import { useDragResize } from './hooks/useDragResize';
 import { EditorHeader } from './components/EditorHeader';
 import { Toolbar } from './components/Toolbar';
+import { ShortcutsSheet } from './components/ShortcutsSheet';
 import { CodeSurface } from './components/CodeSurface';
 import { PreviewPane } from './components/PreviewPane';
 import { OutlineRail } from './components/OutlineRail';
@@ -20,7 +21,8 @@ import { AiAssist } from './components/AiAssist';
 import { CoAuthorsDialog } from './components/CoAuthorsDialog';
 import { ImageDialog } from './components/ImageDialog';
 import { PeerCursors } from './components/PeerCursors';
-import { activeNode, buildOutline } from './lib/outline';
+import { activeNode, buildOutline, type OutlineNode } from './lib/outline';
+import { indexOutline, subtreeSpan } from './lib/tree';
 import {
   addSectionAfter, applyOutline, dropSection, moveSectionTo, placeSection,
   renameSection, sectionWordCount, shiftSection,
@@ -61,6 +63,16 @@ export function EditorPage() {
   const [assistOpen, setAssistOpen] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  /**
+   * The heading of the section the outline rail is acting on.
+   *
+   * Reshaping a row used to change the document with nothing on screen
+   * connecting the row to the text it stands for — the writer indented a
+   * heading in the rail and had to go looking for what had moved. Holding the
+   * offset here lets both panes mark the section instead.
+   */
+  const [focusOffset, setFocusOffset] = useState<number | null>(null);
 
   useEffect(() => { contentRef.current = doc.content; }, [doc.content]);
 
@@ -96,10 +108,58 @@ export function EditorPage() {
   const outline = useMemo(() => buildOutline(doc.content, doc.format), [doc.content, doc.format]);
   const stats = useMemo(() => documentStats(doc.content, doc.format), [doc.content, doc.format]);
   const position = useMemo(() => caretPosition(doc.content, caret), [doc.content, caret]);
+  const tree = useMemo(() => indexOutline(outline), [outline]);
   const activeLabel = useMemo(() => {
     const id = activeNode(outline, caret);
     return outline.find(node => node.id === id)?.label ?? null;
   }, [caret, outline]);
+
+  /** The heading and everything nested under it — what one rail row stands for. */
+  const focusSpan = useMemo(() => {
+    if (focusOffset === null) return null;
+    const index = tree.byOffset.get(focusOffset);
+    return index === undefined ? null : subtreeSpan(tree, index, doc.content.length);
+  }, [doc.content.length, focusOffset, tree]);
+
+  /** The same span as source lines, which is what both panes can actually mark. */
+  const focusLines = useMemo(() => {
+    if (!focusSpan) return null;
+    return {
+      from: lineAt(doc.content, focusSpan.start).number,
+      to: lineAt(doc.content, Math.max(focusSpan.start, focusSpan.end - 1)).number,
+    };
+  }, [doc.content, focusSpan]);
+
+  /*
+   * The mark follows the caret out of the section, and no further.
+   *
+   * Clearing it on any keystroke would drop it the moment the writer started
+   * working in the section they had just gone to, which is the one time it is
+   * useful; clearing it never would leave a stale highlight behind on the
+   * previous section. Leaving the span is the event that actually means "I am
+   * somewhere else now".
+   */
+  useEffect(() => {
+    if (focusOffset === null) return;
+    if (!focusSpan || caret < focusSpan.start || caret > focusSpan.end) setFocusOffset(null);
+  }, [caret, focusOffset, focusSpan]);
+
+  /*
+   * The rendered half marks the same span. `data-line` is 1-based and only
+   * present on tracked Markdown blocks, so this quietly does nothing for LaTeX
+   * rather than needing a second implementation.
+   */
+  useEffect(() => {
+    const root = previewRef.current;
+    if (!root) return;
+    const blocks = root.querySelectorAll<HTMLElement>('[data-line]');
+    blocks.forEach(block => block.classList.remove('doc-focus'));
+    if (!focusLines) return;
+    blocks.forEach(block => {
+      const line = Number(block.dataset.line) - 1;
+      if (line >= focusLines.from && line <= focusLines.to) block.classList.add('doc-focus');
+    });
+  }, [doc.content, focusLines, viewMode]);
   const selectedWords = useMemo(
     () => (selection.end > selection.start ? countWords(doc.content.slice(selection.start, selection.end), doc.format) : 0),
     [doc.content, doc.format, selection],
@@ -117,6 +177,19 @@ export function EditorPage() {
     ta.setSelectionRange(offset, offset);
     setCaret(offset);
   }, [doc.content]);
+
+  /**
+   * Go to a section and mark it, so the row that was clicked and the text it
+   * stands for are visibly the same thing.
+   *
+   * The mark is a highlight rather than a text selection on purpose: selecting
+   * a whole section puts the writer one keystroke away from replacing it, and
+   * pops the inline-AI chip over the very text they came here to read.
+   */
+  const goToSection = useCallback((node: OutlineNode) => {
+    setFocusOffset(node.offset);
+    revealOffset(node.offset);
+  }, [revealOffset]);
 
   const find = useFindReplace({
     content: doc.content,
@@ -310,6 +383,9 @@ export function EditorPage() {
       if (key === 's') { event.preventDefault(); doc.save(); }
       if (key === '\\') { event.preventDefault(); updateOptions({ outline: !options.outline }); }
       if (key === 'f') { event.preventDefault(); find.setOpen(true); }
+      // ⌘/ is the near-universal binding for "what are the shortcuts", and
+      // toggling means the same key puts the sheet away again.
+      if (key === '/') { event.preventDefault(); setShowShortcuts(open => !open); }
       // ⌘J both opens and dismisses — the same key that summoned it should
       // put it away, without reaching for Escape or the close button.
       if (key === 'j') {
@@ -384,8 +460,15 @@ export function EditorPage() {
           onUploadImage={() => setShowImage(true)}
           outlineOpen={options.outline}
           onToggleOutline={() => updateOptions({ outline: !options.outline })}
+          onShowShortcuts={() => setShowShortcuts(true)}
         />
       )}
+
+      <ShortcutsSheet
+        open={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+        format={doc.format}
+      />
 
       <FindBar find={find} />
 
@@ -400,7 +483,8 @@ export function EditorPage() {
             width={options.outlineWidth}
             onWidth={next => updateOptions({ outlineWidth: next })}
             onClose={() => updateOptions({ outline: false })}
-            onJump={node => revealOffset(node.offset)}
+            onJump={goToSection}
+            onFocusSection={node => setFocusOffset(node ? node.offset : null)}
             onInsertSection={insertSection}
             onDeleteSection={deleteSection}
             measureSection={measureSection}
@@ -433,6 +517,7 @@ export function EditorPage() {
               focusMode={options.focusMode}
               fontSize={options.fontSize}
               caret={caret}
+              sectionLines={focusLines}
               placeholder={doc.format === 'latex'
                 ? '\\section{Introduction}\n\nStart writing — or press / for a menu of everything.'
                 : '# Start here\n\nWrite, or press / for a menu of everything.'}
@@ -480,11 +565,27 @@ export function EditorPage() {
         )}
 
         {showEditor && showPreview && (
+          // `role="separator"` with a tabindex is a *focusable* separator, which
+          // is the one ARIA pattern that must also respond to the arrow keys —
+          // a split a mouse can move and a keyboard cannot is not resizable.
           <div
             className="editor-divider"
             onMouseDown={startSplitDrag}
             role="separator"
-            aria-label="Resize panes"
+            tabIndex={0}
+            aria-label="Resize the writing and preview panes"
+            aria-orientation="vertical"
+            aria-valuenow={Math.round(splitRatio)}
+            aria-valuemin={20}
+            aria-valuemax={80}
+            onKeyDown={event => {
+              const step = event.shiftKey ? 10 : 2;
+              if (event.key === 'ArrowLeft') setSplitRatio(r => Math.max(20, r - step));
+              else if (event.key === 'ArrowRight') setSplitRatio(r => Math.min(80, r + step));
+              else if (event.key === 'Home') setSplitRatio(50);
+              else return;
+              event.preventDefault();
+            }}
           />
         )}
 

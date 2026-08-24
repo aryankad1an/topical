@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
@@ -19,19 +19,35 @@ import { errorMessage } from "@/lib/utils";
 export function OnboardingModal() {
   const { user, isNewUser, refetchUser } = useAuth();
   const [open, setOpen] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  /**
+   * Whether this browser has already finished with the modal.
+   *
+   * A ref rather than state, and that is the whole bug fix. Saving calls
+   * `refetchUser()`, which replaces the cached user object; the effect below
+   * depends on `user`, so it re-runs. React flushed that run *before* it had
+   * committed a `setDismissed(true)` issued in the same handler, so the effect
+   * still saw `dismissed === false` and re-opened the modal it had just been
+   * told to close — every save reopened the dialog, while skipping (which does
+   * not refetch) closed it correctly.
+   *
+   * A ref is written synchronously, so it is already true by the time that
+   * racing effect runs. It is also the honest type for this: "has the person
+   * dealt with this modal" is a fact about this mounted instance, not
+   * something the UI renders from.
+   */
+  const dismissedRef = useRef(false);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (isNewUser && user && !dismissed) setOpen(true);
-  }, [isNewUser, user, dismissed]);
+    if (isNewUser && user && !dismissedRef.current) setOpen(true);
+  }, [isNewUser, user]);
 
   const close = () => {
+    dismissedRef.current = true;
     setOpen(false);
-    setDismissed(true);
   };
 
   const handleSave = async () => {

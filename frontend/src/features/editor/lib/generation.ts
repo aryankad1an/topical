@@ -7,10 +7,10 @@
  */
 
 import { outlineFromDocument, refineOutline, requestSection, searchTopics } from '@/lib/api';
-import type { GenerationSource, HierarchyEnvelope, OutlineChange } from '@/lib/api';
+import type { GenerationSource, HierarchyEnvelope, OutlineChange, OutlineRowIn } from '@/lib/api';
 import { stripFrontmatter } from '@/lib/utils';
 import type { DocFormat, TopicHierarchy } from '@/lib/types';
-import { normalise, planFromHierarchy, planItem, planToOutlineText, type PlanItem } from './plan';
+import { normalise, planFromHierarchy, planItem, type PlanItem } from './plan';
 
 /** Where a section's material comes from. Named as the AI service names it. */
 export type GenerationMethod = GenerationSource;
@@ -29,8 +29,15 @@ export interface SectionRequest {
   section: OutlineRow;
   /** Its direct children — a parent gets an introduction, not their content. */
   children: string[];
-  /** The whole outline, so the model knows what the other sections cover. */
-  outline: OutlineRow[];
+  /** The headings it is nested inside, outermost first. */
+  ancestors: string[];
+  /** Its number in the outline — "2.3". */
+  sectionNumber: string;
+  /**
+   * The whole outline as a numbered tree, marked with which sections already
+   * have prose behind them. See `outlineDigest` in `lib/tree.ts`.
+   */
+  digest: string;
   urls: string[];
 }
 
@@ -46,14 +53,21 @@ export async function generateSection(req: SectionRequest): Promise<string> {
     format: req.format,
     source: req.method,
     urls: req.urls,
-    // Sent as indented text rather than JSON: the plan is arbitrarily deep,
-    // and an indented list carries that depth more legibly than a nested
-    // object would.
-    hierarchy: planToOutlineText(req.outline),
+    // Sent as numbered indented text rather than JSON: the outline is
+    // arbitrarily deep, and an indented list carries that depth more legibly
+    // than a nested object would. The numbering and the written/empty marks
+    // are what make "do not repeat the other sections" checkable — a bare
+    // list of titles gave the model no way to tell which of them exist.
+    hierarchy: req.digest,
     // A section with children gets an introduction instead of an article —
     // its children write themselves, and a parent that covers them puts the
     // same prose in the document twice.
     children: req.children,
+    // Where it sits. Without this, a level-3 section is written as though it
+    // opened the document: it re-defines the terms its parent just defined,
+    // because nothing told it a parent existed.
+    ancestors: req.ancestors,
+    section_number: req.sectionNumber,
     level: req.section.level,
   });
 
@@ -96,14 +110,14 @@ export interface RefinedPlan {
  * restructure rather than discovering one.
  */
 export async function refinePlan(
-  items: OutlineRow[],
+  items: OutlineRowIn[],
   subject: string,
   instruction: string,
   format: DocFormat,
 ): Promise<RefinedPlan> {
   const payload = items
     .filter(item => item.title.trim())
-    .map(item => ({ title: item.title, level: item.level }));
+    .map(item => ({ title: item.title, level: item.level, words: item.words ?? 0 }));
   const result = await refineOutline(payload, subject, instruction, format);
   return {
     summary: result.summary,

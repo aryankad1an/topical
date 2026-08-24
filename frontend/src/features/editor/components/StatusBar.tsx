@@ -29,19 +29,24 @@ export function StatusBar({
   saveState, lastSavedAt, stats, line, column, selectedWords, connected, peerCount, format,
 }: Props) {
   return (
-    <div className="editor-status">
-      <span className="editor-status-item">
-        <span className="editor-status-dot" data-state={saveState} />
+    // A `contentinfo` landmark, so the bar is reachable by landmark navigation
+    // rather than only by tabbing past the whole document.
+    <div className="editor-status" role="contentinfo" aria-label="Document status">
+      {/* Only the save state is announced. The rest changes on every keystroke,
+          and a live region that reads the column number aloud as you type is
+          unusable — those are marked aria-hidden and remain readable on screen. */}
+      <span className="editor-status-item" role="status" aria-live="polite">
+        <span className="editor-status-dot" data-state={saveState} aria-hidden="true" />
         {savedLabel(saveState, lastSavedAt)}
       </span>
-      <span className="editor-status-item">Ln {line}, Col {column}</span>
-      <span className="editor-status-item">
+      <span className="editor-status-item" aria-hidden="true">Ln {line}, Col {column}</span>
+      <span className="editor-status-item" aria-hidden="true">
         {selectedWords > 0
           ? `${selectedWords.toLocaleString()} of ${stats.words.toLocaleString()} words`
           : `${stats.words.toLocaleString()} words`}
       </span>
-      <span className="editor-status-item">{stats.chars.toLocaleString()} characters</span>
-      <span className="editor-status-item">{stats.readMinutes} min read</span>
+      <span className="editor-status-item" aria-hidden="true">{stats.chars.toLocaleString()} characters</span>
+      <span className="editor-status-item" aria-hidden="true">{stats.readMinutes} min read</span>
 
       <span className="editor-status-item ml-auto">
         {connected

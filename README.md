@@ -1,13 +1,12 @@
 <div align="center">
   <h1>Topical</h1>
-  <p><b>Where the human brain works with artificial intelligence.</b></p>
+  <p><b>Turn a topic into a structured, publishable document.</b></p>
 </div>
 
-Topical turns a topic into a structured, publishable document. You give it a
-subject; it generates a hierarchy of subtopics, then writes each section on
-demand — grounded in live web sources rather than model memory alone. You keep
-editorial control: every section arrives as a draft snippet you place, edit, and
-arrange yourself.
+Give Topical a subject. It plans a hierarchy of subtopics, then writes each
+section on demand — grounded in live web sources rather than model memory
+alone. You stay the editor: every section arrives as a draft you place, revise,
+and rearrange yourself.
 
 Built for lesson plans, research summaries, and technical documentation.
 
@@ -15,59 +14,48 @@ Built for lesson plans, research summaries, and technical documentation.
 
 ## Features
 
-- **MDX and LaTeX.** Write interactive MDX with embedded code, or LaTeX for
-  academic and scientific work. Both render live in a split-pane preview with
-  syntax highlighting, an outline rail, and line-accurate scroll sync.
-- **A LaTeX preview that behaves like LaTeX.** Sections, equations, figures and
-  tables are numbered; `\ref`/`\eqref`/`\cite` resolve; `\newcommand` macros
-  expand; theorem environments, footnotes and bibliographies render. Anything
-  unsupported is reported as an issue instead of vanishing.
-- **Editing that knows the format.** `/` opens every construct the format has,
-  lists and `\item`s continue on Enter, Tab indents a block, ⌘B/⌘I/⌘K wrap the
-  selection, and find-and-replace works over the source.
-- **Inline AI on the words you already wrote.** Select a passage and press ⌘J to
-  improve, expand, shorten, simplify, fix grammar, set the maths, or run a custom
-  instruction. Nothing is applied until you have read the result.
-- **Hierarchy-first generation.** Topical plans before it writes: it produces a
-  topic tree, then generates each section with the surrounding structure as
-  context, so sections don't overlap or repeat each other. It can also outline a
-  draft you already have.
-- **Grounded in live sources.** Generation can draw on real-time web crawling
-  (via Crawl4AI), specific URLs you supply, or the model's own knowledge —
-  your choice per section.
-- **Bring your own model.** Gemini, OpenAI, Anthropic, xAI, or Mistral. Keys are
-  per-user and never leave your browser except as a request header.
-- **Light and dark.** Follows the OS until you say otherwise; switching wipes
-  across the page from the button you pressed.
-- **Export.** Download the source as `.md`/`.tex` (LaTeX comes wrapped in a
-  compilable document), copy it, or print the rendered document to PDF.
-- **Real-time collaboration.** CRDT-backed multiplayer editing (Yjs) with live
-  peer cursors and presence. The server holds the merged document, so opening a
-  file someone else is already editing shows you their work immediately.
-- **Accounts you own.** Email and password, Argon2id hashes, and server-side
-  sessions you can revoke. No third-party identity provider.
-- **Publish and browse.** Share documents to a public library, or keep them
-  private. Community forum included.
+- **MDX or LaTeX**, side by side with a live preview — numbered sections and
+  equations, resolving `\ref`/`\cite`, `\newcommand` macros, theorems,
+  bibliographies, syntax highlighting, and scroll sync.
+- **Hierarchy-first generation.** Topical outlines before it writes, so
+  sections don't repeat each other. It can also outline a draft you already
+  have, or restructure an outline and tell you why.
+- **Grounded drafting.** Per section, choose the model's own knowledge, a live
+  web crawl, or specific URLs you name.
+- **Inline AI on what you wrote.** Select a passage, press `⌘J`, and improve,
+  expand, shorten, simplify, fix grammar, set the maths, or give your own
+  instruction. Nothing applies until you've read it.
+- **Format-aware editing.** `/` opens every construct the format has, lists
+  continue on Enter, Tab indents, `⌘B`/`⌘I`/`⌘K` wrap the selection, plus
+  find-and-replace over the source.
+- **Real-time collaboration.** CRDT multiplayer (Yjs) with peer cursors; the
+  server holds the merged document, so joining shows you the current state.
+- **Bring your own model.** Gemini, OpenAI, Anthropic, xAI, or Mistral. Keys
+  are per-user, kept in your browser, and sent only as a request header.
+- **Own your accounts.** Email and password, Argon2id hashes, revocable
+  server-side sessions. No third-party identity provider.
+- **Export and publish.** Download `.md`/`.tex`, print to PDF, or share to a
+  public library with a community forum.
 
 ---
 
-## Architecture
+## Tech stack
 
-One backend, one process:
-
-| Part | Stack | Port |
+| Layer | Stack | Dev port |
 |---|---|---|
-| Frontend | React 18, TypeScript, Vite 5, TanStack Router, Tailwind, Yjs | `5173` (dev) |
-| Backend | Python 3.10+, FastAPI, SQLAlchemy 2 (async), Alembic, PostgreSQL | `3000` |
+| Frontend | React 18, TypeScript, Vite 5, TanStack Router + Query, Tailwind, Yjs | `5173` |
+| Backend | Python 3.10+, FastAPI, SQLAlchemy 2 (async) over asyncpg, Alembic | `3000` |
+| Data | PostgreSQL | — |
+| AI | LiteLLM (provider routing), Crawl4AI (live web) | — |
 
-The backend serves the REST API, the collaboration WebSocket, AI generation,
-and — in production — the built frontend. In development Vite serves the app
-and proxies `/api` and `/ws` to it. LiteLLM handles provider routing, so adding
-a model is a config change rather than a new integration.
+One backend, one process. It serves the REST API under `/api`, the
+collaboration socket at `/ws/doc/{id}`, AI generation, and — in production —
+the built frontend. In development Vite serves the app and proxies `/api` and
+`/ws` to it.
 
 ```
                  ┌─────────────────────────────┐
-browser ── /api ─▶│  FastAPI (:3000)            │──▶ provider (via LiteLLM)
+browser ── /api ─▶│  FastAPI (:3000)            │──▶ model provider (LiteLLM)
    │             │  api → services → db        │──▶ Crawl4AI (live web)
    └──── /ws ───▶│  realtime: Yjs rooms        │
                  └──────────────┬──────────────┘
@@ -75,94 +63,62 @@ browser ── /api ─▶│  FastAPI (:3000)            │──▶ provider 
                            PostgreSQL
 ```
 
-The backend's layers depend downward only — a service never imports FastAPI, a
-route never writes SQL:
-
-```
-backend/
-  api/        HTTP: routing, status codes, request and response bodies
-  services/   what the application does, given a session and a user
-  db/         tables, and the session that reaches them
-  auth/       accounts, passwords, and sessions
-  realtime/   the collaborative-editing socket
-  core/       settings, errors, logging, shared validation
-```
-
 ---
 
 ## Getting started
 
-### Prerequisites
-
-- **Python 3.10+** — required by Crawl4AI, which fails to import on 3.9.
-- **Node.js + npm** — runs the Vite frontend.
-- **PostgreSQL** — a reachable database.
-
-### 1. Install
+**Prerequisites:** Python 3.10+ (Crawl4AI won't import on 3.9), Node.js + npm,
+and a reachable PostgreSQL database.
 
 ```bash
 git clone https://github.com/aryankad1an/topical.git
 cd topical
-
 cd frontend && npm install && cd ..
+cp .env.example .env        # then set DATABASE_URL
+./run.sh
 ```
 
-The Python virtualenv (`.venv`) is created automatically on first run — see
-step 4.
+`run.sh` frees ports 3000/5173, creates `.venv` and installs Python
+dependencies on first run (including the headless browser Crawl4AI needs),
+applies migrations, and starts both processes. Open
+**http://localhost:5173** and create an account.
 
-### 2. Configure
+### Configuration
 
-```bash
-cp .env.example .env
-```
-
-**`DATABASE_URL` is the only required variable.** Authentication is in-house,
-so there is nothing to register with and no provider credentials to obtain.
+`DATABASE_URL` is the only required variable — authentication is in-house, so
+there is nothing to register with.
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | **yes** | PostgreSQL connection string |
-| `PORT` / `HOST` | no | Where the backend listens. Default `0.0.0.0:3000` |
+| `HOST` / `PORT` | no | Where the backend listens. Default `0.0.0.0:3000` |
 | `ENVIRONMENT` | no | `production` marks session cookies Secure (needs HTTPS) |
 | `SESSION_TTL_DAYS` | no | Session lifetime without use. Default 14 |
-| `UPLOADS_DIR` | no | Where uploaded images are written. Default `./uploads` |
+| `UPLOADS_DIR` | no | Where uploaded images go. Default `./uploads` |
+| `LOG_LEVEL` | no | Default `INFO` |
 
-> API keys for AI providers are **not** environment variables — they are
-> configured per user in the web UI. See step 5.
+Provider API keys are **not** environment variables — each user adds their own
+in the UI.
 
-### 3. Migrate the database
+### Add an AI provider key
 
-```bash
-source .venv/bin/activate
-alembic upgrade head
-```
+Generation stays disabled until you add one. Open **Profile → AI Providers**,
+pick a provider and model, paste the key, and click **Add & verify key**. The
+key is checked against the provider before it is saved, so a bad key fails
+immediately rather than mid-generation.
 
-`run.sh` does this for you on every start. The baseline revision adopts an
-existing schema rather than recreating it, so it is safe to run against a
-database that already holds data.
+---
 
-### 4. Run
+## Using it
 
-```bash
-./run.sh
-```
-
-This frees ports 3000/5173, applies migrations, and starts both processes. On
-first run it creates `.venv`, installs the Python dependencies, and downloads
-the headless browser Crawl4AI needs. Open **http://localhost:5173** and create
-an account.
-
-### 5. Add an AI provider key
-
-Generation is disabled until you add a key. Keys live in browser storage and are
-sent only as request headers.
-
-1. Open **Profile → AI Providers**.
-2. Choose a provider and model.
-3. Paste your API key and click **Add & verify key**.
-
-The key is verified against the provider before being saved, so a bad key fails
-immediately rather than at generation time.
+1. **Start a document.** Give it a topic; Topical proposes a subtopic tree.
+2. **Shape the outline** in the rail on the right — reorder, nest, add, or ask
+   for a refinement pass. The rail is where structure and generation meet.
+3. **Generate a section.** Pick its grounding (model knowledge, a live crawl,
+   or your own URLs); the draft arrives as a snippet you place where you want.
+4. **Edit.** `/` for constructs, `⌘J` for AI on a selection, `⌘F` to find and
+   replace. The preview keeps up.
+5. **Share.** Export `.md`/`.tex`, print to PDF, or publish to the library.
 
 ---
 
@@ -174,20 +130,52 @@ source .venv/bin/activate
 python -m backend                       # backend only, with reload
 cd frontend && npm run dev              # frontend only
 
-alembic revision --autogenerate -m "…"  # a migration from model changes
-alembic upgrade head                    # apply migrations
+alembic revision --autogenerate -m "…"  # migration from model changes
+alembic upgrade head                    # apply
 alembic downgrade -1                    # undo the last one
 
 cd frontend && npx tsc --noEmit         # typecheck
 cd frontend && npm run lint             # lint
+cd frontend && npm run build            # production bundle
 ```
 
-The API documents itself: with the backend running, **http://localhost:3000/docs**
-is the full route list with request and response schemas.
+With the backend running, **http://localhost:3000/docs** is the full route
+list with request and response schemas.
+
+### Layout
+
+```
+backend/
+  main.py                 app factory: middleware, routers, static
+  api/routes/             HTTP only — one module per resource, gathered under /api
+  services/               what the app does, framework-free
+    ai/                   prompts, providers, crawling, generation
+  db/models/              the tables
+  auth/                   passwords, sessions, the current-user dependency
+  realtime/yjs.py         collaboration rooms and the y-protocols wire format
+  core/                   settings, errors, logging, validation
+  cli.py                  administrative commands
+alembic/versions/         migrations
+
+frontend/src/
+  features/editor/        the writing screen (components, hooks, pure lib/)
+  features/preview/       rendering; latex/ is a parser → preamble → renderer pipeline
+  components/ui/          shared primitives
+  routes/                 TanStack Router file routes
+  styles/                 split by what the rules describe; index.css sets cascade order
+```
+
+Two conventions hold the codebase together:
+
+- **The backend's layers depend downward only.** A service never imports
+  FastAPI; a route never writes SQL.
+- **Editor text operations are pure functions** over `(document, selection)`
+  in `features/editor/lib/textOps.ts`. That is what lets the toolbar, the
+  shortcuts, the `/` menu and the AI panels all drive the same behaviour.
 
 ### Administration
 
-Operations no signed-in user should be able to perform:
+Things no signed-in user should be able to do:
 
 ```bash
 python -m backend.cli list-users              # who exists, and who can sign in
@@ -196,109 +184,65 @@ python -m backend.cli set-password <email> --create
 python -m backend.cli prune-sessions          # delete expired sessions
 ```
 
-`set-password` is the way back in for an account that predates in-house
-authentication: it keeps its profile and documents but has no password until
-one is set.
-
-### Layout
-
-```
-frontend/src/
-  features/editor/        the writing screen
-    components/           header, toolbar, code surface, outline rail, AI panels
-    hooks/                document + collaboration, editing, find, scroll sync,
-                          outline rows, section writing, drag-to-resize
-    lib/                  pure text operations, highlighting, outline, export
-  features/preview/       rendering, shared by editor / reader / community
-    latex/                parser → preamble → renderer pipeline
-  components/ui/          shared primitives (Surface, Avatar, Chip, IconButton…)
-  styles/                 the stylesheet, split by what the rules describe;
-                          index.css lists them in cascade order
-backend/
-  main.py                 the app factory: middleware, routers, static
-  api/routes/             one module per resource; HTTP only
-  services/               the application's behaviour, framework-free
-    ai/                   prompts, providers, crawling, generation
-  db/models/              the tables
-  auth/                   passwords, sessions, the current-user dependency
-  realtime/yjs.py         collaboration rooms and the y-protocols wire format
-  core/                   settings, errors, logging, validation
-  cli.py                  administrative commands
-alembic/versions/         migrations
-```
-
-Text operations in `features/editor/lib/textOps.ts` are pure functions over
-`(document, selection)`, which is what lets the toolbar, the keyboard shortcuts,
-the `/` menu and the AI panels all drive the same behaviour.
-
-### Authentication
-
-Accounts live in this application's own database.
-
-- **Passwords** are hashed with Argon2id (`argon2-cffi` defaults). The hash
-  carries its own cost parameters, so raising them later upgrades each password
-  silently at its owner's next sign-in.
-- **Sessions** are opaque 32-byte random tokens in an httpOnly, SameSite=Lax
-  cookie. Only the token's SHA-256 is stored, in `auth_sessions` — a leaked
-  database yields no usable sessions. Signing out deletes the row, so it takes
-  effect on the next request rather than whenever a token would have expired.
-- **SameSite=Lax** is also the CSRF defence: the browser withholds the cookie on
-  cross-site POSTs, which is every forged write this API has.
-- A failed sign-in reports one sentence for both halves of the failure, and an
-  unknown email costs the same time as a known one — so the login form is not a
-  register of who holds an account.
-
-### Toolchain notes
-
-- `run.sh` picks the first Python ≥ 3.10 it finds. To pin one, create `.venv`
-  yourself before the first run.
-- **SQLAlchemy 2.0 async** throughout, over `asyncpg`. `DATABASE_URL` is written
-  in the usual `postgresql://` form and translated for the driver in
-  `backend/core/config.py`, which also drops libpq-only parameters like
-  `sslmode` that asyncpg rejects outright.
-
 ### AI endpoints
 
-All are `POST` under `/api/ai/`, and require a session. Each reads the provider,
-model, and key from the `X-AI-Provider`, `X-AI-Model`, and `X-AI-Api-Key`
-headers; the key is used for that one call and never stored or logged.
+All `POST` under `/api/ai/`, session required. Each reads the provider, model
+and key from the `X-AI-Provider`, `X-AI-Model` and `X-AI-Api-Key` headers; the
+key is used for that one call and never stored or logged.
 
 | Endpoint | Purpose |
 |---|---|
 | `search-topics` | Build the topic hierarchy for a subject |
 | `outline-from-document` | The outline an existing draft is reaching for |
 | `refine-outline` | Restructure an outline, with a reason for each change |
-| `generate-section` | Write one section of a document |
-| `transform` | Rewrite, extend or explain one selected passage |
+| `generate-section` | Write one section |
+| `transform` | Rewrite, extend or explain a selected passage |
 
-`generate-section` takes `format` (`mdx` \| `latex`) and `source` (`llm` for
-the model's own knowledge, `web` for a live crawl of the topic, `urls` for
-pages you name). It replaced six endpoints that differed only in those two
-fields — which is why the LaTeX crawl used to skip a fallback the MDX one had.
+`generate-section` takes `format` (`mdx` | `latex`) and `source` (`llm`,
+`web`, or `urls`) rather than being six near-identical endpoints. Provider
+failures map to real statuses — `401` rejected key, `429` rate limit, `404`
+unknown model, `504` timeout — with messages safe to show a user.
 
-Provider failures map to real HTTP statuses — `401` for a rejected key, `429`
-for rate limits, `404` for an unknown model, `504` on timeout — each with a
-message safe to show a user. Raw provider payloads are logged, never returned.
+### Notes worth knowing before you change things
+
+- **Authentication.** Argon2id hashes carrying their own cost parameters;
+  sessions are opaque 32-byte tokens stored only as SHA-256 in `auth_sessions`
+  and delivered in an httpOnly, `SameSite=Lax` cookie — which is also the CSRF
+  defence. Failed sign-ins are constant-shape and constant-time, so the login
+  form isn't a register of who holds an account.
+- **Interface material.** `styles/glass.css` loads last and re-skins surfaces
+  the earlier files laid out, so it must win their background, border and
+  shadow. The rule it enforces: glass goes on chrome that floats *over*
+  content, never on a card sitting on flat page ground. Glass is never nested,
+  every pane keeps a hairline, and `@supports` / `prefers-reduced-transparency`
+  fall back to opaque surfaces with the same layout.
+- **Latency.** The database is usually in a different region from the server,
+  so three things are load-bearing: the pool is warmed at boot (`warm_pool`),
+  `pool_pre_ping` is off in favour of `pool_recycle`, and `last_seen_at` is
+  written at most hourly (`_TOUCH_INTERVAL` in `backend/auth/session.py`).
+- **Toolchain.** `run.sh` picks the first Python ≥ 3.10 it finds; create
+  `.venv` yourself first to pin one. `DATABASE_URL` is written in ordinary
+  `postgresql://` form and translated for asyncpg in `backend/core/config.py`,
+  which also drops libpq-only parameters like `sslmode`.
 
 ---
 
 ## Deploying
 
-The `Dockerfile` builds the frontend and copies it into the Python image, so one
-container serves everything. Migrations run at boot.
+The `Dockerfile` builds the frontend into the Python image, so one container
+serves everything. Migrations run at boot.
 
 ```bash
 docker build -t topical .
 docker run -p 3000:3000 -e DATABASE_URL=postgres://... -v topical_uploads:/app/uploads topical
 ```
 
-`fly.toml` is configured for the same image. Two things to keep in mind:
+`fly.toml` is configured for the same image. Two things to remember:
 
-- **Uploaded images are on disk.** Mount a volume at `/app/uploads`, or they
+- **Uploaded images are on disk** — mount a volume at `/app/uploads` or they
   vanish on deploy.
-- **Collaboration rooms live in memory.** A second machine has its own rooms, so
-  two people editing the same document must reach the same one. `fly.toml`
-  keeps `min_machines_running = 1` for this reason.
+- **Collaboration rooms live in memory** — a second machine has its own rooms,
+  so `fly.toml` keeps `min_machines_running = 1`.
 
 ---
 

@@ -1,0 +1,202 @@
+/* Liquid Glass — the parts of the material that are not the filter.
+
+   The filter in `components/LiquidGlass.tsx` bends light *through* the pane.
+   These rules draw light falling *on* it: the specular rim, the inner bevel
+   that gives it thickness, and the shadow that lifts it off the page. Both
+   halves are needed — a filter with no rim reads as a smeared patch, and a
+   rim with no filter reads as a plain card.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Holds the generated <filter> and nothing else. */
+.liquid-glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.liquid-glass-pane {
+  position: relative;
+  isolation: isolate;
+
+  /* The tint is deliberately faint. Anything heavier and the refraction —
+     the whole point — is hidden behind the pane's own colour. */
+  background: rgba(255, 255, 255, calc(0.10 + var(--lg-light, 0.5) * 0.12));
+
+  /* Fallback first: a browser that cannot resolve the filter reference keeps
+     a working frosted pane instead of dropping the declaration entirely. */
+  -webkit-backdrop-filter: blur(var(--lg-frost, 3px)) saturate(180%);
+  backdrop-filter: blur(var(--lg-frost, 3px)) saturate(180%);
+
+  border: 1px solid rgba(255, 255, 255, calc(0.18 + var(--lg-light, 0.5) * 0.34));
+
+  /* Depth, in three parts: a lit top edge, a shaded bottom edge, and a cast
+     shadow. Scaling all three off one variable is what keeps a "thicker"
+     pane from looking merely darker. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, calc(var(--lg-light, 0.5) * 0.85)),
+    inset 0 calc(var(--lg-depth, 0.5) * -2px) calc(var(--lg-depth, 0.5) * 12px)
+      rgba(0, 0, 0, calc(var(--lg-depth, 0.5) * 0.22)),
+    0 calc(var(--lg-depth, 0.5) * 18px) calc(var(--lg-depth, 0.5) * 46px)
+      rgba(0, 0, 0, calc(var(--lg-depth, 0.5) * 0.30));
+}
+
+/* Where `url()` resolves in `backdrop-filter`, the blur alone is replaced by
+   the full graph. Chromium today; the @supports test is the feature itself,
+   not a browser sniff, so this turns on wherever it starts working. */
+@supports (backdrop-filter: url("#x")) or (-webkit-backdrop-filter: url("#x")) {
+  .liquid-glass-pane {
+    -webkit-backdrop-filter: var(--lg-filter) saturate(180%);
+    backdrop-filter: var(--lg-filter) saturate(180%);
+  }
+}
+
+/* The rim. A gradient ring one pixel wide, brightest where the light is
+   modelled as coming from — the top-left — and fading by the middle, so the
+   edge has a direction instead of glowing uniformly.
+
+   Drawn as a masked slice of a full-size gradient because `border-image`
+   cannot follow a border-radius and four separate borders cannot share one
+   gradient. */
+.liquid-glass-pane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, calc(var(--lg-light, 0.5) * 1.3)) 0%,
+    rgba(255, 255, 255, calc(var(--lg-light, 0.5) * 0.35)) 30%,
+    transparent 55%,
+    rgba(255, 255, 255, calc(var(--lg-light, 0.5) * 0.5)) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* A broad sheen off the lit corner, so the face is not a flat wash of tint. */
+.liquid-glass-pane::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    130% 90% at 12% -20%,
+    rgba(255, 255, 255, calc(var(--lg-light, 0.5) * 0.55)) 0%,
+    transparent 62%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Content sits above the sheen and clear of the rim. */
+.liquid-glass-pane > * { position: relative; z-index: 1; }
+
+/* Reduced transparency: the material goes opaque, keeping the layout. */
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-pane {
+    background: var(--surface, #fff);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--line, rgba(0, 0, 0, 0.12));
+  }
+  .liquid-glass-pane::before,
+  .liquid-glass-pane::after { content: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The playground at /glass
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.glass-lab {
+  position: relative;
+  min-height: 100dvh;
+  margin: calc(-5rem - 1.5rem) -1rem -1.5rem;
+  overflow: hidden;
+}
+
+.glass-lab-bg {
+  position: absolute;
+  inset: 0;
+  padding: 6rem 3rem 3rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--ink-2);
+  column-count: 2;
+  column-gap: 3rem;
+}
+.glass-lab-bg p { margin-bottom: 0.9rem; break-inside: avoid; }
+
+.glass-lab-bars {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.5rem;
+  break-inside: avoid;
+}
+.glass-lab-bars span { flex: 1; height: 72px; border-radius: 10px; }
+
+.glass-lab-pane {
+  position: absolute;
+  top: 22vh;
+  left: 8vw;
+  width: min(520px, 60vw);
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glass-lab-pane-inner { text-align: center; padding: 1.5rem; }
+.glass-lab-pane-inner h2 {
+  font-family: var(--font-serif);
+  font-size: 1.9rem;
+  margin-bottom: 0.4rem;
+}
+.glass-lab-pane-inner p { font-size: 0.9rem; color: var(--ink-2); }
+
+.glass-lab-controls {
+  position: absolute;
+  top: 6rem;
+  right: 2rem;
+  width: 260px;
+  padding: 1.25rem;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--glass-shadow-lg);
+  max-height: calc(100dvh - 9rem);
+  overflow-y: auto;
+}
+
+.glass-lab-controls h1 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 1rem;
+}
+
+.glass-lab-control { margin-bottom: 1rem; }
+.glass-lab-control label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.glass-lab-control output {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-500);
+}
+.glass-lab-control input[type='range'] { width: 100%; accent-color: var(--accent-400); }
+.glass-lab-hint { font-size: 10.5px; color: var(--ink-faint); margin-top: 3px; }

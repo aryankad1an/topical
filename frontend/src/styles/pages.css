@@ -56,32 +56,25 @@
 
 .community-tabs {
   display: inline-flex;
-  gap: 4px;
-  background: var(--ink-a02);
-  border: 1px solid var(--line);
-  border-radius: 100px;
-  padding: 4px;
+  gap: 3px;
+  padding: 3px;
 }
 .community-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 16px;
-  border-radius: 100px;
+  padding: 6px 14px;
   font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-faint);
-  transition: all var(--dur-base) var(--ease-out);
+  transition: background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
   white-space: nowrap;
 }
-.community-tab.active {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  color: var(--accent-500);
-}
-.community-tab:hover:not(.active) {
-  color: var(--ink-muted);
-}
+/* Where accent *text* sits on an accent-soft fill it is always the 600 step,
+   never 500: at 500 it measures 3.5:1 against that fill, under WCAG AA for
+   body text, and these are body-sized labels. On the page ground rather
+   than on an accent fill, 500 is still the right step. */
 
 /* ── Search ── */
 .community-search-wrap {
@@ -130,45 +123,20 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 14px;
-  border-radius: 100px;
+  padding: 5px 12px;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-faint);
-  border: 1px solid var(--line-soft);
-  transition: all 0.2s ease;
-}
-.sort-pill.active {
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-  color: var(--accent-500);
-}
-.sort-pill:hover:not(.active) {
-  color: var(--ink-muted);
-  border-color: var(--line);
+  transition: background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
 }
 
 /* ── New Post Button ── */
+/* Geometry only — the fill, border and states come from buttons.css. */
 .new-post-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   height: 34px;
-  padding: 0 16px;
-  border-radius: 100px;
+  padding: 0 15px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  box-shadow: 0 4px 18px -6px var(--accent-glow);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), filter var(--dur-fast) var(--ease-out);
-  cursor: none;
-  white-space: nowrap;
-}
-.new-post-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
-  box-shadow: 0 8px 26px -6px var(--accent-glow);
+  cursor: pointer;
 }
 
 /* ── Forum list ── */
@@ -188,30 +156,14 @@
   display: flex;
   gap: 0;
   padding: 0;
-  border-radius: 14px;
-  background: var(--ink-a02);
-  border: 1px solid var(--line-soft);
-  cursor: none;
-  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1);
+  cursor: pointer;
   position: relative;
   overflow: hidden;
-  min-height: 110px;
+  min-height: 108px;
 }
-.community-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--ink-a06), transparent);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-.community-card:hover {
-  background: var(--ink-a02);
-  border-color: var(--line);
-  transform: translateY(-1px);
-}
-.community-card:hover::before { opacity: 1; }
+/* Hover is the shared card lift from primitives.css. What used to be here
+   instead was a 1px light sweep faded in across the top edge — a glass-era
+   flourish that on paper reads as a grey smear. */
 
 /* Vote column — fixed width strip on the left */
 .community-vote-col {
@@ -222,10 +174,10 @@
   gap: 4px;
   flex-shrink: 0;
   width: 52px;
-  padding: 18px 0 18px;
+  padding: 18px 0;
   border-right: 1px solid var(--line-soft);
-  background: var(--ink-a02);
-  border-radius: 14px 0 0 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 .vote-btn {
   display: flex;
@@ -233,10 +185,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   color: var(--ink-ghost);
   transition: color 0.2s, background 0.2s;
-  cursor: none;
+  cursor: pointer;
 }
 .vote-btn:hover:not(:disabled) {
   color: var(--ink-2);
@@ -296,7 +248,7 @@
   font-size: 10.5px;
   font-weight: 500;
   padding: 3px 9px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   background: var(--ink-a06);
   border: 1px solid var(--ink-a08);
   color: var(--ink-muted);
@@ -328,7 +280,7 @@
   display: flex;
   flex-direction: column;
   animation: panelUp 0.35s cubic-bezier(0.16,1,0.3,1);
-  box-shadow: 0 -8px 48px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
 }
 @keyframes panelUp { from { transform: translateY(100px); opacity: 0; } to { transform: none; opacity: 1; } }
 
@@ -340,7 +292,7 @@
   border-top-color: var(--line-strong);
   border-radius: 24px 24px 0 0;
   animation: panelUp 0.35s cubic-bezier(0.16,1,0.3,1);
-  box-shadow: 0 -8px 48px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
 }
 
 .post-detail-header {
@@ -361,7 +313,7 @@
   color: var(--ink-faint);
   background: var(--ink-a04);
   transition: color 0.2s, background 0.2s;
-  cursor: none;
+  cursor: pointer;
 }
 .detail-close-btn:hover { color: var(--ink-2); background: var(--ink-a06); }
 .post-detail-body { padding: 18px 20px 24px; }
@@ -371,7 +323,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--ink-a04);
   border: 1px solid var(--ink-a08);
   margin-bottom: 16px;
@@ -413,7 +365,7 @@
 /* ── Lesson picker ── */
 .lesson-picker {
   border: 1px solid var(--line-soft);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   max-height: 180px;
   overflow-y: auto;
@@ -426,7 +378,7 @@
   color: var(--ink-muted);
   border-bottom: 1px solid var(--line-soft);
   transition: background 0.15s, color 0.15s;
-  cursor: none;
+  cursor: pointer;
   display: block;
 }
 .lesson-pick-item:hover { background: var(--ink-a04); color: var(--ink-2); }
@@ -440,7 +392,7 @@
 }
 .lesson-community-card {
   padding: 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--ink-a02);
   border: 1px solid var(--line-soft);
   transition: background 0.25s, border-color 0.25s, transform 0.25s cubic-bezier(0.16,1,0.3,1);
@@ -454,7 +406,7 @@
   font-size: 10px;
   font-weight: 500;
   padding: 2px 8px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   background: var(--ink-a06);
   border: 1px solid var(--ink-a08);
   color: var(--ink-muted);
@@ -466,10 +418,11 @@
    as a deliberate surface instead of a failed load. */
 .community-empty {
   text-align: center;
-  padding: 3.5rem 1.5rem;
+  padding: 4rem 1.5rem;
   border: 1px dashed var(--line);
-  border-radius: 14px;
-  background: var(--ink-a02);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--ink-faint);
 }
 
 /* ── Peer Cursor Hover ── */
@@ -492,30 +445,20 @@ textarea:focus-visible {
    textarea itself must not add an inset ring over the highlighted text. */
 .code-input:focus-visible { box-shadow: none; }
 
-/* ── Accent button ── */
+/* ── Accent button ──
+   The flat terracotta and its states live in buttons.css; what is left here
+   is the size. It used to be a 135° gradient with a coloured glow, which is
+   a different material from the flat blocks every other control now uses. */
 .accent-btn {
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  color: var(--accent-ink);
-  font-weight: 700;
-  border: none;
-  transition: transform var(--dur-fast) var(--ease-out),
-              box-shadow var(--dur-base) var(--ease-out),
-              filter var(--dur-fast) var(--ease-out);
-  box-shadow: 0 4px 20px -6px var(--accent-glow);
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
 }
-.accent-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 28px -6px var(--accent-glow);
-  filter: brightness(1.06);
-}
-.accent-btn:active:not(:disabled) { transform: translateY(0); }
-.accent-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 
 /* ── Accent chip / subtle accent surface ── */
 .accent-soft {
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
-  color: var(--accent-500);
+  color: var(--accent-600);
 }
 
 /* ── Skeleton loading ──
@@ -524,7 +467,7 @@ textarea:focus-visible {
   position: relative;
   overflow: hidden;
   background: var(--ink-a04);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 .skeleton::after {
   content: '';
@@ -553,18 +496,54 @@ textarea:focus-visible {
 }
 .page-shell--narrow { max-width: 48rem; }
 
-/* ── Section heading rhythm ── */
+/* ── Section heading rhythm ──
+   The old scale ran 9rem for the hero and 1.75rem for every section
+   heading under it, with nothing between: each section read as a caption
+   under a billboard. A section title is now genuinely a size of its own,
+   and `.section-head` gives the title/subtitle pair one margin instead of
+   each caller inventing one. */
+.section-head {
+  max-width: 40rem;
+  margin-bottom: 2.25rem;
+}
+.section-head--center {
+  margin-inline: auto;
+  text-align: center;
+}
 .section-title {
   font-family: var(--font-serif), system-ui, sans-serif;
-  font-size: var(--text-xl);
+  font-size: clamp(1.625rem, 3.2vw, 2.125rem);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-variation-settings: 'wdth' 92, 'opsz' 32;
   color: var(--ink);
+  text-wrap: balance;
 }
 .section-sub {
-  font-size: var(--text-sm);
-  color: var(--ink-faint);
-  margin-top: 0.35rem;
+  font-size: var(--text-md);
+  line-height: 1.55;
+  color: var(--ink-muted);
+  margin-top: 0.6rem;
+  text-wrap: pretty;
+}
+
+/* ── Section rhythm ──
+   One vertical scale for every landing/marketing band, so the gaps between
+   sections are a decision rather than whatever `py-20` happened to be on
+   each one. */
+.band {
+  padding-block: clamp(2.25rem, 4.5vw, 3.5rem);
+  padding-inline: var(--gutter);
+}
+.band--tight { padding-block: clamp(1.75rem, 3.5vw, 2.75rem); }
+/* Two stacked bands would otherwise put both their paddings in the same
+   gap, which is where the landing page's dead space kept coming from. */
+.band + .band { padding-top: 0; }
+.band-inner {
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -574,14 +553,14 @@ textarea:focus-visible {
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 100px;
-  font-size: 0.7rem;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--accent-500);
+  color: var(--accent-600);
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
 }
@@ -591,104 +570,239 @@ textarea:focus-visible {
   box-shadow: 0 0 8px var(--accent-glow);
 }
 
-/* ── Product preview window ── */
-.preview-window {
-  border-radius: 14px;
+/* ── Hero ──
+   The wordmark used to be set at `clamp(3.5rem, 13vw, 9rem)` with an
+   `animation: titleShimmer` that was never defined anywhere in the
+   stylesheet — so the gradient it was sized around never moved, and what
+   was left was a 9rem word above 13px body copy with no step in between.
+
+   It is still the largest thing on the page, just not by a factor of ten. */
+.hero-band {
+  position: relative;
+  padding: clamp(4.5rem, 11vw, 7.5rem) var(--gutter) 0;
+  text-align: center;
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 64rem;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-display);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-variation-settings: 'wdth' 88, 'opsz' 72;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+.hero-lede {
+  font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+  font-weight: 300;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--ink-muted);
+  max-width: 38rem;
+  text-wrap: balance;
+}
+/* The two phrases that carry the sentence. `<em>` rather than a span with a
+   colour class: it is emphasis, and it should still be emphasis with the
+   stylesheet off. */
+.hero-lede em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink);
+}
+.hero-sub {
+  margin-top: 1.1rem;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--ink-faint);
+  max-width: 32rem;
+  text-wrap: pretty;
+}
+.hero-actions {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+/* The secondary action was `--ink-faint` text inside a `--line-soft` border,
+   which on cream measured about 2.4:1 — it read as a disabled control next
+   to the live one. */
+.hero-secondary {
+  padding: 0.7rem 1.3rem;
+  font-size: var(--text-base);
+}
+.hero-preview {
+  width: 100%;
+  max-width: 60rem;
+  margin-top: clamp(3rem, 7vw, 5rem);
+  padding-inline: 0.25rem;
+}
+
+/* ── Closing call to action ── */
+.closing-cta {
+  max-width: 40rem;
+  margin-inline: auto;
+  padding: clamp(2.5rem, 5vw, 3.5rem) 2rem;
+  text-align: center;
   border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: 0 40px 120px -40px rgb(var(--shadow-rgb) / var(--shadow-strength)), 0 0 0 1px var(--ink-a12);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(100% 120% at 50% 0%, var(--accent-soft) 0%, transparent 62%),
+    var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Footer ── */
+.site-footer {
+  margin-top: auto;
+  padding: 2.5rem var(--gutter);
+  border-top: 1px solid var(--line-soft);
+}
+.site-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.footer-link {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.footer-link:hover { color: var(--ink-2); }
+
+/* ── Product preview window ──
+   A miniature of the editor, and the only place on the landing page that
+   shows the actual product. It is deliberately the most elevated thing on
+   the screen — everything else is a hairline card at rest. */
+.preview-window {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-pop);
   overflow: hidden;
 }
 .preview-chrome {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.7rem 0.9rem;
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--surface-2);
   border-bottom: 1px solid var(--line-soft);
 }
-.preview-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-a06); }
-.preview-body { display: grid; grid-template-columns: 190px 1fr; min-height: 260px; }
+.preview-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+}
+.preview-title {
+  margin-left: 0.35rem;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.preview-body { display: grid; grid-template-columns: 200px 1fr; min-height: 300px; }
 @media (max-width: 720px) {
   .preview-body { grid-template-columns: 1fr; }
   .preview-rail { display: none; }
 }
 .preview-rail {
   border-right: 1px solid var(--line-soft);
-  padding: 0.9rem;
-  background: var(--ink-a02);
+  padding: 0.9rem 0.7rem;
+  background: var(--bg-subtle);
 }
-.preview-pane { padding: 1.1rem 1.3rem; }
+.preview-rail-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding-inline: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+.preview-pane { padding: 1.4rem 1.6rem; }
 
 .preview-node {
-  display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.7rem;
-  padding: 0.3rem 0.45rem;
-  border-radius: 6px;
-  color: var(--ink-muted);
+  display: flex; align-items: center; gap: 0.45rem;
+  font-size: 0.75rem;
+  padding: 0.32rem 0.45rem;
+  border-radius: var(--radius-xs);
+  /* These were `--ink-muted` and `--ink-ghost`, which on a recessed rail
+     left the sub-items at roughly 2:1 — legible as shapes, not as words. */
+  color: var(--ink-2);
 }
 .preview-node--active {
   background: var(--accent-soft);
-  color: var(--accent-500);
+  color: var(--accent-600);
+  font-weight: 600;
   border: 1px solid var(--accent-line);
 }
-.preview-node--sub { margin-left: 0.85rem; font-size: 0.66rem; color: var(--ink-ghost); }
+.preview-node--sub {
+  margin-left: 0.8rem;
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
 
 /* Text lines standing in for generated prose */
-.preview-line { height: 7px; border-radius: 3px; background: var(--ink-a06); margin-bottom: 0.5rem; }
-.preview-line--head { height: 11px; width: 45%; background: var(--ink-a12); margin-bottom: 0.9rem; }
+.preview-line { height: 7px; border-radius: 3px; background: var(--ink-a06); margin-bottom: 0.55rem; }
+.preview-line--head { height: 12px; width: 42%; background: var(--ink-a20); margin-bottom: 1rem; border-radius: 4px; }
+.preview-line--sub  { height: 9px; width: 30%; background: var(--ink-a12); margin: 1.4rem 0 0.8rem; border-radius: 3px; }
 .preview-line--accent { background: var(--accent-soft); border: 1px solid var(--accent-line); }
 
-/* ── Step rail ── */
+/* ── Step rail ──
+   Layout only; the material is the shared card in primitives.css. */
 .step-card {
   position: relative;
-  padding: 1.5rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid var(--line-soft);
-  background: var(--ink-a02);
-  transition: border-color var(--dur-base) var(--ease-out),
-              transform var(--dur-base) var(--ease-out),
-              background var(--dur-base) var(--ease-out);
-}
-.step-card:hover {
-  border-color: var(--accent-line);
-  background: var(--ink-a02);
-  transform: translateY(-3px);
+  padding: 1.6rem 1.5rem;
 }
 .step-num {
-  font-family: var(--font-serif);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--accent-400);
-  margin-bottom: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent-500);
+  margin-bottom: 1rem;
   display: block;
+}
+.card-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+.card-body {
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--ink-muted);
+  text-wrap: pretty;
 }
 
 /* ── Bento feature grid ── */
 .bento {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 0.9rem;
+  gap: 1rem;
 }
 .bento-item {
   grid-column: span 2;
-  padding: 1.5rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid var(--line-soft);
-  background: var(--ink-a02);
-  transition: border-color var(--dur-base) var(--ease-out),
-              transform var(--dur-base) var(--ease-out),
-              background var(--dur-base) var(--ease-out);
-}
-.bento-item:hover {
-  border-color: var(--line);
-  background: var(--ink-a02);
-  transform: translateY(-3px);
+  padding: 1.6rem 1.5rem;
 }
 .bento-item--wide { grid-column: span 3; }
 .bento-item--feature {
   grid-column: span 6;
+  padding: 2rem 1.9rem;
   background:
-    radial-gradient(120% 140% at 0% 0%, var(--accent-soft) 0%, transparent 55%),
-    var(--ink-a02);
+    radial-gradient(110% 150% at 0% 0%, var(--accent-soft) 0%, transparent 58%),
+    var(--surface);
   border-color: var(--accent-line);
 }
 @media (max-width: 860px) {
@@ -697,15 +811,18 @@ textarea:focus-visible {
 }
 
 .bento-icon {
-  height: 2.1rem; width: 2.1rem;
-  border-radius: 9px;
+  height: 2.25rem; width: 2.25rem;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  background: var(--ink-a04);
+  background: var(--surface-2);
   border: 1px solid var(--line);
   color: var(--ink-muted);
-  margin-bottom: 0.9rem;
-  transition: all var(--dur-base) var(--ease-out);
+  margin-bottom: 1.1rem;
+  transition: background var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
 }
+.step-card:hover .bento-icon,
 .bento-item:hover .bento-icon {
   background: var(--accent-soft);
   border-color: var(--accent-line);
@@ -730,9 +847,9 @@ textarea:focus-visible {
   position: absolute;
   top: 50%;
   left: 0;
-  height: 34px;
+  height: 31px;
   transform: translateY(-50%);
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   background: var(--ink-a06);
   border: 1px solid var(--line);
   transition: width var(--dur-base) var(--ease-spring),
@@ -747,10 +864,10 @@ textarea:focus-visible {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
-  border-radius: 100px;
-  font-size: 13.5px;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink-muted);
   text-decoration: none;
@@ -768,7 +885,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 4px;
   padding: 5px 9px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11px;
   font-weight: 600;
   font-family: var(--font-mono);
@@ -789,14 +906,14 @@ textarea:focus-visible {
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700;
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  border: 1px solid var(--line-strong);
+  background: var(--accent-400);
+  border: 1px solid var(--ink-a12);
   flex-shrink: 0;
   overflow: hidden;
   transition: box-shadow var(--dur-fast) var(--ease-out);
 }
-/* An uploaded picture fills the circle; the gradient stays as its backing so
-   a transparent PNG still reads against the dark nav. */
+/* An uploaded picture fills the circle; the accent fill stays as its backing
+   so a transparent PNG still reads against the nav. */
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .nav-avatar:hover { box-shadow: 0 0 0 2px var(--ink-a12); }
 
@@ -817,11 +934,11 @@ textarea:focus-visible {
 
 .cmdk-panel {
   width: min(560px, calc(100vw - 2rem));
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 40px 120px -30px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
   animation: cmdk-rise var(--dur-base) var(--ease-spring);
 }
 @keyframes cmdk-rise {
@@ -850,7 +967,7 @@ textarea:focus-visible {
   display: flex; align-items: center; gap: 11px;
   width: 100%;
   padding: 10px 11px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   color: var(--ink-2);
   text-align: left;
@@ -871,7 +988,7 @@ textarea:focus-visible {
   font-size: 11px; color: var(--ink-ghost);
 }
 .cmdk-key {
-  padding: 2px 6px; border-radius: 5px;
+  padding: 2px 6px; border-radius: var(--radius-xs);
   background: var(--ink-a04);
   border: 1px solid var(--line);
   font-family: var(--font-mono); font-size: 10px;
@@ -887,13 +1004,13 @@ textarea:focus-visible {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1px;
-  background: var(--ink-a04);
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .stat-cell {
-  background: var(--bg);
+  background: var(--surface);
   padding: 1rem 1.15rem;
 }
 .stat-value {
@@ -913,25 +1030,40 @@ textarea:focus-visible {
 }
 
 /* ── Segmented control (grid / list) ── */
+/* ── The segmented control ──
+   This is the app's toggle switch — grid/list, Write/Split/Read — so it is
+   the most literal case of the shape the brief asks for. Track and thumb are
+   both fully rounded: a pill track with a square-ish thumb inside reads as a
+   bug, and the two radii have to agree or the gap between them changes
+   thickness around the curve. */
+/* A row of blocks in a ruled tray, not a pill switch. The pill was drawn
+   for a glass brief; here the tray is an outline and the selected block is a
+   second ink pass over it. */
 .segmented {
   display: inline-flex;
   padding: 3px;
-  gap: 2px;
-  border-radius: 10px;
-  background: var(--ink-a04);
-  border: 1px solid var(--line-soft);
+  gap: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1.5px solid var(--ink);
 }
 .segmented button {
   display: flex; align-items: center; justify-content: center;
   height: 28px; width: 32px;
-  border-radius: 7px;
+  border-radius: 4px;
   color: var(--ink-faint);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
 }
+
+/* The thumb: raised out of a recessed track, which is the whole read of a
+   physical switch. `--accent-600` for the same contrast reason as the pills
+   above — this label sits on the accent-soft fill. */
 .segmented button[data-active='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-500);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
+  background: var(--accent-400);
+  color: var(--accent-ink);
+  box-shadow: none;
 }
 .segmented button:hover:not([data-active='true']) { color: var(--ink-2); }
 
@@ -951,7 +1083,7 @@ textarea:focus-visible {
    projects is scannable by shape rather than by reading every title. */
 .doc-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--ink-a02);
   border: 1px solid var(--line-soft);
@@ -962,7 +1094,7 @@ textarea:focus-visible {
 .doc-card:hover {
   transform: translateY(-4px);
   border-color: var(--doc-accent-line, var(--line));
-  box-shadow: 0 24px 60px -28px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
 }
 
 /* Paper miniature */
@@ -973,7 +1105,7 @@ textarea:focus-visible {
   overflow: hidden;
   background:
     radial-gradient(120% 130% at 100% 0%, var(--doc-accent-soft, transparent) 0%, transparent 60%),
-    linear-gradient(180deg, var(--ink-a04), var(--ink-a02));
+    var(--bg-subtle);
   border-bottom: 1px solid var(--line-soft);
 }
 /* Fade the miniature into the card so it reads as a page continuing below */
@@ -992,18 +1124,49 @@ textarea:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.doc-thumb-line {
-  height: 5px;
-  border-radius: 3px;
-  background: var(--ink-a06);
-  margin-bottom: 6px;
+/* ── The miniature's text ──
+   Real prose, set very small. Two things make that legible rather than a
+   smudge: a line-height well above what the size would normally take, and a
+   colour that stays clearly below the card's own title in the hierarchy —
+   this is a preview, and it must never compete with the name of the thing. */
+.doc-thumb-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.doc-thumb-line--h {
-  height: 7px;
-  width: 42%;
-  background: var(--doc-accent-dim, var(--ink-a08));
-  margin-top: 12px;
-  margin-bottom: 9px;
+
+.doc-thumb-p {
+  font-size: 8.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  /* Two lines each, so one long paragraph cannot fill the whole miniature
+     and hide the structure underneath it. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.doc-thumb-h {
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--doc-accent, var(--ink-muted));
+  margin: 3px 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-thumb-h:first-child { margin-top: 0; }
+
+.doc-thumb-empty {
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--ink-ghost);
+  font-style: italic;
+  margin: 0;
 }
 
 .doc-badge {
@@ -1014,7 +1177,7 @@ textarea:focus-visible {
   font-weight: 800;
   letter-spacing: 0.06em;
   padding: 3px 8px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--doc-accent, var(--ink-muted));
   border: 1px solid var(--doc-accent-line, var(--line));
@@ -1039,7 +1202,7 @@ textarea:focus-visible {
 .doc-btn {
   flex: 1;
   height: 32px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 12px;
   font-weight: 600;
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -1049,12 +1212,14 @@ textarea:focus-visible {
   transition: all var(--dur-fast) var(--ease-out);
 }
 .doc-btn:hover { color: var(--ink); background: var(--ink-a06); }
+/* A document card can carry a per-document hue; when it does not, this is
+   the ordinary primary button. Flat, either way. */
 .doc-btn--primary {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--doc-accent, var(--accent-500)), var(--doc-accent-2, var(--accent-300)));
-  border-color: transparent;
+  background: var(--doc-accent, var(--accent-400));
+  border-color: var(--doc-accent, var(--accent-400));
 }
-.doc-btn--primary:hover { filter: brightness(1.08); color: var(--accent-ink); }
+.doc-btn--primary:hover { filter: brightness(0.92); color: var(--accent-ink); }
 
 /* ── List view ── */
 .doc-row {
@@ -1062,7 +1227,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 14px;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line-soft);
   background: var(--ink-a02);
   transition: all var(--dur-fast) var(--ease-out);
@@ -1073,26 +1238,44 @@ textarea:focus-visible {
 }
 
 /* ── New-project tile ── */
+/* ── Start something ──
+   These are now the only way to create a document — the header carried a
+   "New document" button as well, which silently picked MDX. Being the entry
+   point, they get the height to look like one: at 1.1rem of padding the tile
+   was ~74px against ~576px of width, a 7.8:1 bar that read as a toolbar
+   strip rather than as something to choose between.
+
+   `min-height` rather than more padding alone, so the two tiles stay the
+   same height when one description wraps to a second line and the other
+   does not. */
 .new-tile {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 1.1rem 1.25rem;
-  border-radius: 14px;
+  gap: 15px;
+  min-height: 6.5rem;
+  padding: 1.35rem 1.5rem;
+  border-radius: var(--radius-xl);
   border: 1px dashed var(--line);
   background: var(--ink-a02);
-  transition: all var(--dur-base) var(--ease-out);
+  transition: border-color var(--dur-base) var(--ease-out),
+              background var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out);
   text-align: left;
   width: 100%;
 }
+/* Solid on hover, and lit: the dashed border becomes real, which is the
+   standard "this will become a thing" affordance. */
 .new-tile:hover {
+  border-style: solid;
   border-color: var(--tile-accent-line, var(--accent-line));
   background: var(--tile-accent-soft, var(--accent-soft));
+  box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
 .new-tile-icon {
-  height: 2.4rem; width: 2.4rem;
-  border-radius: 11px;
+  height: 2.9rem; width: 2.9rem;
+  border-radius: var(--radius-lg);
   display: flex; align-items: center; justify-content: center;
   background: var(--tile-accent-soft, var(--accent-soft));
   border: 1px solid var(--tile-accent-line, var(--accent-line));
@@ -1108,7 +1291,7 @@ textarea:focus-visible {
    somewhere for the avatar, handle and bio to actually live. */
 .identity-banner {
   position: relative;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--line);
   background: var(--bg);
@@ -1147,7 +1330,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 12px;
   padding: 12px 13px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line);
   background:
     linear-gradient(100deg, color-mix(in srgb, var(--brand) 11%, transparent) 0%, transparent 55%),
@@ -1174,7 +1357,7 @@ textarea:focus-visible {
 
 .provider-mark {
   height: 34px; width: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-serif);
   font-size: 13px; font-weight: 800;
@@ -1195,7 +1378,7 @@ textarea:focus-visible {
   font-weight: 800;
   letter-spacing: 0.07em;
   padding: 2px 7px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   color: var(--brand);
   background: color-mix(in srgb, var(--brand) 15%, transparent);
   border: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
@@ -1203,14 +1386,14 @@ textarea:focus-visible {
 
 .icon-btn {
   height: 28px; width: 28px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-ghost);
   transition: all var(--dur-fast) var(--ease-out);
   flex-shrink: 0;
 }
 .icon-btn:hover { color: var(--ink); background: var(--ink-a04); }
-.icon-btn--danger:hover { color: var(--status-danger); background: rgba(188,76,60,0.09); }
+.icon-btn--danger:hover { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.09); }
 
 /* ═══════════════════════════════════════════════════════════════════════
    AI generation panel — outline as workflow
@@ -1252,7 +1435,7 @@ textarea:focus-visible {
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 1px 6px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   background: var(--ink-a04);
   color: var(--ink-faint);
 }
@@ -1276,10 +1459,10 @@ textarea:focus-visible {
 .editor-status-dot {
   height: 6px; width: 6px; border-radius: 50%;
   background: var(--status-success);
-  box-shadow: 0 0 7px rgba(61,125,90,0.55);
+  box-shadow: 0 0 7px rgb(var(--success-rgb) / 0.55);
 }
 .editor-status-dot[data-state='dirty'] { background: var(--accent-400); box-shadow: 0 0 7px var(--accent-glow); }
-.editor-status-dot[data-state='saving'] { background: var(--status-info); box-shadow: 0 0 7px rgba(74,111,165,0.55); }
+.editor-status-dot[data-state='saving'] { background: var(--status-info); box-shadow: 0 0 7px rgb(var(--info-rgb) / 0.55); }
 .editor-status-dot[data-state='offline'] { background: var(--ink-a12); box-shadow: none; }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1302,8 +1485,8 @@ textarea:focus-visible {
 }
 .setup-step[data-done='true'] .setup-num {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  border-color: transparent;
+  background: var(--accent-400);
+  border-color: var(--accent-400);
 }
 /* Connector line between steps */
 .setup-line {
@@ -1334,7 +1517,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 10px;
   padding: 12px 13px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   text-align: left;
   border: 1px solid var(--line);
   background: var(--ink-a02);
@@ -1354,7 +1537,7 @@ textarea:focus-visible {
 }
 .brand-card-mark {
   height: 32px; width: 32px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-serif);
   font-size: 13px; font-weight: 800;
@@ -1378,7 +1561,7 @@ textarea:focus-visible {
 .model-option {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   text-align: left;
   font-size: 12.5px;
   border: 1px solid var(--line-soft);
@@ -1409,7 +1592,7 @@ textarea:focus-visible {
 .key-note {
   display: flex; gap: 9px;
   padding: 11px 13px;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   font-size: 11.5px;
   line-height: 1.55;
   color: var(--ink-faint);
@@ -1426,7 +1609,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 12px;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--line-soft);
   background: var(--ink-a02);
   text-decoration: none;
@@ -1451,7 +1634,7 @@ textarea:focus-visible {
 .pub-row {
   display: flex; align-items: center; gap: 11px;
   padding: 11px 13px;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--line-soft);
   background: var(--ink-a02);
   text-decoration: none;

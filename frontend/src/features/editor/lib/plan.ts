@@ -34,12 +34,33 @@ export function planItem(title: string, level = 1): PlanItem {
   return { id: `p${Date.now().toString(36)}-${seq}`, title, level };
 }
 
-/** The two-level shape the AI service returns, widened to the flat model. */
+/**
+ * The topic tree the AI service returns, flattened to the level model.
+ *
+ * Recursive, and deliberately: the wire shape allows a subtopic to be another
+ * node, and the previous version mapped `subtopics` straight to level 2, so a
+ * third level the model *did* return was silently dropped along with
+ * everything under it. Depth is clamped to what a heading can spell rather
+ * than truncated, so a too-deep branch arrives flattened instead of missing.
+ */
 export function planFromHierarchy(hierarchy: TopicHierarchy[]): PlanItem[] {
-  return hierarchy.flatMap(entry => [
-    planItem(entry.topic, 1),
-    ...(entry.subtopics ?? []).map(sub => planItem(sub, 2)),
-  ]);
+  const out: PlanItem[] = [];
+
+  const walk = (entries: (string | TopicHierarchy)[], level: number) => {
+    for (const entry of entries) {
+      const depth = Math.min(level, MAX_PLAN_LEVEL);
+      if (typeof entry === 'string') {
+        if (entry.trim()) out.push(planItem(entry.trim(), depth));
+        continue;
+      }
+      if (!entry?.topic?.trim()) continue;
+      out.push(planItem(entry.topic.trim(), depth));
+      walk(entry.subtopics ?? [], level + 1);
+    }
+  };
+
+  walk(hierarchy, 1);
+  return normalise(out);
 }
 
 /**
@@ -64,14 +85,6 @@ export function headingMarkup(title: string, level: number, format: DocFormat): 
     return `\\${LATEX_COMMANDS[Math.min(depth, LATEX_COMMANDS.length) - 1]}{${title}}`;
   }
   return `${'#'.repeat(depth)} ${title}`;
-}
-
-/** Indented plain text — what the model reads as "the rest of the document". */
-export function planToOutlineText(items: { title: string; level: number }[]): string {
-  return items
-    .filter(item => item.title.trim())
-    .map(item => `${'  '.repeat(item.level - 1)}- ${item.title}`)
-    .join('\n');
 }
 
 /**

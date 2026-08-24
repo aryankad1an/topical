@@ -250,10 +250,18 @@ export interface SectionBody {
   source: GenerationSource;
   /** Pages to ground the section in. Read only when `source` is "urls". */
   urls?: string[];
-  /** The whole outline as indented text, for cross-section awareness. */
+  /**
+   * The whole outline as a numbered tree, marked with what is already
+   * written. "Do not repeat the other sections" is only followable if the
+   * model can see which of them exist.
+   */
   hierarchy?: string;
   /** Sub-sections written separately; a parent must not cover them. */
   children?: string[];
+  /** Headings this section is nested inside, outermost first. */
+  ancestors?: string[];
+  /** Its number in the outline — "2.3" — so the model knows where it sits. */
+  section_number?: string;
   /** Heading depth, so the section opens at the right level. */
   level?: number;
 }
@@ -293,9 +301,21 @@ export interface RefinedOutline {
   changes: OutlineChange[];
 }
 
+/** One row of the outline sent for refinement, with what it already cost. */
+export interface OutlineRowIn {
+  title: string;
+  level: number;
+  /**
+   * Words already written under it. A restructure that moves a section
+   * carrying 900 words is a different proposition from moving an empty
+   * heading, and the model cannot weigh that if it only sees titles.
+   */
+  words?: number;
+}
+
 /** Ask for a better-organised outline, and the reasoning behind each move. */
 export async function refineOutline(
-  outline: { title: string; level: number }[],
+  outline: OutlineRowIn[],
   subject: string,
   instruction: string,
   format: DocFormat,

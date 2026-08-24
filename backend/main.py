@@ -19,7 +19,7 @@ from .core.config import settings
 from .api import api_router
 from .core.errors import register_exception_handlers
 from .core.logging import configure_logging
-from .db.session import dispose_engine, is_configured
+from .db.session import dispose_engine, is_configured, warm_pool
 from .realtime import realtime_router
 from .static import mount_frontend
 
@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
         settings.port,
         "configured" if is_configured() else "NOT configured",
     )
+    await warm_pool()
     yield
     await dispose_engine()
 

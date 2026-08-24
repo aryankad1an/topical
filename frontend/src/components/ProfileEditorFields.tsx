@@ -52,12 +52,19 @@ export function ProfileEditorFields({
     try {
       const url = await uploadFile(file);
       onAvatarChange(url);
+      // Drop the local preview only once the uploaded URL is in hand, and
+      // revoke it only after it is no longer what the <img> points at.
+      // Revoking it in a `finally` while `displayedAvatar` still preferred it
+      // left the element pointing at a dead blob: the avatar went blank the
+      // moment the upload succeeded.
+      setPreviewUrl(null);
+      URL.revokeObjectURL(localPreview);
     } catch (error) {
       toast.error(errorMessage(error, "Failed to upload image"));
       setPreviewUrl(null);
+      URL.revokeObjectURL(localPreview);
     } finally {
       setIsUploading(false);
-      URL.revokeObjectURL(localPreview);
     }
   };
 

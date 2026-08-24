@@ -25,6 +25,75 @@
 }
 .doc-sheet[data-format='latex'] { max-width: 48rem; }
 
+/* ── The section the outline rail is pointing at ──
+   The rendered half marks the same span the editor does, so a row touched in
+   the rail is identifiable in whichever pane the writer happens to be reading.
+
+   The tint is applied through a negative-margin box rather than to the blocks
+   themselves so the highlight is one continuous band down the section instead
+   of a stripe per paragraph, and so it reaches into the sheet's own margin
+   the way a marked passage would. */
+.doc-focus {
+  /* Opaque, not a translucent wash. Consecutive blocks of one section overlap
+     slightly to close the gaps between them (below), and two translucent
+     tints stacked in the overlap would draw a darker band across every
+     paragraph break. */
+  --doc-focus-bg: color-mix(in srgb, rgb(var(--accent-rgb)) 6%, var(--bg));
+  --doc-focus-line: color-mix(in srgb, rgb(var(--accent-rgb)) 45%, var(--bg));
+  position: relative;
+  margin-left: -0.9rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--doc-focus-line);
+  background: var(--doc-focus-bg);
+}
+/* One section reads as one band.
+   ═══════════════════════════════
+   The space between two blocks is the first one's own bottom margin, and no
+   background reaches into a margin — so a run of marked paragraphs came out
+   as separate stripes, with the rule down the side broken in as many places
+   as there were paragraphs.
+
+   Closed by turning that margin into padding on any marked block followed by
+   another one: the block grows to fill the space it was leaving, so the tint
+   and the rule carry across it while the text does not move a pixel. The
+   values below are the same ones declared above — a shared token would be
+   neater, but these margins are read by the type scale and are meant to be
+   legible where they are set, not indirected through a variable that has to
+   be chased to know what the rhythm is. Anything not listed falls back to the
+   prose margin, which is close enough not to show.
+
+   Only blocks *followed* by another marked one are touched, so the end of a
+   section keeps its normal spacing from whatever comes next. */
+.md-body .doc-focus:has(+ .doc-focus) { margin-bottom: 0; padding-bottom: 1.05em; }
+.md-body h1.doc-focus:has(+ .doc-focus) { padding-bottom: 1rem; }
+.md-body h2.doc-focus:has(+ .doc-focus) { padding-bottom: calc(0.4rem + 0.85rem); }
+.md-body h3.doc-focus:has(+ .doc-focus) { padding-bottom: 0.6rem; }
+.md-body h4.doc-focus:has(+ .doc-focus),
+.md-body h5.doc-focus:has(+ .doc-focus),
+.md-body h6.doc-focus:has(+ .doc-focus) { padding-bottom: 0.5rem; }
+.md-body blockquote.doc-focus:has(+ .doc-focus) { padding-bottom: calc(0.15em + 1.2em); }
+.md-body .md-code.doc-focus:has(+ .doc-focus),
+.md-body .md-callout.doc-focus:has(+ .doc-focus),
+.md-body .md-table-wrap.doc-focus:has(+ .doc-focus) { padding-bottom: 1.3em; }
+
+/* The same again from the other side. Adjacent margins collapse to the larger
+   of the two, so a heading's own 2.1rem top margin is what actually separates
+   it from the paragraph above — zeroing that paragraph's bottom margin closes
+   nothing. Prose has no top margin and needs no rule; everything that opens on
+   space gets it back as padding. */
+.md-body .doc-focus + .doc-focus { margin-top: 0; }
+.md-body .doc-focus + h2.doc-focus { padding-top: 2.1rem; }
+.md-body .doc-focus + h3.doc-focus { padding-top: 1.6rem; }
+.md-body .doc-focus + h4.doc-focus,
+.md-body .doc-focus + h5.doc-focus,
+.md-body .doc-focus + h6.doc-focus { padding-top: 1.3rem; }
+.md-body .doc-focus + blockquote.doc-focus { padding-top: calc(0.15em + 1.2em); }
+.md-body .doc-focus + .md-callout.doc-focus { padding-top: calc(0.85rem + 1.3em); }
+.md-body .doc-focus + .md-code.doc-focus,
+.md-body .doc-focus + .md-table-wrap.doc-focus { padding-top: 1.3em; }
+.doc-focus:not(.doc-focus + .doc-focus) { border-top-left-radius: var(--radius-sm); }
+.doc-focus:not(:has(+ .doc-focus)) { border-bottom-left-radius: var(--radius-sm); }
+
 .doc-empty {
   height: 100%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -95,24 +164,24 @@
   font-style: italic;
 }
 
-.md-body a { color: var(--syn-link); text-decoration: none; border-bottom: 1px solid rgba(193,95,60,0.3); }
+.md-body a { color: var(--syn-link); text-decoration: none; border-bottom: 1px solid rgb(var(--accent-rgb) / 0.3); }
 .md-body a:hover { border-bottom-color: var(--syn-link); }
 
 .md-body code:not(pre code) {
   padding: 0.12em 0.4em;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 0.87em;
   color: var(--syn-code);
-  background: rgba(61,125,90,0.09);
-  border: 1px solid rgba(61,125,90,0.14);
+  background: rgb(var(--success-rgb) / 0.09);
+  border: 1px solid rgb(var(--success-rgb) / 0.14);
 }
 
 /* Code blocks get a chrome bar with the language and a copy button. */
 .md-code {
   color: var(--ink);
   margin: 1.3em 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--line);
   background: var(--surface-2);
@@ -132,7 +201,7 @@
 .md-copy {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 8px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   font-size: 10.5px; font-weight: 600;
   color: var(--ink-faint);
   transition: all var(--dur-fast) var(--ease-out);
@@ -148,7 +217,7 @@
 }
 .md-code pre code { font-family: var(--font-mono); background: none; padding: 0; border: none; }
 
-.md-table-wrap { margin: 1.3em 0; overflow-x: auto; border-radius: 11px; border: 1px solid var(--line); }
+.md-table-wrap { margin: 1.3em 0; overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--line); }
 .md-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .md-table-wrap th {
   padding: 9px 13px;
@@ -161,7 +230,7 @@
 .md-table-wrap td { padding: 9px 13px; border-bottom: 1px solid var(--line-soft); color: var(--ink-2); }
 .md-table-wrap tr:last-child td { border-bottom: none; }
 
-.md-img { max-width: 100%; height: auto; border-radius: 11px; margin: 1.3em 0; border: 1px solid var(--line-soft); }
+.md-img { max-width: 100%; height: auto; border-radius: var(--radius-md); margin: 1.3em 0; border: 1px solid var(--line-soft); }
 .md-body hr { margin: 2.2em 0; border: none; border-top: 1px solid var(--line); }
 
 /* GitHub-style callouts */
@@ -169,7 +238,7 @@
   --callout: var(--status-info);
   margin: 1.3em 0;
   padding: 0.85rem 1.05rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, var(--callout) 28%, transparent);
   background: color-mix(in srgb, var(--callout) 8%, transparent);
 }
@@ -240,7 +309,7 @@
 .lx-quote {
   margin: 1.1rem 0;
   padding: 0.1rem 0 0.1rem 1.1rem;
-  border-left: 2px solid rgba(74,111,165,0.4);
+  border-left: 2px solid rgb(var(--latex-rgb) / 0.4);
   color: var(--ink-muted);
   font-style: italic;
 }
@@ -252,7 +321,7 @@
 .lx-pre {
   margin: 1.15rem 0;
   padding: 0.9rem 1.05rem;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 12.5px;
@@ -268,18 +337,18 @@
   font-family: var(--font-mono);
   font-size: 0.86em;
   color: var(--syn-code);
-  background: rgba(61,125,90,0.09);
+  background: rgb(var(--success-rgb) / 0.09);
 }
 .lx-sc { font-variant: small-caps; }
 .lx-sf { font-family: var(--font-sans); }
-.lx-link { color: var(--syn-link); text-decoration: none; border-bottom: 1px solid rgba(193,95,60,0.3); }
+.lx-link { color: var(--syn-link); text-decoration: none; border-bottom: 1px solid rgb(var(--accent-rgb) / 0.3); }
 .lx-link:hover { border-bottom-color: var(--syn-link); }
 
 .lx-abstract {
   margin: 0 auto 2rem;
   max-width: 88%;
   padding: 1.1rem 1.3rem;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--ink-a02);
   border: 1px solid var(--line-soft);
   font-size: 0.94em;
@@ -317,17 +386,17 @@
   font-family: var(--font-mono);
   font-size: 0.85em;
   color: var(--status-danger);
-  background: rgba(188,76,60,0.09);
-  border-bottom: 1px dashed rgba(188,76,60,0.5);
+  background: rgb(var(--danger-rgb) / 0.09);
+  border-bottom: 1px dashed rgb(var(--danger-rgb) / 0.5);
   padding: 0.05em 0.25em;
   border-radius: 3px;
 }
 
 .lx-figure { margin: 1.5rem auto; text-align: center; }
-.lx-img { max-width: 100%; border-radius: 10px; border: 1px solid var(--line-soft); }
+.lx-img { max-width: 100%; border-radius: var(--radius); border: 1px solid var(--line-soft); }
 .lx-img-missing {
   padding: 1.7rem;
-  border-radius: 10px;
+  border-radius: var(--radius);
   border: 1px dashed var(--line);
   font-family: var(--font-mono);
   font-size: 11.5px;
@@ -356,12 +425,12 @@
 .lx-theorem {
   margin: 1.3rem 0;
   padding: 0.9rem 1.1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(74,111,165,0.22);
-  background: rgba(74,111,165,0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(var(--latex-rgb) / 0.22);
+  background: rgb(var(--latex-rgb) / 0.05);
 }
 .lx-theorem[data-kind='definition'] { border-color: rgba(122,92,168,0.24); background: rgba(122,92,168,0.05); }
-.lx-theorem[data-kind='example'] { border-color: rgba(61,125,90,0.22); background: rgba(61,125,90,0.05); }
+.lx-theorem[data-kind='example'] { border-color: rgb(var(--success-rgb) / 0.22); background: rgb(var(--success-rgb) / 0.05); }
 .lx-theorem[data-kind='remark'] { border-color: var(--line); background: var(--ink-a02); }
 .lx-thm-head {
   font-family: var(--font-serif);
@@ -382,7 +451,7 @@
 .lx-qed { float: right; color: var(--ink-muted); }
 
 .lx-ref { color: var(--latex-500); font-variant-numeric: tabular-nums; }
-.lx-ref-missing { color: var(--status-warning); background: rgba(199,125,46,0.1); padding: 0 0.25em; border-radius: 3px; }
+.lx-ref-missing { color: var(--status-warning); background: rgb(var(--warning-rgb) / 0.1); padding: 0 0.25em; border-radius: 3px; }
 .lx-cite { color: var(--latex-500); text-decoration: none; }
 .lx-fn-mark a { color: var(--accent-400); text-decoration: none; font-size: 0.75em; }
 .lx-fn-back { color: var(--ink-faint); text-decoration: none; margin-right: 0.3rem; }
@@ -402,7 +471,7 @@
 .lx-toc {
   margin: 0 0 2rem;
   padding: 1rem 1.2rem;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--ink-a02);
   border: 1px solid var(--line-soft);
 }
@@ -428,14 +497,14 @@
 .lx-skip { height: 0.9rem; }
 .lx-logo-a { font-size: 0.75em; position: relative; top: -0.35em; margin: 0 -0.25em; }
 .lx-logo-e { font-size: 0.9em; position: relative; top: 0.22em; margin: 0 -0.1em; }
-.lx-unknown-env { border-left: 2px dashed rgba(199,125,46,0.35); padding-left: 0.9rem; }
+.lx-unknown-env { border-left: 2px dashed rgb(var(--warning-rgb) / 0.35); padding-left: 0.9rem; }
 
 /* Parser complaints, folded away until asked for. */
 .lx-issues {
   margin-top: 2.5rem;
-  border-radius: 12px;
-  border: 1px solid rgba(199,125,46,0.22);
-  background: rgba(199,125,46,0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(var(--warning-rgb) / 0.22);
+  background: rgb(var(--warning-rgb) / 0.05);
   overflow: hidden;
 }
 .lx-issues-head {

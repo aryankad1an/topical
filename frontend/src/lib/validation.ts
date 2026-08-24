@@ -44,3 +44,57 @@ export function passwordProblem(password: string): string | null {
   if (password.length < MIN_PASSWORD_LENGTH) return PASSWORD_RULE;
   return null;
 }
+
+/* ─────────────────────────── Strength ───────────────────────────
+   Advice, not a rule. The server accepts anything eight characters or
+   longer, and this must never disagree with it — a meter that blocks
+   submission is a second, undocumented password policy, and the one place
+   it will be discovered is by someone who cannot sign up.
+
+   So this scores and says so, and nothing here gates the button. */
+
+export type PasswordStrength = {
+  /** 0–4. 0 means "nothing typed yet". */
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  /** The cheapest single change that would raise the score. */
+  advice: string | null;
+};
+
+/**
+ * A rough score for a password, from length and character variety.
+ *
+ * Length is weighted above variety on purpose: `correcthorsebattery` resists
+ * guessing far better than `P@ss1!`, and a meter that says otherwise teaches
+ * people to write the short one.
+ */
+export function passwordStrength(password: string): PasswordStrength {
+  if (!password) return { score: 0, label: '', advice: null };
+
+  const classes =
+    Number(/[a-z]/.test(password)) +
+    Number(/[A-Z]/.test(password)) +
+    Number(/[0-9]/.test(password)) +
+    Number(/[^A-Za-z0-9]/.test(password));
+
+  let points = 0;
+  if (password.length >= MIN_PASSWORD_LENGTH) points += 1;
+  if (password.length >= 12) points += 1;
+  if (password.length >= 16) points += 1;
+  if (classes >= 2) points += 1;
+  if (classes >= 3) points += 1;
+
+  // A single repeated character or a straight run of digits is long without
+  // being hard to guess; length alone must not carry those to the top.
+  if (/^(.)\1+$/.test(password) || /^\d+$/.test(password)) points = Math.min(points, 1);
+
+  const score = Math.min(4, Math.max(1, points)) as 1 | 2 | 3 | 4;
+  const label = (['Too short', 'Weak', 'Fair', 'Good', 'Strong'] as const)[score];
+
+  let advice: string | null = null;
+  if (password.length < MIN_PASSWORD_LENGTH) advice = PASSWORD_RULE;
+  else if (password.length < 12) advice = 'Longer is stronger — try a short phrase';
+  else if (classes < 2) advice = 'Mix in a capital or a number';
+
+  return { score, label, advice };
+}

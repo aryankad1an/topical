@@ -43,9 +43,13 @@
   font-weight: 600;
   color: var(--ink);
   padding: 5px 9px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   min-width: 6ch;
-  max-width: 28ch;
+  /* Was 28ch, which cut "Retrieval-Augmented Generation" to "…Ger" with no
+     ellipsis — an <input> clips rather than truncating. Sized off the header
+     instead, so a long name uses the room the header actually has. */
+  max-width: min(42ch, 26vw);
+  text-overflow: ellipsis;
   transition: background var(--dur-fast) var(--ease-out);
 }
 .editor-title:hover { background: var(--ink-a04); }
@@ -80,7 +84,7 @@
 }
 .editor-peer--more { background: var(--ink-a08); color: var(--ink-2); box-shadow: none; }
 
-.editor-save { height: 30px; padding: 0 15px; font-size: 12px; border-radius: 9px; }
+.editor-save { height: 30px; padding: 0 15px; font-size: 12px; border-radius: var(--radius); }
 
 /* One dismiss boundary around every header popover. */
 .editor-menus { display: flex; align-items: center; gap: 2px; }
@@ -94,10 +98,10 @@
   z-index: 60;
   min-width: 214px;
   padding: 6px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 24px 60px -20px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
   animation: cmdk-rise 0.16s var(--ease-out);
 }
 .editor-menu-label {
@@ -110,7 +114,7 @@
   display: flex; align-items: center; gap: 9px;
   width: 100%;
   padding: 7px 9px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 12.5px;
   color: var(--ink-2);
   text-align: left;
@@ -137,11 +141,16 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--line-soft);
   background: var(--ink-a02);
+  /* Narrow windows scroll the bar instead of squeezing 18 targets below
+     their minimum size. `-thin` because a scrollbar inside 44px of chrome is
+     furniture, not a control. */
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 .toolbar-btn {
   height: 29px; width: 29px;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--ink-muted);
   transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
@@ -152,7 +161,7 @@
 .toolbar-toggle {
   display: inline-flex; align-items: center; gap: 6px;
   height: 29px; padding: 0 11px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 12px; font-weight: 600;
   color: var(--ink-muted);
   border: 1px solid transparent;
@@ -166,7 +175,31 @@
   background: var(--accent-soft);
   border-color: var(--accent-line);
 }
-.toolbar-divider { width: 1px; height: 18px; margin: 0 7px; background: var(--ink-a06); }
+.toolbar-divider {
+  width: 1px; height: 18px; margin: 0 7px;
+  background: var(--ink-a06);
+  flex-shrink: 0;
+}
+
+/* Groups keep their own buttons together when the bar has to wrap or scroll,
+   so a heading control never ends up orphaned on the far side of a divider
+   from its siblings. */
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+/* The hint and the shortcut button ride at the far end and never compress. */
+.toolbar-tail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding-left: 10px;
+  flex-shrink: 0;
+}
 .toolbar-hint {
   display: inline-flex; align-items: center; gap: 5px;
   margin-left: auto; padding-right: 4px;
@@ -174,7 +207,7 @@
 }
 .toolbar-hint kbd {
   font-family: var(--font-mono);
-  padding: 1px 5px; border-radius: 5px;
+  padding: 1px 5px; border-radius: var(--radius-xs);
   background: var(--ink-a04);
   border: 1px solid var(--line);
   color: var(--ink-muted);
@@ -251,7 +284,7 @@
   outline: none;
 }
 .code-input::placeholder { color: var(--ink-ghost); }
-.code-input::selection { background: rgba(217,119,87,0.22); }
+.code-input::selection { background: rgb(var(--accent-rgb) / 0.22); }
 
 /* One element per source line: gutter numbers hang in the padding, and focus
    mode has something to dim. */
@@ -282,6 +315,23 @@
 .code-surface[data-focus='true'] .cl-active { opacity: 1; }
 .code-surface[data-focus='true'] .cl-active::before { color: var(--accent-400); }
 
+/* ── The section the outline rail is pointing at ──
+   Painted on the mirror, which sits *under* the transparent textarea, so it
+   reads as a highlight on the text rather than as a box drawn over it — and
+   the caret, the selection and native find all keep working on top of it.
+
+   Deliberately not a text selection. Selecting a whole section leaves the
+   writer one keystroke from replacing it, and pops the inline-AI chip over
+   the exact text they opened the row to look at. */
+.cl-section {
+  background: rgb(var(--accent-rgb) / 0.05);
+  box-shadow: inset 2px 0 0 rgb(var(--accent-rgb) / 0.45);
+}
+.cl-section-top { border-top-left-radius: var(--radius-xs); border-top-right-radius: var(--radius-xs); }
+.cl-section-end { border-bottom-left-radius: var(--radius-xs); border-bottom-right-radius: var(--radius-xs); }
+.code-surface[data-gutter='true'] .cl-section::before { color: var(--accent-400); }
+.code-surface[data-focus='true'] .cl-section { opacity: 1; }
+
 /* ── Tokens ── */
 .tok-head    { color: var(--accent-500); font-weight: 700; }
 .tok-strong  { color: var(--ink); font-weight: 700; }
@@ -290,7 +340,7 @@
 .tok-code    { color: var(--syn-code); }
 .tok-math    { color: var(--latex-500); }
 .tok-link    { color: var(--syn-link); }
-.tok-url     { color: rgba(193,95,60,0.45); }
+.tok-url     { color: rgb(var(--accent-rgb) / 0.45); }
 .tok-quote   { color: var(--ink-muted); font-style: italic; }
 .tok-marker  { color: var(--accent-500); }
 .tok-rule    { color: var(--ink-ghost); }
@@ -300,14 +350,14 @@
 .tok-comment { color: var(--ink-ghost); font-style: italic; }
 .tok-punct   { color: var(--ink-faint); }
 .tok-find {
-  background: rgba(217,119,87,0.18);
+  background: rgb(var(--accent-rgb) / 0.18);
   border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(217,119,87,0.3);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.3);
 }
 .tok-find-active {
-  background: rgba(217,119,87,0.4);
+  background: rgb(var(--accent-rgb) / 0.4);
   border-radius: 3px;
-  box-shadow: 0 0 0 1px rgba(217,119,87,0.7);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.7);
 }
 
 /* ── Outline rail ──
@@ -315,13 +365,22 @@
    it by hand, the model proposes changes to it, and each row is the handle
    for writing that section. Width is dragged, so it can be a thin navigator
    or a wide working outline. */
+/* ── The rail ──
+   Solid, deliberately. A sidebar is a panel the document sits beside, not
+   chrome floating over it: frosting a tall column against scrolling text
+   makes the text smear the whole height of the screen every time you move,
+   which reads as noise rather than as depth.
+
+   The glass in here is carried by a few *controls* instead — the two AI
+   buttons, the generate button, and the active row. Mostly solid, with the
+   material appearing where something is actionable. */
 .outline-rail {
   position: relative;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--line-soft);
-  background: var(--ink-a02);
+  border-right: 1px solid var(--line);
+  background: var(--bg-subtle);
   overflow: hidden;
 }
 .outline-head {
@@ -334,10 +393,29 @@
 }
 .outline-count {
   font-family: var(--font-mono);
-  padding: 1px 6px; border-radius: 100px;
+  padding: 1px 6px; border-radius: var(--radius-pill);
   background: var(--ink-a04);
   color: var(--ink-faint);
   letter-spacing: 0;
+}
+
+/* ── Coverage ──
+   How much of the outline is written, stated once. The rail used to say this
+   with a tick on every written row, which is the same fact repeated as many
+   times as there are sections and readable as none of them. */
+.outline-meter {
+  height: 2px;
+  margin: 0 12px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-a06);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.outline-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: rgb(var(--accent-rgb) / 0.55);
+  transition: width var(--dur-base) var(--ease-out);
 }
 
 /* The drag handle sits over the border, not beside it, so the rail loses no
@@ -351,16 +429,21 @@
 }
 .outline-resize:hover { background: var(--accent-line); }
 
+/* One button, so it takes the width. There were two — "AI outline" and
+   "Refine" — which asked the same question and differed only in whether a
+   structure already existed; that is a distinction the rail can make for
+   itself from the outline it is already rendering. */
 .outline-actions {
-  display: flex; flex-wrap: wrap; gap: 4px;
+  display: flex;
   padding: 0 10px 9px;
   flex-shrink: 0;
 }
 .orail-btn {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%;
   min-height: 0;
   padding: 5px 9px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11px; font-weight: 600;
   color: var(--ink-muted);
   background: var(--surface);
@@ -380,7 +463,7 @@
   display: flex; flex-direction: column; gap: 6px;
   margin: 0 10px 10px;
   padding: 9px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--line);
   flex-shrink: 0;
@@ -390,7 +473,7 @@
   width: 100%;
   min-width: 0;
   padding: 6px 8px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   font-size: 11.5px;
   font-family: inherit;
   color: var(--ink);
@@ -404,7 +487,7 @@
 .orail-go {
   min-height: 0;
   padding: 5px 10px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   font-size: 11px; font-weight: 600;
   color: var(--accent-ink);
   background: var(--accent-400);
@@ -421,13 +504,36 @@
 }
 .orail-link:hover:not(:disabled) { color: var(--accent-500); }
 .orail-link:disabled { opacity: 0.4; }
+.orail-foot-link { align-self: center; }
+
+/* Openers, not presets: clicking one fills the box and leaves it editable, so
+   the four common instructions cost a click and everything else still costs a
+   sentence. Pills, because they describe rather than act — the ramp is for
+   controls. */
+.orail-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.orail-chip {
+  min-height: 0;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px; font-weight: 500;
+  color: var(--ink-muted);
+  background: var(--ink-a04);
+  border: 1px solid transparent;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.orail-chip:hover {
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+.orail-note { font-size: 10px; line-height: 1.5; color: var(--ink-ghost); }
 
 /* ── Proposed restructure ──
    Shown next to the reasoning that produced it. A restructure that lands
    silently is one nobody can check, so nothing is applied until this is. */
 .orail-proposal {
   margin: 0 10px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   border: 1px solid var(--accent-line);
   background: var(--surface);
   overflow: hidden;
@@ -469,15 +575,15 @@
   align-self: flex-start;
   margin-top: 1px;
   padding: 1px 6px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   font-size: 9px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.06em;
   color: var(--ink-muted);
   background: var(--ink-a06);
   border: 1px solid var(--line);
 }
-.orail-kind[data-kind='added']   { color: var(--status-success); background: rgba(61,125,90,0.12); border-color: rgba(61,125,90,0.3); }
-.orail-kind[data-kind='removed'] { color: var(--status-danger); background: rgba(188,76,60,0.12); border-color: rgba(188,76,60,0.3); }
+.orail-kind[data-kind='added']   { color: var(--status-success); background: rgb(var(--success-rgb) / 0.12); border-color: rgb(var(--success-rgb) / 0.3); }
+.orail-kind[data-kind='removed'] { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.12); border-color: rgb(var(--danger-rgb) / 0.3); }
 .orail-kind[data-kind='moved'],
 .orail-kind[data-kind='nested']  { color: var(--accent-500); background: var(--accent-soft); border-color: var(--accent-line); }
 .orail-change-title { font-size: 11.5px; font-weight: 600; color: var(--ink); }
@@ -494,19 +600,75 @@
 /* ── Rows ── */
 .outline-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 7px 8px; }
 
+/* ── Rows ──
+   Indentation alone was carrying the whole hierarchy, which at 14px a level
+   is not enough to read as a tree — three levels looked like three slightly
+   ragged lines. Two things fix it: a guide rule showing what a row hangs
+   from, and a type scale that makes depth legible without measuring.
+   ═══════════════════════════════════════════════════════════════════════ */
 .orow {
+  --orow-step: 14px;
+  --orow-gutter: 9px;
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 3px 5px;
-  border-radius: 7px;
+  /* The indent, derived from the level the row published. */
+  padding-left: calc(var(--orow-gutter) - 3px + (var(--orow-level, 1) - 1) * var(--orow-step));
+  border-radius: var(--radius-sm);
   font-size: 12px;
   color: var(--ink-muted);
-  transition: background var(--dur-fast) linear;
+  transition: background-color var(--dur-fast) linear,
+              color var(--dur-fast) linear;
 }
-.orow:hover { background: var(--ink-a04); }
-.orow[data-active='true'] { background: var(--accent-soft); }
+
+/* ── Tree guides ──
+   One full-height rule per ancestor, at that ancestor's own indent. Rows sit
+   flush, so the rules of a subtree meet end to end and read as one line down
+   the side of it.
+
+   The previous version painted a single hairline as a `background-image` on
+   each row. A background is clipped to the element that paints it, so what
+   appeared was a stack of short dashes — one per row, at the *immediate*
+   parent's indent only — with nothing joining them and no rule at all for the
+   grandparents. It looked like an artefact because it was describing nothing.
+
+   Real elements also give the pseudo-elements back: `::before`/`::after` on
+   `.orow` remain the drop indicators, and the row no longer has to route its
+   depth through the one property those two are fighting over. */
+.orow-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--orow-gutter) + (var(--orow-guide, 1) - 1) * var(--orow-step));
+  width: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+/* The rule the active row hangs from is lit for its whole height, so a
+   selected sub-section shows which parent it belongs to. */
+.orow[data-active='true'] .orow-guide:last-of-type { background: var(--accent-line); }
+
+/* Depth as weight and size, not only as position. */
+.orow[data-level='1'] .orow-name { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.orow[data-level='2'] .orow-name { font-size: 12px; font-weight: 500; }
+.orow[data-level='3'] .orow-name,
+.orow[data-level='4'] .orow-name { font-size: 11.5px; font-weight: 400; }
+
+.orow:hover { background-color: var(--ink-a04); }
+
+/* ── The active row ──
+   A hairline down the leading edge and the faintest wash. It used to be a
+   2px accent bar, a full-strength `--accent-soft` fill, accent-coloured text
+   *and* a jump to weight 600 — four signals for one fact, on a row that is
+   already the one under the caret. Marking where you are should be the
+   quietest thing in the list, not the loudest: the title keeps its own colour
+   and weight so the type scale still reads as depth. */
+.orow[data-active='true'] {
+  background-color: rgb(var(--accent-rgb) / 0.055);
+  box-shadow: inset 2px 0 0 rgb(var(--accent-rgb) / 0.5);
+}
 
 /* ── Dragging ──
    The grip is held open by its own width so revealing it on hover doesn't
@@ -538,32 +700,33 @@
 .orow[data-drop='top']::before { top: -1px; }
 .orow[data-drop='bottom']::after { bottom: -1px; }
 
-.orow-mark {
-  height: 14px; width: 14px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+/* ── Per-row status ──
+   This slot held a green tick in a ring on every section that had prose behind
+   it. On a finished document that is a column of identical marks — a checklist
+   nobody is ticking off, restating what the meter at the top of the rail
+   already says, and repeating it once per row. What is actually worth knowing
+   per row is *how much* is there, so the slot carries the word count, and only
+   a run in progress or a failure takes it over. */
+.orow-meta {
+  display: flex; align-items: center; justify-content: flex-end;
+  min-width: 26px;
   flex-shrink: 0;
-  border: 1px solid var(--line);
-  color: transparent;
-  transition: all var(--dur-base) var(--ease-out);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-ghost);
+  transition: opacity var(--dur-fast) linear;
 }
-.orow[data-in-doc='true'] .orow-mark {
-  border-color: rgba(61,125,90,0.4);
-  background: rgba(61,125,90,0.12);
-  color: var(--status-success);
-}
-.orow[data-status='generating'] .orow-mark {
-  border-color: var(--accent-line);
-  background: var(--accent-soft);
-  color: var(--accent-500);
-}
-/* Failed reads as "still to do, and something went wrong" — it stays clickable
-   because clicking it is the retry. */
-.orow[data-status='failed'] .orow-mark {
-  border-color: rgba(188,76,60,0.4);
-  background: rgba(188,76,60,0.12);
-  color: var(--status-danger);
-}
+.orow-meta[data-kind='generating'] { color: var(--accent-500); }
+/* Failed reads as "still to do, and something went wrong" — the row stays
+   clickable because clicking ✨ is the retry. */
+.orow-meta[data-kind='failed'] { color: var(--status-danger); }
+.orow:hover .orow-meta[data-kind='words'],
+.orow:hover .orow-meta[data-kind='todo'] { opacity: 0; }
+
+/* A section with nothing behind it yet is a promise, and reads like one. */
+.orow[data-written='false'] .orow-name { color: var(--ink-faint); }
+.orow[data-written='true'] .orow-name { color: var(--ink); }
 
 .orow-name {
   flex: 1;
@@ -582,14 +745,12 @@
 .orow-name:hover:not(:disabled) { color: var(--accent-500); }
 .orow-name[data-empty='true'] { color: var(--ink-ghost); font-style: italic; }
 .orow-name:disabled { cursor: default; }
-.orow[data-in-doc='true'] .orow-name { color: var(--ink); }
-.orow[data-active='true'] .orow-name { color: var(--accent-500); font-weight: 600; }
 
 .orow-input {
   flex: 1;
   min-width: 0;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   font-family: inherit;
   color: var(--ink);
@@ -601,22 +762,53 @@
 
 /* The rail stays hidden until the row is wanted — seven controls on every row
    at rest turns the outline into a toolbar you have to read past. */
+/* ── Row tools ──
+   Taken out of flow on purpose. In flow, six 18px buttons plus their gaps
+   reserved 113px of every row *while invisible* — measured against a 285px
+   row, which left the section title 120px and truncated nearly every one of
+   them to "Retrieval-Augmen…" in a rail with 165px of blank space beside it.
+   Absolute keeps the title's width honest: it now gets the whole row, and
+   the tools sit over its tail only while they are actually shown.
+
+   `pointer-events: none` while hidden matters as much as the width did.
+   `opacity: 0` still takes clicks, so the right-hand third of every row was
+   firing indent, outdent or delete on what looked like a click on the title. */
 .orow-tools {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 1px;
-  flex-shrink: 0;
   opacity: 0;
+  pointer-events: none;
+  /* Fades the title out under the icons instead of letting the two overlap.
+     The stop colour has to match whatever the row is painted, which is why
+     it is repeated for the hover and active states below. */
+  padding-left: 16px;
+  background: linear-gradient(90deg, transparent 0, var(--bg-subtle) 16px);
   transition: opacity var(--dur-fast) linear;
 }
 .orow:hover .orow-tools,
-.orow:focus-within .orow-tools { opacity: 1; }
+.orow:focus-within .orow-tools { opacity: 1; pointer-events: auto; }
+
+/* The fade has to end in the row's own colour, or a pale band appears where
+   the gradient lands on a differently-tinted row. */
+.orow:hover .orow-tools {
+  background: linear-gradient(90deg, transparent 0,
+    color-mix(in srgb, var(--ink-a04), var(--bg-subtle)) 16px);
+}
+.orow[data-active='true'] .orow-tools {
+  background: linear-gradient(90deg, transparent 0,
+    color-mix(in srgb, rgb(var(--accent-rgb) / 0.055), var(--bg-subtle)) 16px);
+}
 
 .orow-tool {
   height: 18px; width: 18px;
   min-height: 0; min-width: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   color: var(--ink-faint);
   transition: background var(--dur-fast) linear, color var(--dur-fast) linear;
 }
@@ -624,20 +816,28 @@
 .orow-tool:disabled { opacity: 0.25; cursor: default; }
 .orow-tool--go:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
 .orow-tool--add:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
-.orow-tool--danger:hover:not(:disabled) { background: rgba(188,76,60,0.12); color: var(--status-danger); }
+.orow-tool--danger:hover:not(:disabled) { background: rgb(var(--danger-rgb) / 0.12); color: var(--status-danger); }
 
+/* The foot is now one thing — generate — plus the setting that configures
+   it. It used to carry a second "add section" and three lines of permanent
+   help as well, which is what made the bottom of the rail heavier than the
+   list above it. */
 .outline-foot {
   flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 7px;
-  padding: 9px 10px 11px;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 10px 12px;
   border-top: 1px solid var(--line-soft);
 }
+
+/* Inside the foot the source switch is a setting, not a section: no padding
+   of its own, and it sits directly against the button it describes. */
+.outline-foot .outline-source { padding: 0; }
 .orail-add {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   width: 100%;
   min-height: 0;
   padding: 7px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--ink-2);
   background: var(--surface);
@@ -656,7 +856,7 @@
   width: 100%;
   min-height: 0;
   padding: 8px 10px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--accent-ink);
   background: var(--accent-400);
@@ -666,15 +866,84 @@
 .orail-primary:hover:not(:disabled) { background: var(--accent-500); border-color: var(--accent-500); }
 .orail-primary:disabled { opacity: 0.4; }
 
+/* Stopping is not the primary action of the screen — it just happens to live
+   in the primary action's slot while a run is going. */
+.orail-primary--stop {
+  color: var(--ink-2);
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+.orail-primary--stop:hover:not(:disabled) {
+  color: var(--status-danger);
+  background: rgb(var(--danger-rgb) / 0.1);
+  border-color: rgb(var(--danger-rgb) / 0.35);
+}
+
+.gen-run { display: flex; flex-direction: column; gap: 7px; }
+/* Which section, not only how many: a bar reading 3/7 through a four-minute
+   run says nothing about what is landing in the document. */
+.gen-now {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gen-now b { color: var(--ink-2); font-weight: 600; }
+
+/* Centred in the space it occupies, rather than pinned to the top-left of
+   it. An empty state that hugs one corner leaves the rail looking broken;
+   one that sits in the middle looks like it is waiting. */
 .outline-empty {
   flex: 1;
-  padding: 12px 14px;
-  font-size: 11.5px; line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 24px 20px;
+  font-size: 11.5px;
+  line-height: 1.6;
   color: var(--ink-ghost);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
 }
-.outline-empty b { color: var(--ink-muted); font-weight: 600; }
-.outline-empty .orail-add { width: auto; margin-top: 8px; }
+.outline-empty svg { color: var(--ink-a12); margin-bottom: 2px; }
+.outline-empty-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+.outline-empty p { max-width: 24ch; }
+.outline-empty b { color: var(--ink-2); font-weight: 600; }
+.outline-empty .orail-add { width: auto; margin-top: 10px; }
+
+/* ── Add, as the last row of the list ──
+   Reads as one more line of the outline rather than as a separate control,
+   which is what makes "the list continues here" obvious. Dashed while idle,
+   solid on hover — the standard "this will become real" affordance. */
+.orail-add-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 0;
+  margin-top: 3px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--ink-faint);
+  background: transparent;
+  border: 1px dashed transparent;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.orail-add-row:hover {
+  color: var(--accent-500);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
 
 /* ── Find & replace ── */
 .find-bar {
@@ -683,14 +952,14 @@
   flex-shrink: 0;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--line-soft);
-  background: rgba(217,119,87,0.035);
+  background: rgb(var(--accent-rgb) / 0.035);
   animation: fadeInUp 0.16s var(--ease-out);
 }
 .find-input {
   height: 27px;
   min-width: 150px;
   padding: 0 9px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 12.5px;
   color: var(--ink);
   background: var(--ink-a04);
@@ -709,7 +978,7 @@
 .find-btn {
   height: 27px; padding: 0 10px;
   display: inline-flex; align-items: center; gap: 5px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--ink-muted);
   background: var(--ink-a04);
@@ -728,10 +997,10 @@
   max-height: 300px;
   overflow-y: auto;
   padding: 6px;
-  border-radius: 13px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 26px 70px -22px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
   animation: cmdk-rise 0.14s var(--ease-out);
 }
 .slash-group {
@@ -744,7 +1013,7 @@
   display: flex; align-items: center; gap: 9px;
   width: 100%;
   padding: 7px 9px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 12.5px;
   color: var(--ink-2);
   text-align: left;
@@ -756,7 +1025,7 @@
   margin-left: auto;
   font-family: var(--font-mono);
   font-size: 10px;
-  padding: 1px 5px; border-radius: 5px;
+  padding: 1px 5px; border-radius: var(--radius-xs);
   background: var(--ink-a04);
   color: var(--ink-faint);
 }
@@ -768,11 +1037,11 @@
   z-index: 65;
   display: inline-flex; align-items: center; gap: 6px;
   height: 27px; padding: 0 11px;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   font-size: 11.5px; font-weight: 600;
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  box-shadow: 0 8px 22px -8px var(--accent-glow);
+  background: var(--accent-400);
+  box-shadow: var(--shadow-lg);
   animation: fadeInUp 0.16s var(--ease-out);
 }
 .ai-chip kbd {
@@ -787,10 +1056,10 @@
   position: absolute;
   z-index: 72;
   width: 340px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: 0 30px 80px -24px rgb(var(--shadow-rgb) / var(--shadow-strength));
+  box-shadow: var(--shadow-pop);
   overflow: hidden;
   animation: cmdk-rise 0.16s var(--ease-out);
 }
@@ -806,7 +1075,7 @@
   display: flex; align-items: center; gap: 9px;
   width: 100%;
   padding: 7px 9px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   text-align: left;
   transition: background var(--dur-fast) var(--ease-out);
 }
@@ -827,7 +1096,7 @@
   width: 100%;
   height: 32px;
   padding: 0 10px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 12.5px;
   color: var(--ink);
   background: var(--ink-a04);
@@ -845,7 +1114,7 @@
   max-height: 210px;
   overflow-y: auto;
   padding: 10px 11px;
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-family: var(--font-mono);
   font-size: 11.5px;
   line-height: 1.65;
@@ -858,7 +1127,7 @@
 .ai-btn {
   display: inline-flex; align-items: center; gap: 5px;
   height: 28px; padding: 0 11px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--ink-2);
   background: var(--ink-a04);
@@ -869,10 +1138,10 @@
 .ai-btn:disabled { opacity: 0.4; }
 .ai-btn--primary {
   color: var(--accent-ink);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-300));
-  border-color: transparent;
+  background: var(--accent-400);
+  border-color: var(--accent-400);
 }
-.ai-btn--primary:hover:not(:disabled) { filter: brightness(1.08); color: var(--accent-ink); }
+.ai-btn--primary:hover:not(:disabled) { background: var(--accent-500); color: var(--accent-ink); }
 /* Why a disabled control is disabled, next to the control itself. */
 .ai-field-note {
   font-size: 10.5px;
@@ -881,29 +1150,29 @@
   opacity: 0.85;
 }
 
-.method-switch { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--ink-a02); }
+.method-switch { display: flex; gap: 3px; padding: 3px; border-radius: var(--radius); background: var(--ink-a02); }
 .method-btn {
   flex: 1;
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
   padding: 7px 0;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--ink-faint);
   transition: all var(--dur-fast) var(--ease-out);
 }
 .method-btn:hover { color: var(--ink-2); }
-.method-btn[data-active='true'] { color: var(--accent-500); background: var(--accent-soft); }
+.method-btn[data-active='true'] { color: var(--accent-600); background: var(--accent-soft); }
 
 /* ── Share dialog bits ── */
 .dialog-dark {
   background: var(--surface) !important;
   border: 1px solid var(--line) !important;
-  border-radius: 16px !important;
+  border-radius: var(--radius-lg) !important;
 }
 .share-results {
   display: flex; flex-direction: column; gap: 2px;
   padding: 4px;
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   max-height: 168px; overflow-y: auto;
   background: var(--ink-a02);
   border: 1px solid var(--line);
@@ -911,7 +1180,7 @@
 .share-row {
   display: flex; align-items: center; gap: 9px;
   padding: 6px 8px;
-  border-radius: 9px;
+  border-radius: var(--radius);
 }
 .share-row:hover { background: var(--ink-a04); }
 .share-row--filled { background: var(--ink-a02); border: 1px solid var(--line-soft); }
@@ -926,8 +1195,71 @@
   max-height: 150px;
   width: 100%;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--ink-a02);
 }
 
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Keyboard shortcut sheet
+   Two columns on a wide dialog, one on a narrow one. The key column is
+   right-aligned so the chords form a scannable edge rather than floating at
+   the end of labels of differing length.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.shortcut-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem 2.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+@media (min-width: 640px) {
+  .shortcut-columns { grid-template-columns: 1fr 1fr; }
+}
+
+.shortcut-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.6rem;
+}
+
+.shortcut-list { display: flex; flex-direction: column; gap: 1px; }
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+}
+.shortcut-row:nth-child(odd) { background: var(--ink-a02); }
+
+.shortcut-label { font-size: 12.5px; color: var(--ink-2); }
+
+.shortcut-keys { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+
+.shortcut-keys kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 0 var(--line);
+}

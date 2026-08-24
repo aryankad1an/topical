@@ -32,9 +32,15 @@ class GenerateSectionRequest(BaseModel):
     format: str = "mdx"
     source: str = "llm"
     urls: List[str] = Field(default_factory=list)
-    #: The whole outline as indented text, for cross-section awareness.
+    #: The whole outline as a numbered tree, marked with what is already
+    #: written. A bare list of titles gave the model no way to tell which of
+    #: its neighbours exist, so "do not repeat them" was unfollowable.
     hierarchy: Optional[str] = None
     children: Optional[List[str]] = None
+    #: Headings this section is nested inside, outermost first.
+    ancestors: Optional[List[str]] = None
+    #: Its number in the outline — "2.3" — so the model knows where it sits.
+    section_number: Optional[str] = None
     level: int = 1
 
 
@@ -60,6 +66,10 @@ class OutlineNodeIn(BaseModel):
 
     title: str
     level: int = 1
+    #: Words already written under it. Moving a section carrying 900 words is
+    #: not the same proposition as moving an empty heading, and a model shown
+    #: only titles cannot weigh the difference.
+    words: int = 0
 
 
 class RefineOutlineRequest(BaseModel):

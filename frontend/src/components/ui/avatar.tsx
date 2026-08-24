@@ -24,7 +24,10 @@ const AvatarImage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
+    // `object-cover` is what stops a non-square photo being stretched to fill
+    // the square box `aspect-square` imposes. Without it a portrait avatar is
+    // squashed horizontally, which is the whole of "the pfp is scaled weirdly".
+    className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
   />
 ))

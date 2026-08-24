@@ -1,0 +1,355 @@
+/* Controls — buttons, tabs, pills, chips
+   ═══════════════════════════════════════════════════════════════════════
+
+   Loaded last, and the single owner of what a control *looks* like:
+   colour, border, radius, weight, shadow, and every state. The page files
+   keep owning what a control *measures* — height, padding, grid position —
+   because that is layout and it belongs next to the layout.
+
+   This file replaces two earlier attempts that were both still live. One
+   drew glossy translucent pills with a travelling white shine; the other
+   drew risograph ink blocks with a hard `3px 3px 0` offset that collapsed
+   on click. They described different physical worlds, they were both
+   applied to the same class names, and which one you saw depended on the
+   `@import` order in index.css. That is why the same button looked
+   different on two screens.
+
+   What is here instead is one material, matching the cards:
+
+     Primary   — filled terracotta, the only saturated block on a page.
+     Secondary — white paper with a hairline, like a small card.
+     Ghost     — no chrome until you point at it. Icon-only controls.
+
+   Three tiers, three jobs. A screen that needs a fourth needs fewer
+   buttons, not another style.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared geometry ──
+   Radius comes from the ramp so a button and the card it sits in are
+   visibly the same kit. Nothing here sets height or padding: those are
+   per-control and already declared where the control is laid out. */
+.accent-btn,
+.cta-btn,
+.glass-btn,
+.btn-subtle,
+.doc-btn,
+.orail-btn,
+.orail-primary,
+.orail-go,
+.editor-save,
+.new-post-btn,
+.auth-submit,
+.toolbar-toggle,
+.orail-add {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+
+  /* No background-image at all, so nothing here can be washed out by a
+     gradient the way the previous set was. */
+  background-image: none;
+
+  transition: background-color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+
+/* ── Primary ──
+   The filled terracotta. This is the only element on a page allowed to be
+   this saturated, which is what makes it findable without a shadow doing
+   the work. The inset hairline is the same lit top edge the glass chrome
+   carries, so the two read as one light source. */
+.accent-btn,
+.cta-btn,
+.orail-primary:not(:disabled),
+.orail-go,
+.new-post-btn,
+.auth-submit,
+.doc-btn--primary {
+  background-color: var(--accent-400);
+  border-color: var(--accent-400);
+  color: var(--accent-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+              var(--shadow-sm);
+}
+
+.accent-btn:hover:not(:disabled),
+.cta-btn:hover:not(:disabled),
+.orail-primary:hover:not(:disabled),
+.orail-go:hover:not(:disabled),
+.new-post-btn:hover:not(:disabled),
+.auth-submit:hover:not(:disabled),
+.doc-btn--primary:hover:not(:disabled) {
+  background-color: var(--accent-500);
+  border-color: var(--accent-500);
+  color: var(--accent-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+              0 4px 14px -6px var(--accent-glow);
+}
+
+/* ── Secondary ──
+   Paper. A hairline and a whisper of a shadow: the same construction as a
+   card, at control size. */
+.glass-btn,
+.btn-subtle,
+.doc-btn,
+.orail-btn,
+.editor-save,
+.toolbar-toggle,
+.orail-add {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--ink-2);
+  box-shadow: var(--shadow-xs);
+}
+
+.glass-btn:hover:not(:disabled),
+.btn-subtle:hover:not(:disabled),
+.doc-btn:hover:not(.doc-btn--primary):not(:disabled),
+.orail-btn:hover:not(:disabled),
+.editor-save:hover:not(:disabled),
+.toolbar-toggle:hover:not(:disabled),
+.orail-add:hover:not(:disabled) {
+  background-color: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+/* ── Pressed ──
+   One pixel down. Not a travel into an offset shadow — there is no offset
+   here to travel into — just enough movement to acknowledge the click. */
+.accent-btn:active:not(:disabled),
+.cta-btn:active:not(:disabled),
+.glass-btn:active:not(:disabled),
+.btn-subtle:active:not(:disabled),
+.doc-btn:active:not(:disabled),
+.orail-btn:active:not(:disabled),
+.orail-primary:active:not(:disabled),
+.orail-go:active:not(:disabled),
+.editor-save:active:not(:disabled),
+.new-post-btn:active:not(:disabled),
+.auth-submit:active:not(:disabled),
+.toolbar-toggle:active,
+.orail-add:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Selected reads as the accent's quiet form, so "on" and "hovered" can
+   never be confused for each other. */
+.toolbar-toggle[data-active='true'],
+.orail-btn[data-active='true'] {
+  background-color: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-600);
+}
+
+/* ── Disabled ──
+   Flat, quiet, and still outlined, so the control is visibly present and
+   visibly unavailable rather than half-erased. `opacity` is deliberately
+   not used: it fades the border and the label by the same amount and the
+   result reads as a rendering glitch on a light ground. */
+.accent-btn:disabled,
+.cta-btn:disabled,
+.glass-btn:disabled,
+.btn-subtle:disabled,
+.doc-btn:disabled,
+.orail-btn:disabled,
+.orail-primary:disabled,
+.orail-go:disabled,
+.editor-save:disabled,
+.new-post-btn:disabled,
+.auth-submit:disabled {
+  background-color: var(--surface-2);
+  color: var(--ink-faint);
+  border-color: var(--line);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* ── Size ──
+   The landing CTA is the one button that has to carry a whole hero, so it
+   gets its own measurements rather than inheriting a form control's. */
+.cta-btn {
+  padding: 0.7rem 1.35rem;
+  font-size: var(--text-md);
+  border-radius: var(--radius-md);
+}
+
+/* ── Ghost / icon-only ──
+   No chrome at rest. At 30px a border and a shadow are most of the
+   control, and a grid of them reads as a wall of boxes; the affordance is
+   the hover fill instead. */
+.toolbar-btn,
+.icon-btn,
+.nav-kbd,
+.orow-tool,
+.detail-close-btn,
+.vote-btn,
+.theme-toggle,
+.auth-reveal {
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--ink-muted);
+  transition: background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+
+.toolbar-btn:hover:not(:disabled),
+.icon-btn:hover:not(:disabled),
+.nav-kbd:hover:not(:disabled),
+.orow-tool:hover:not(:disabled),
+.detail-close-btn:hover:not(:disabled),
+.vote-btn:hover:not(:disabled),
+.theme-toggle:hover:not(:disabled),
+.auth-reveal:hover:not(:disabled) {
+  background-color: var(--ink-a06);
+  color: var(--ink);
+}
+
+.toolbar-btn[data-active='true'],
+.icon-btn[data-active='true'] {
+  background-color: var(--accent-soft);
+  color: var(--accent-600);
+}
+
+/* ── Tabs and segmented trays ──
+   These are navigation, not actions, so they must not look like the
+   primary button. Previously both the section tabs and the sort pills
+   filled solid accent when active — two rows of identical bright blocks,
+   with nothing to say which one changed the page and which one reordered
+   a list.
+
+   The tray is now the recessed thing and the active tab is the raised one:
+   a tab that is "on" reads as a card lifted out of a well. Sort pills, one
+   level down the hierarchy, only take the accent as text and a hairline. */
+.segmented,
+.community-tabs {
+  background-color: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-rgb) / 0.04);
+}
+
+.segmented button,
+.community-tab {
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.segmented button:hover:not([data-active='true']),
+.community-tab:hover:not(.active) {
+  color: var(--ink);
+  background-color: var(--ink-a04);
+}
+
+.segmented button[data-active='true'],
+.community-tab.active {
+  background-color: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+/* The accent appears as a mark, not as a fill — enough to say "this one"
+   without spending the primary-action colour on a tab. */
+.community-tab.active svg,
+.segmented button[data-active='true'] svg {
+  color: var(--accent-400);
+}
+
+/* Sort pills sit below tabs in the hierarchy and stay text-weight. */
+.sort-pill {
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+.sort-pill:hover:not(.active) {
+  color: var(--ink-2);
+  background-color: var(--ink-a04);
+}
+.sort-pill.active {
+  background-color: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-600);
+  font-weight: 600;
+}
+
+/* ── Chips ──
+   Labels, not controls. They keep the pill shape precisely so they cannot
+   be mistaken for something clickable: in this system rounded rectangles
+   act and pills describe. */
+.chip,
+.accent-soft {
+  border-radius: var(--radius-pill);
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ── Keyboard focus ──
+   One ring, everywhere, outside the control so it never fights a border. */
+.accent-btn:focus-visible,
+.cta-btn:focus-visible,
+.glass-btn:focus-visible,
+.btn-subtle:focus-visible,
+.doc-btn:focus-visible,
+.orail-btn:focus-visible,
+.orail-primary:focus-visible,
+.orail-go:focus-visible,
+.auth-submit:focus-visible,
+.new-post-btn:focus-visible,
+.editor-save:focus-visible,
+.toolbar-btn:focus-visible,
+.toolbar-toggle:focus-visible,
+.icon-btn:focus-visible,
+.nav-kbd:focus-visible,
+.sort-pill:focus-visible,
+.community-tab:focus-visible,
+.segmented button:focus-visible {
+  outline: 2px solid var(--accent-400);
+  outline-offset: 2px;
+}
+
+/* Reduced motion: the state still changes, it just does not travel. */
+@media (prefers-reduced-motion: reduce) {
+  .accent-btn, .cta-btn, .glass-btn, .btn-subtle, .doc-btn, .orail-btn,
+  .orail-primary, .orail-go, .editor-save, .new-post-btn, .auth-submit,
+  .toolbar-toggle, .orail-add {
+    transition: background-color var(--dur-fast) var(--ease-out),
+                color var(--dur-fast) var(--ease-out);
+  }
+  .accent-btn:active, .cta-btn:active, .glass-btn:active, .btn-subtle:active,
+  .doc-btn:active, .orail-btn:active, .orail-primary:active,
+  .orail-go:active, .editor-save:active, .new-post-btn:active,
+  .auth-submit:active, .toolbar-toggle:active, .orail-add:active {
+    transform: none;
+  }
+}

@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner"
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Home, FolderOpen, Users, UserRound, Command } from "lucide-react";
@@ -91,20 +92,22 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
   return (
     <>
       {/* Desktop nav */}
+      {/* The bar floats over whatever is scrolling beneath it, so it is glass
+          rather than a solid pill — `nav-glass` supplies the tint and blur,
+          `liquid-glass` the specular rim. Colour, border and shadow are left
+          out of the inline styles below on purpose: an inline background
+          would beat both classes. */}
       <nav
         id="main-nav"
-        className="hidden md:flex fixed z-[100]"
+        className="hidden md:flex fixed z-[100] nav-glass liquid-glass"
         style={{
           top: 20,
           left: '50%',
           transform: 'translateX(-50%)',
           alignItems: 'center',
           gap: 2,
-          background: 'var(--surface)',
-          border: '1px solid var(--line)',
           borderRadius: 100,
-          padding: '6px 8px',
-          boxShadow: '0 8px 40px rgba(25,25,23,0.12), inset 0 1px 1px transparent',
+          padding: '5px 6px',
         }}
       >
         {/* Logo / brand */}
@@ -113,40 +116,31 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 7,
-            padding: '8px 16px 8px 12px',
+            gap: 6,
+            padding: '6px 10px 6px 8px',
             borderRadius: 100,
-            marginRight: 4,
+            marginRight: 2,
             background: isActive('/') ? 'var(--ink-a06)' : 'transparent',
             transition: 'background 0.25s',
             textDecoration: 'none',
           }}
         >
           <div style={{
-            width: 26, height: 26, borderRadius: 8,
+            width: 22, height: 22, borderRadius: 7,
             background: 'var(--accent-400)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 2px 8px var(--ink-a12)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.20)',
             flexShrink: 0,
           }}>
-            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 13, fontFamily: 'inherit' }}>T</span>
+            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 11, fontFamily: 'inherit' }}>T</span>
           </div>
-          <span
-            className="font-brand"
-            style={{
-              fontSize: 15,
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, var(--ink), var(--ink-2))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <span className="font-brand" style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
             Topical
           </span>
         </Link>
 
         {/* Divider */}
-        <div style={{ width: 1, height: 18, background: 'var(--ink-a06)', margin: '0 4px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 16, background: 'var(--ink-a06)', margin: '0 2px', flexShrink: 0 }} />
 
         <div className="nav-shell" ref={shellRef}>
           <span
@@ -165,7 +159,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           ))}
         </div>
 
-        <div style={{ width: 1, height: 18, background: 'var(--ink-a06)', margin: '0 6px', flexShrink: 0 }} />
+        <div style={{ width: 1, height: 16, background: 'var(--ink-a06)', margin: '0 3px', flexShrink: 0 }} />
 
         <button className="nav-kbd" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
           <Command className="h-3 w-3" />K
@@ -180,16 +174,16 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
             </span>
           </Link>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
             <Link
               to="/login"
               className="accent-btn"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '7px 16px',
+                padding: '6px 14px',
                 borderRadius: 100,
-                fontSize: 13,
+                fontSize: 12.5,
                 textDecoration: 'none',
                 cursor: 'pointer',
                 minHeight: 0,
@@ -215,17 +209,13 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           }}>
             <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
           </div>
-          <span className="font-brand text-base" style={{
-            background: 'linear-gradient(135deg, var(--ink), var(--ink-2))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>Topical</span>
+          <span className="font-brand text-base" style={{ color: 'var(--ink)' }}>Topical</span>
         </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <button
-            className="p-2 rounded-full text-[var(--ink-muted)]"
-            style={{ background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
+            className="icon-btn"
+            style={{ height: 34, width: 34 }}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
@@ -243,7 +233,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
                 <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--accent-400)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
                 </div>
-                <span className="font-brand text-lg" style={{ background: 'linear-gradient(135deg, var(--ink), var(--ink-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Topical</span>
+                <span className="font-brand text-lg" style={{ color: 'var(--ink)' }}>Topical</span>
               </Link>
               <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 text-[var(--ink-muted)]"><X size={20} /></button>
             </div>
@@ -292,6 +282,9 @@ function Root() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      {/* Unconditional: the editor hides the nav and the page ground, but its
+          own toolbars are glass and reference these by id. */}
+      <GlassFilters />
       {!isEditorRoute && <div className="grid-bg" />}
       {!isEditorRoute && <NavBar onOpenCommand={() => setCommandOpen(true)} />}
       <CommandPalette
@@ -311,7 +304,7 @@ function Root() {
             background: 'var(--surface)',
             border: '1px solid var(--line)',
             color: 'var(--ink)',
-            borderRadius: '14px',
+            borderRadius: 'var(--radius-lg)',
           },
         }}
       />

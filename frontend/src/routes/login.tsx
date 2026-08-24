@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Mail, PenLine, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth-context';
-import { AuthCard, AuthField, AuthSubmit } from '@/components/auth/AuthCard';
+import { AuthCard, AuthField, AuthPasswordField, AuthPitch, AuthSubmit } from '@/components/auth/AuthCard';
 
 /**
  * Sign in.
@@ -49,12 +49,20 @@ function LoginPage() {
     <AuthCard
       title="Welcome back"
       subtitle="Sign in to reach your documents."
+      pitch={
+        <AuthPitch
+          headline="Pick up where you left off."
+          body="Your outlines, drafts and published pieces are exactly as you left them."
+          points={[
+            { icon: PenLine, text: 'Markdown and LaTeX in one editor, with a live preview' },
+            { icon: Sparkles, text: 'An outline rail that drafts and refines structure with you' },
+            { icon: Share2, text: 'Publish to the community when a piece is ready — not before' },
+          ]}
+        />
+      }
       footer={
         <>
-          No account yet?{' '}
-          <Link to="/register" className="text-[var(--accent-500)] font-medium hover:underline">
-            Create one
-          </Link>
+          No account yet? <Link to="/register">Create one</Link>
         </>
       }
       onSubmit={submit}
@@ -64,24 +72,24 @@ function LoginPage() {
         id="email"
         label="Email"
         type="email"
+        icon={Mail}
+        placeholder="you@example.com"
         autoComplete="email"
         value={email}
         onChange={setEmail}
         required
         autoFocus
       />
-      <AuthField
+      <AuthPasswordField
         id="password"
         label="Password"
-        type="password"
         autoComplete="current-password"
+        placeholder="••••••••"
         value={password}
         onChange={setPassword}
         required
       />
-      <AuthSubmit pending={isNavigating}>
-        {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
-      </AuthSubmit>
+      <AuthSubmit pending={isNavigating}>Sign in</AuthSubmit>
     </AuthCard>
   );
 }

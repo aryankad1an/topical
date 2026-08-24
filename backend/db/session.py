@@ -29,9 +29,20 @@ session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 if settings.async_database_url:
     engine = create_async_engine(
         settings.async_database_url,
-        pool_size=5,
-        max_overflow=10,
-        pool_pre_ping=True,  # a connection killed by the provider's idle timeout is replaced, not raised
+        # Opening a connection to a managed Postgres costs a TLS handshake plus
+        # the Postgres startup exchange — measured at ~1.6s against the hosted
+        # database this runs on. So the pool is sized to hold every connection a
+        # normal load needs, and `max_overflow` is small: an overflow connection
+        # is a 1.6s stall inside one request.
+        pool_size=10,
+        max_overflow=5,
+        # `pool_pre_ping` was here to survive the provider closing an idle
+        # connection. It does that by issuing a SELECT 1 before *every* checkout
+        # — one extra network round trip on every single request, which is 105ms
+        # against a database in another region. Recycling connections before the
+        # provider's idle timeout reaches them costs nothing and covers the same
+        # case; the pool retires the connection instead of probing it.
+        pool_recycle=240,
         echo=False,
     )
     session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -58,6 +69,30 @@ async def get_session() -> AsyncIterator[AsyncSession]:
         except Exception:
             await session.rollback()
             raise
+
+
+async def warm_pool(connections: int = 3) -> None:
+    """Open a few connections before the first request needs one.
+
+    Connecting to the hosted database costs a TLS handshake plus the Postgres
+    startup exchange — ~1.6s. A pool that starts empty pays that *inside* the
+    first requests to arrive, which is why the first click after a restart felt
+    broken while later ones were fine. Opening them here moves that cost to
+    boot, where nobody is waiting on it.
+
+    Failures are logged and swallowed: an unreachable database at boot should
+    not stop the server from starting and serving the frontend, and the normal
+    connection path will report it properly on the first request that needs it.
+    """
+    if engine is None:
+        return
+    try:
+        conns = [await engine.connect() for _ in range(connections)]
+        for conn in conns:
+            await conn.close()  # returns it to the pool, rather than closing the socket
+        logger.info("warmed %d database connections", connections)
+    except Exception as exc:  # noqa: BLE001 — boot must not depend on this
+        logger.warning("could not warm the connection pool: %s", exc)
 
 
 async def dispose_engine() -> None:

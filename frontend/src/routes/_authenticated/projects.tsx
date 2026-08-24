@@ -36,6 +36,7 @@ function ProjectsPage() {
   const queryClient = useQueryClient();
 
   const [showNameDialog, setShowNameDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectType, setProjectType] = useState<DocFormat>('mdx');
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,15 +84,25 @@ function ProjectsPage() {
   const handleCreate = async () => {
     const name = projectName.trim();
     if (!name) { toast.error('Please enter a project name'); return; }
+    // The round trip to the database is not instant. Without this guard the
+    // button looks dead for the length of it and a second click creates a
+    // second project — which is what "the create button doesn't work" was.
+    if (isCreating) return;
+
+    setIsCreating(true);
     try {
       const mainTopic = projectType === 'latex' ? `${LATEX_PREFIX}${name}` : name;
       const result = await saveLessonPlan({ name, mainTopic, topics: [] });
+      // Not awaited: the editor does not read this list, so making the
+      // navigation wait for a refetch only delays it.
       queryClient.invalidateQueries({ queryKey: ['user-lesson-plans'] });
       setShowNameDialog(false);
       navigate({ to: '/editor', search: { id: result.id, type: projectType } });
       toast.success(`Project "${name}" created`);
     } catch {
       toast.error('Failed to create project');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -150,12 +161,10 @@ function ProjectsPage() {
           subtitle={`${greeting}, ${user?.given_name || 'there'}. ${projects.length
             ? `You have ${projects.length} document${projects.length === 1 ? '' : 's'}.`
             : 'Start your first document below.'}`}
-          actions={
-            <button onClick={() => openCreateDialog('mdx')}
-              className="accent-btn inline-flex items-center gap-2 h-10 px-5 rounded-full text-sm">
-              <Plus className="h-4 w-4" /> New document
-            </button>
-          }
+          // No action here on purpose. This was a "New document" button that
+          // silently chose MDX, sitting a few centimetres above two tiles that
+          // ask which format you want — three controls for one intention, and
+          // the quickest of them made the choice for you.
         />
 
         {/* ── Stats ── */}
@@ -294,12 +303,16 @@ function ProjectsPage() {
           <div className="py-4">
             <Input placeholder="e.g. Machine Learning Fundamentals" value={projectName}
               onChange={e => setProjectName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
-              className="glass-input" autoFocus />
+              className="glass-input" disabled={isCreating} autoFocus />
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowNameDialog(false)} className="glass-btn border-[var(--line)]">Cancel</Button>
-            <Button onClick={handleCreate} className="text-[var(--accent-ink)] font-semibold"
-              style={{ background: 'var(--accent-400)' }}>Create</Button>
+            <Button variant="outline" onClick={() => setShowNameDialog(false)} disabled={isCreating}
+              className="glass-btn border-[var(--line)]">Cancel</Button>
+            <Button onClick={handleCreate} disabled={isCreating || !projectName.trim()}
+              className="text-[var(--accent-ink)] font-semibold"
+              style={{ background: 'var(--accent-400)' }}>
+              {isCreating ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Creating…</> : 'Create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

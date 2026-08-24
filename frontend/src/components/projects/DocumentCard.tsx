@@ -27,28 +27,65 @@ export function wordCount(doc: DocLike): number {
   return t ? t.split(/\s+/).length : 0;
 }
 
-/**
- * Line widths for the paper miniature, derived from the document's real
- * paragraph lengths so each project's thumbnail has its own silhouette.
- * Falls back to a deterministic pattern seeded from the name for empty docs,
- * so a fresh project still looks like a page rather than a blank box.
- */
-function previewLines(doc: DocLike, count = 6): number[] {
-  const body = docText(doc)
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l && !l.startsWith('#') && !l.startsWith('```'));
+/** One line of the miniature: either a heading or a run of body text. */
+type PreviewLine = { text: string; heading: boolean };
 
-  if (body.length) {
-    return body.slice(0, count).map(l => Math.min(100, Math.max(28, (l.length / 72) * 100)));
+/**
+ * Strip the markup from one line, leaving what a reader would actually see.
+ *
+ * Both formats at once, because a document is one or the other and the card
+ * does not know which until it looks at `mainTopic` — and running the wrong
+ * stripper over the other format is worse than running both over either.
+ */
+function stripMarkup(line: string): string {
+  return line
+    // LaTeX: \section{Foundations} → Foundations. Sectioning commands carry
+    // the text a reader wants; everything else is scaffolding.
+    .replace(/\\(?:sub)*section\*?\{([^}]*)\}/g, '$1')
+    .replace(/\\(?:textbf|textit|emph|texttt|mbox)\{([^}]*)\}/g, '$1')
+    .replace(/\\begin\{[^}]*\}|\\end\{[^}]*\}/g, '')
+    .replace(/\$[^$]*\$/g, '')            // inline maths reads as noise at 9px
+    .replace(/\\[a-zA-Z]+\*?(\[[^\]]*\])?/g, '')
+    // Markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^>\s?/, '')
+    .replace(/^[-*+]\s+/, '')
+    .replace(/^\d+\.\s+/, '')
+    .replace(/[*_`~]/g, '')
+    .replace(/\{|\}/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * The document's own opening, as lines of real text.
+ *
+ * The card used to draw grey bars whose *widths* came from the real paragraph
+ * lengths — a silhouette of the document rather than the document. Every card
+ * therefore looked the same from more than a foot away, which is exactly the
+ * distance a grid of cards is read from. Showing the actual first heading and
+ * first few sentences makes each card recognisable as the thing it opens.
+ */
+function previewContent(doc: DocLike, max = 7): PreviewLine[] {
+  const out: PreviewLine[] = [];
+
+  for (const raw of docText(doc).split('\n')) {
+    if (out.length >= max) break;
+    const line = raw.trim();
+    if (!line || line.startsWith('```') || line.startsWith('---')) continue;
+
+    const isHeading =
+      /^#{1,6}\s/.test(line) || /^\\(?:sub)*section\*?\{/.test(line);
+    const text = stripMarkup(line.replace(/^#{1,6}\s+/, ''));
+    if (!text) continue;
+
+    // Two headings in a row is a table of contents, not a preview of prose.
+    if (isHeading && out.length && out[out.length - 1].heading) continue;
+    out.push({ text, heading: isHeading });
   }
 
-  let seed = 0;
-  for (const ch of doc.name) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-  return Array.from({ length: count }, (_, i) => {
-    seed = (seed * 1103515245 + 12345) >>> 0;
-    return 45 + ((seed >>> (i % 8)) % 50);
-  });
+  return out;
 }
 
 interface Props {
@@ -65,23 +102,30 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
   const type = formatOf(doc.mainTopic);
   const isLatex = type === 'latex';
   const Icon = isLatex ? FileCode2 : FileType2;
-  const lines = previewLines(doc);
+  const preview = previewContent(doc);
   const words = wordCount(doc);
 
   return (
     <div className="doc-card group" style={docTypeVars(type)}>
       <span className="doc-badge">{isLatex ? 'LaTeX' : 'MDX'}</span>
 
-      {/* Miniature of the document itself */}
+      {/* A miniature of the document, set in its own words. Hidden from
+          assistive tech: the same text is announced properly by the title and
+          metadata below, and reading a truncated duplicate first is worse
+          than not reading it. */}
       <div className="doc-thumb" aria-hidden="true">
         <div className="doc-thumb-title">{doc.name}</div>
-        {lines.slice(0, 2).map((w, i) => (
-          <div key={`a${i}`} className="doc-thumb-line" style={{ width: `${w}%` }} />
-        ))}
-        <div className="doc-thumb-line doc-thumb-line--h" />
-        {lines.slice(2).map((w, i) => (
-          <div key={`b${i}`} className="doc-thumb-line" style={{ width: `${w}%` }} />
-        ))}
+        {preview.length > 0 ? (
+          <div className="doc-thumb-doc">
+            {preview.map((line, i) => (
+              <p key={i} className={line.heading ? 'doc-thumb-h' : 'doc-thumb-p'}>
+                {line.text}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="doc-thumb-empty">Empty document — open it to start writing.</p>
+        )}
       </div>
 
       <div className="doc-body">

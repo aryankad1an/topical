@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReadRouteImport } from './routes/read'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GlassRouteImport } from './routes/glass'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -36,6 +37,11 @@ const ReadRoute = ReadRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GlassRoute = GlassRouteImport.update({
+  id: '/glass',
+  path: '/glass',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
+  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/community'
+    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/community'
+    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/community'
+    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -184,6 +196,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   CommunityRoute: typeof CommunityRoute
+  GlassRoute: typeof GlassRoute
   LoginRoute: typeof LoginRoute
   ReadRoute: typeof ReadRoute
   RegisterRoute: typeof RegisterRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/glass': {
+      id: '/glass'
+      path: '/glass'
+      fullPath: '/glass'
+      preLoaderRoute: typeof GlassRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -311,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   CommunityRoute: CommunityRoute,
+  GlassRoute: GlassRoute,
   LoginRoute: LoginRoute,
   ReadRoute: ReadRoute,
   RegisterRoute: RegisterRoute,

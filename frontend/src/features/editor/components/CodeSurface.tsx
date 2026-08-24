@@ -19,6 +19,8 @@ interface Props {
   focusMode: boolean;
   fontSize: number;
   caret: number;
+  /** Source lines of the section the outline rail is acting on, inclusive. */
+  sectionLines?: { from: number; to: number } | null;
   placeholder: string;
   /** Peer cursor layer. */
   children?: ReactNode;
@@ -36,7 +38,7 @@ interface Props {
 export function CodeSurface({
   value, onChange, onKeyDown, onSelectionChange, onDropText, format,
   textareaRef, linesRef, finds = [], activeFind = -1,
-  showLineNumbers, focusMode, fontSize, caret, placeholder, children,
+  showLineNumbers, focusMode, fontSize, caret, sectionLines = null, placeholder, children,
 }: Props) {
   const html = useMemo(
     () => highlight(value, format, finds, activeFind),
@@ -65,6 +67,35 @@ export function CodeSurface({
     next?.classList.add('cl-active');
     activeLine.current = next ?? null;
   }, [caret, value, html, linesRef]);
+
+  /*
+   * Mark the section the outline rail is pointing at.
+   *
+   * Painted onto the mirror's line elements, the same way focus mode dims
+   * them, rather than through the highlighter: `highlight()` emits a flat,
+   * non-overlapping token list where the earliest match wins, so a token
+   * spanning a whole section would swallow every heading, link and equation
+   * inside it and the section would come back grey.
+   */
+  const marked = useRef<HTMLElement[]>([]);
+  useEffect(() => {
+    marked.current.forEach(el => el.classList.remove('cl-section', 'cl-section-top', 'cl-section-end'));
+    marked.current = [];
+
+    const pre = linesRef.current;
+    if (!pre || !sectionLines) return;
+
+    const lines: HTMLElement[] = [];
+    for (let i = sectionLines.from; i <= sectionLines.to; i += 1) {
+      const el = pre.children[i] as HTMLElement | undefined;
+      if (!el) continue;
+      el.classList.add('cl-section');
+      lines.push(el);
+    }
+    lines[0]?.classList.add('cl-section-top');
+    lines[lines.length - 1]?.classList.add('cl-section-end');
+    marked.current = lines;
+  }, [sectionLines, html, linesRef]);
 
   return (
     <div

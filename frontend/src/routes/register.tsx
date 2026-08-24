@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { KeyRound, Mail, ShieldCheck, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth-context';
 import { passwordProblem } from '@/lib/validation';
-import { AuthCard, AuthField, AuthSubmit } from '@/components/auth/AuthCard';
+import { AuthCard, AuthField, AuthPasswordField, AuthPitch, AuthSubmit } from '@/components/auth/AuthCard';
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
@@ -53,12 +53,20 @@ function RegisterPage() {
     <AuthCard
       title="Create an account"
       subtitle="Everything you write stays yours until you publish it."
+      pitch={
+        <AuthPitch
+          headline="Write it once. Structure it properly."
+          body="Topical is a writing surface for long, structured pieces — outline first, draft in Markdown or LaTeX, publish when it holds together."
+          points={[
+            { icon: KeyRound, text: 'Your account lives here — no third-party sign-in required' },
+            { icon: ShieldCheck, text: 'Passwords are stored as Argon2id hashes, never as text' },
+            { icon: User, text: 'A public profile only exists once you publish something' },
+          ]}
+        />
+      }
       footer={
         <>
-          Already have one?{' '}
-          <Link to="/login" className="text-[var(--accent-500)] font-medium hover:underline">
-            Sign in
-          </Link>
+          Already have one? <Link to="/login">Sign in</Link>
         </>
       }
       onSubmit={submit}
@@ -68,6 +76,7 @@ function RegisterPage() {
         <AuthField
           id="givenName"
           label="First name"
+          placeholder="Ada"
           autoComplete="given-name"
           value={givenName}
           onChange={setGivenName}
@@ -76,6 +85,7 @@ function RegisterPage() {
         <AuthField
           id="familyName"
           label="Last name"
+          placeholder="Lovelace"
           autoComplete="family-name"
           value={familyName}
           onChange={setFamilyName}
@@ -85,24 +95,25 @@ function RegisterPage() {
         id="email"
         label="Email"
         type="email"
+        icon={Mail}
+        placeholder="you@example.com"
         autoComplete="email"
         value={email}
         onChange={setEmail}
         required
       />
-      <AuthField
+      <AuthPasswordField
         id="password"
         label="Password"
-        type="password"
         autoComplete="new-password"
+        placeholder="At least 8 characters"
         value={password}
         onChange={setPassword}
         hint={passwordHint}
+        showStrength
         required
       />
-      <AuthSubmit pending={isNavigating}>
-        {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
-      </AuthSubmit>
+      <AuthSubmit pending={isNavigating}>Create account</AuthSubmit>
     </AuthCard>
   );
 }

@@ -31,6 +31,10 @@ SESSION_TTL = timedelta(days=settings.session_ttl_days)
 #: Below this, a session near its expiry is not worth a write on every request.
 _REFRESH_THRESHOLD = SESSION_TTL / 2
 
+#: How stale ``last_seen_at`` is allowed to get before it is rewritten. This is
+#: the resolution of "last used", traded against an UPDATE on every request.
+_TOUCH_INTERVAL = timedelta(hours=1)
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -119,14 +123,34 @@ async def resolve_session(db: AsyncSession, token: Optional[str]) -> Optional[Us
 async def _touch(db: AsyncSession, session: AuthSession) -> None:
     """Record use, and extend the expiry once it is over halfway spent.
 
-    Written conditionally rather than on every request: this runs on every
-    authenticated call, and an unconditional UPDATE would make each of them a
-    write to the same row.
+    Genuinely conditional, and it has to be: this runs on *every* authenticated
+    request. The previous version said it was conditional but only the expiry
+    extension ever was — ``last_seen_at`` was written unconditionally, so each
+    request carried an extra UPDATE round trip and a write to the same row. On
+    a database in another region that was 105ms added to every call, for a
+    column nothing reads to the minute.
+
+    So the timestamp is only rewritten once it is more than
+    ``_TOUCH_INTERVAL`` stale. Nothing else changes: the row still records
+    when the session was last used, to within that interval.
     """
     now = _now()
-    values: dict = {"last_seen_at": now}
+    values: dict = {}
+
+    last_seen = session.last_seen_at
+    if last_seen is not None and last_seen.tzinfo is None:
+        # The column is timestamptz, but a session built in this process before
+        # a round trip still carries whatever it was constructed with.
+        last_seen = last_seen.replace(tzinfo=timezone.utc)
+    if last_seen is None or now - last_seen > _TOUCH_INTERVAL:
+        values["last_seen_at"] = now
+
     if session.expires_at - now < _REFRESH_THRESHOLD:
         values["expires_at"] = now + SESSION_TTL
+
+    # Nothing to say: skip the statement rather than write the row back unchanged.
+    if not values:
+        return
 
     await db.execute(
         update(AuthSession).where(AuthSession.token_hash == session.token_hash).values(**values)

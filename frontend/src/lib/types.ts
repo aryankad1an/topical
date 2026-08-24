@@ -29,9 +29,17 @@ export interface LessonPlan {
 }
 
 /** One branch of a generated outline. */
+/**
+ * A topic tree as the AI service returns it.
+ *
+ * `subtopics` holds either a bare name or another node, so a hierarchy can be
+ * as deep as the subject actually is. It used to be `string[]`, which capped
+ * every generated outline at two levels no matter how the model was asked —
+ * the rail draws six, and the third level had nowhere to land.
+ */
 export interface TopicHierarchy {
   topic: string;
-  subtopics: string[];
+  subtopics?: (string | TopicHierarchy)[];
 }
 
 /** LaTeX documents are stored with a `latex:` prefix on their main topic. */

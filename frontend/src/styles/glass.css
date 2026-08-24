@@ -1,0 +1,261 @@
+/* Glass — the overlay material.
+   ═══════════════════════════════════════════════════════════════════════
+
+   One rule decides what gets glass:
+
+     Glass goes on chrome that floats OVER moving content. Nothing else.
+
+   The nav pill, dialogs, the command palette, the editor's pinned bars —
+   these have real content passing behind them, and frosting it is what
+   gives the material something to do. Everything that sits on the page
+   ground is opaque paper: a translucent card over flat paint returns a
+   slightly grey rectangle and costs a composite pass to do it.
+
+   This file used to be 718 lines and re-skinned every surface in the
+   product, including a block at the end that gave cards a 1.5px ink border
+   and a hard `4px 4px 0` offset. That was a third design language layered
+   over the other two, and between them a `.step-card` was declared three
+   times in three different materials. The cards' real appearance now lives
+   in `primitives.css` and `pages.css`, where their layout already was.
+
+   Two rules that survive from the old file, because they are still true:
+   - Glass is never nested. A pane inside a pane frosts the same pixels
+     twice and the result is fog.
+   - Every pane keeps a hairline. The border is what survives when the
+     backdrop happens to match the tint; without it the element vanishes.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* `position` and `isolation` go through `:where()`, which has zero
+   specificity, so a positioning utility on the same element still wins.
+   Written flat, this file loads after Tailwind and its `position: relative`
+   silently beat `.fixed` on the nav — the floating pill became a full-width
+   bar in normal flow. */
+:where(.liquid-glass, .glass-card, .auth-panel) {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The primitive
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.liquid-glass {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg), var(--glass-bevel);
+}
+
+/* The bevel is one lit hairline along the top edge and nothing else.
+
+   What stood here before was a four-sided specular rim: a 145° gradient
+   masked into a 1px ring, bright at the top-left and again at the bottom-
+   right. On a real pane that would read as light catching an edge. On a
+   flat card it read as a border that had been drawn twice and not lined
+   up — which is precisely what the cards on the landing page looked like,
+   dark down one side and bright down the other. */
+
+.liquid-glass--heavy {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow-pop), var(--glass-bevel);
+}
+
+.liquid-glass--light {
+  background: var(--glass-tint-weak);
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-bevel);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Application — the four kinds of floating chrome
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Overlays: dialogs, sheets, popovers, the command palette ──
+   These sit above the document, so they take the strong tint and the large
+   blur: there is real detail behind them and it has to be pushed back far
+   enough for the panel's own text to read. */
+.nav-glass,
+.cmdk-panel,
+.post-detail-panel,
+.new-post-dialog,
+.dialog-glass,
+.mobile-menu-overlay,
+.editor-menu,
+.lesson-picker,
+.shortcuts-sheet {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-pop), var(--glass-bevel);
+}
+
+/* Sheets and dialogs take the largest corner in the ramp. Radix ships
+   `sm:rounded-lg` on its dialog content, which resolves through Tailwind to
+   the *control* radius — a modal with a button's corners. */
+.cmdk-panel,
+.post-detail-panel,
+.new-post-dialog,
+.dialog-glass,
+.editor-menu,
+.lesson-picker,
+.shortcuts-sheet {
+  border-radius: var(--radius-xl);
+}
+
+/* ── Editor chrome ──
+   Bars pinned against a scrolling document: the text sliding under them is
+   the backdrop, and it is exactly what should be frosted. */
+.editor-header,
+.editor-toolbar,
+.editor-status {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-color: var(--glass-border);
+}
+
+/* The outline rail is a solid panel, not glass — see `.outline-rail` in
+   editor.css. It is a wall of the layout rather than something floating
+   over it, and frosting a panel whose backdrop is the page ground shows
+   nothing at all. */
+
+/* ── Scrims ──
+   A scrim frosts what is behind it instead of only darkening it. The blur
+   is what separates "a panel opened" from "a panel is drawn on top". */
+.cmdk-overlay,
+.post-detail-overlay,
+.dialog-scrim {
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Refraction
+   Layered on top of the blur declared above, and kept in its own
+   `@supports` block on purpose: `backdrop-filter: url(...)` is not
+   universal — Safari has the property but not the function — and a browser
+   that parses `url()` and ignores it would drop the whole declaration,
+   taking the blur with it and leaving a bare translucent rectangle.
+
+   Declaring the plain blur first and only *replacing* it where the
+   reference actually resolves means the fallback is the material minus its
+   lens, not the material minus everything. See `GlassFilters.tsx`.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@supports (backdrop-filter: url("#lg-panel")) or (-webkit-backdrop-filter: url("#lg-panel")) {
+
+  .liquid-glass,
+  .cmdk-panel,
+  .post-detail-panel,
+  .new-post-dialog,
+  .dialog-glass,
+  .lesson-picker,
+  .editor-menu,
+  .shortcuts-sheet {
+    -webkit-backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
+    backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
+  }
+
+  /* The one piece of chrome that always has page content moving underneath
+     it, which is why the bend reads here more clearly than anywhere else. */
+  .nav-glass,
+  .editor-header,
+  .editor-toolbar,
+  .editor-status {
+    -webkit-backdrop-filter: url("#lg-nav") saturate(var(--glass-saturate));
+    backdrop-filter: url("#lg-nav") saturate(var(--glass-saturate));
+  }
+
+  /* Thinner tints, now that the lens carries the material. The tints above
+     are set for glass whose only trick is blur, where the fill has to
+     supply most of the sense of a surface. A refracting pane does not need
+     that, and every point of opacity is backdrop that cannot be seen
+     bending. */
+  .nav-glass {
+    background: color-mix(in srgb, var(--glass-tint-strong) 72%, transparent);
+  }
+
+  .editor-header,
+  .editor-toolbar,
+  .editor-status {
+    background: color-mix(in srgb, var(--glass-tint) 68%, transparent);
+  }
+
+  /* Scrims frost what is behind them; they must not also warp it, or the
+     page appears to melt every time a dialog opens. */
+  .cmdk-overlay,
+  .post-detail-overlay,
+  .dialog-scrim {
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
+    backdrop-filter: blur(6px) saturate(120%);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   No nested glass
+   An element with `backdrop-filter` inside another one frosts pixels that
+   are already frosted: the result is fog, it costs a second composite pass,
+   and on a long list it is the difference between a smooth scroll and a
+   janky one.
+
+   `:is()` takes the specificity of its most specific argument, so this
+   lands at (0,2,0) and beats the single-class rules above without
+   `!important`.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:is(.liquid-glass, .glass-card, .auth-panel, .cmdk-panel, .post-detail-panel,
+    .new-post-dialog, .dialog-glass, .editor-menu, .lesson-picker, .nav-glass,
+    .shortcuts-sheet)
+:is(.surface, .chip, .btn, .btn-subtle, .doc-btn, .accent-soft, .model-option,
+    .pub-row, .doc-row, .segmented, .sort-pill, .community-tab, .nav-kbd,
+    .nav-indicator, .glass-btn, .glass-input, .glass-card, .auth-input,
+    .liquid-glass) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Fallbacks
+   Both of these serve the same layout in opaque paint rather than a
+   thinner version of the same effect. The list is short now because only
+   floating chrome is translucent in the first place.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .liquid-glass,
+  .liquid-glass--heavy,
+  .liquid-glass--light,
+  .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
+  .dialog-glass, .mobile-menu-overlay, .editor-menu, .lesson-picker,
+  .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status {
+    background: var(--surface);
+    border-color: var(--line);
+  }
+}
+
+/* Some people get motion sickness or simply cannot read through a blur.
+   The OS setting for it exists; honour it. */
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass,
+  .liquid-glass--heavy,
+  .liquid-glass--light,
+  .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
+  .dialog-glass, .mobile-menu-overlay, .editor-menu, .lesson-picker,
+  .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status,
+  .outline-rail, .outline-head, .orail-prompt {
+    background: var(--surface);
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-color: var(--line);
+  }
+
+  .cmdk-overlay, .post-detail-overlay, .dialog-scrim {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

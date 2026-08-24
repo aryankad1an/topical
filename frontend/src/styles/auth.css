@@ -1,0 +1,343 @@
+/* Auth — the sign-in and sign-up screens.
+
+   These two pages are the only ones a signed-out visitor sees, so they carry
+   the product's first impression with none of its content to help. The layout
+   answers that: a pitch column that says what this is, and a panel that asks
+   for two fields.
+
+   The panel is paper — a white sheet, a hairline, and the deepest shadow in
+   the product, because on an otherwise empty screen it is the only object
+   and it should look like one. It used to carry the four-sided specular rim
+   from the glass brief, which lit two corners and darkened the other two and
+   read as a border that had been drawn twice.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.auth-shell {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem var(--gutter) 4rem;
+  overflow: hidden;
+
+  /* `<main>` in the root shell adds `px-4 py-6 mt-20` (`md:mt-24`) so ordinary
+     pages clear the floating nav. This screen centres its panel in the whole
+     viewport rather than in what is left below the nav, so it takes those
+     back. Safe to do with negative margins because `body` already
+     sets `overflow-x: hidden`; the padding above restores the clearance under
+     the nav that `mt-20` was providing. */
+  margin: calc(-5rem - 1.5rem) -1rem -1.5rem;
+}
+
+@media (min-width: 768px) {
+  .auth-shell { margin-top: calc(-6rem - 1.5rem); }
+}
+
+/* ── The two columns ──
+   One column until there is room for two. The pitch is what gets dropped on
+   a narrow screen: on a phone the visitor came here to sign in, and making
+   them scroll past a sales paragraph to do it is the wrong trade. */
+.auth-layout {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 60rem;
+  display: grid;
+  gap: 3.5rem;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .auth-layout {
+    grid-template-columns: 1fr minmax(21rem, 24rem);
+    gap: 4.5rem;
+  }
+}
+
+.auth-pitch { display: none; }
+
+@media (min-width: 900px) {
+  .auth-pitch { display: block; }
+}
+
+.auth-pitch-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(2.25rem, 3.6vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin: 1.5rem 0 1rem;
+}
+
+.auth-pitch-sub {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 30rem;
+}
+
+/* Three lines of proof, not a feature list. */
+.auth-points {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.auth-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.auth-point-mark {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+}
+
+/* ── The panel ── */
+.auth-panel {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.9rem 1.85rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+}
+
+/* ── Brand mark ── */
+.auth-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--accent-400);
+  color: var(--accent-ink);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.auth-mark--lg { height: 3rem; width: 3rem; border-radius: var(--radius-lg); font-size: 1.375rem; }
+
+.auth-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.6rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-top: 1.1rem;
+}
+
+.auth-sub {
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.auth-form {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-foot {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.auth-foot a {
+  color: var(--accent-500);
+  font-weight: 600;
+  text-decoration: none;
+}
+.auth-foot a:hover { text-decoration: underline; }
+
+/* ── Fields ──
+   The label sits above the field and the hint below it, so the eye runs
+   label → field → hint in the order the three are needed. */
+.auth-field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.auth-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+}
+
+.auth-input-wrap { position: relative; display: flex; align-items: center; }
+
+/* The leading icon names the field at a glance; the input is padded past it
+   rather than the icon being floated over text, so a long value never runs
+   underneath it. */
+.auth-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  display: flex;
+  color: var(--ink-faint);
+  pointer-events: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.auth-input {
+  width: 100%;
+  height: 2.75rem;
+  padding: 0 0.9rem 0 2.4rem;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-rgb) / 0.07);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.auth-input::placeholder { color: var(--ink-ghost); }
+
+/* Room on the right for the reveal button, when there is one. */
+.auth-input--reveal { padding-right: 2.75rem; }
+
+/* No leading icon, so the text starts where the icon would have. Written as
+   a class rather than a Tailwind `pl-*` utility because `.auth-input` sets
+   padding as a shorthand, and this file loads after Tailwind's. */
+.auth-input--bare { padding-left: 0.9rem; }
+
+.auth-input:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--accent-400);
+  box-shadow: 0 0 0 3px var(--accent-soft),
+              inset 0 1px 2px rgb(var(--shadow-rgb) / 0.05);
+}
+
+.auth-input-wrap:focus-within .auth-input-icon { color: var(--accent-500); }
+
+/* Autofill paints its own background straight over the glass. There is no
+   property that stops it, so the fill is pushed off-screen with a very long
+   inset shadow and the text colour is restored by hand. */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  caret-color: var(--ink);
+}
+
+.auth-reveal {
+  position: absolute;
+  right: 0.4rem;
+  height: 2rem;
+  width: 2rem;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-hint {
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+/* ── Strength meter ──
+   Four segments rather than a continuous bar: a bar invites the reader to
+   chase the last few pixels, and there is no score here precise enough to
+   deserve that. */
+.auth-strength { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.auth-strength-bars { display: flex; gap: 4px; }
+
+.auth-strength-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-a08);
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.auth-strength-bar[data-on='true'] { background: var(--strength-colour); }
+
+.auth-strength-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.6875rem;
+}
+
+.auth-strength-label { font-weight: 600; color: var(--strength-colour); }
+.auth-strength-advice { color: var(--ink-faint); text-align: right; }
+
+/* ── Error ──
+   A tinted well rather than a red line: the sentence the server sent is the
+   only content on this screen the reader did not write, and it has to be
+   findable without being alarming. */
+.auth-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius);
+  /* Tokens, not literals. This was a hard-coded terracotta left over from an
+     older palette, so the error well stayed the same colour through every
+     retheme — and after the last one it was the *accent* hue, which made a
+     failed sign-in look like a call to action. */
+  background: rgb(var(--danger-rgb) / 0.09);
+  border: 1px solid rgb(var(--danger-rgb) / 0.28);
+  color: var(--status-danger);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.auth-error svg { flex-shrink: 0; margin-top: 0.1rem; }
+
+/* ── Submit ──
+   Size only. The fill, the border and every state are the primary button in
+   buttons.css, so the one control on this screen is unmistakably the same
+   control the rest of the app uses. It used to declare its own gradient, its
+   own glow and its own travelling white shine here. */
+.auth-submit {
+  margin-top: 0.25rem;
+  height: 2.75rem;
+  width: 100%;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}

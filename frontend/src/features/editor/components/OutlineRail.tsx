@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ListTree, Loader2, PanelLeftClose, Plus, Sparkles, Wand2 } from 'lucide-react';
+import { ListTree, Loader2, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
 import { IconButton } from '@/components/ui/primitives';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import type { OutlineNode } from '../lib/outline';
+import { childTitles, indexOutline } from '../lib/tree';
 import { fetchHierarchy, outlineDraft, refinePlan, type RefinedPlan } from '../lib/generation';
 import { MAX_OUTLINE_WIDTH, MIN_OUTLINE_WIDTH } from '../lib/viewOptions';
 import { useDragResize } from '../hooks/useDragResize';
@@ -13,6 +14,14 @@ import { useSectionWriter } from '../hooks/useSectionWriter';
 import { OutlineRow } from './OutlineRow';
 import { OutlineProposal } from './OutlineProposal';
 import { SectionSource } from './SectionSource';
+
+/** Openers for the instruction box, once there is a structure to change. */
+const SUGGESTIONS = [
+  'Add a section on ',
+  'Reorder so it builds logically',
+  'Split anything covering two ideas',
+  'Trim it to the essentials',
+];
 
 interface Props {
   format: DocFormat;
@@ -26,6 +35,8 @@ interface Props {
   onWidth: (width: number) => void;
   onClose: () => void;
   onJump: (node: OutlineNode) => void;
+  /** Show, in the document itself, the section a rail gesture is acting on. */
+  onFocusSection: (node: OutlineNode | null) => void;
   onInsertSection: (text: string, title: string, replace: boolean) => void;
   /** Remove a section and everything nested under it from the document. */
   onDeleteSection: (title: string) => void;
@@ -49,51 +60,58 @@ interface Props {
  * navigated could disagree.
  *
  * Composition only. Row gestures live in `useOutlineRows`, generation in
- * `useSectionWriter`, and the two AI panels in their own components; what is
- * left here is the arrangement and the calls that restructure the whole
- * outline at once.
+ * `useSectionWriter`, the hierarchy relations in `lib/tree`, and the proposal
+ * in its own component; what is left here is the arrangement and the calls
+ * that restructure the whole outline at once.
  */
 export function OutlineRail({
   format, projectName, content, documentNodes, activeLabel, width, onWidth,
-  onClose, onJump, onInsertSection, onDeleteSection, measureSection,
+  onClose, onJump, onFocusSection, onInsertSection, onDeleteSection, measureSection,
   onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onApplyOutline,
 }: Props) {
-  const [prompt, setPrompt] = useState<'outline' | 'refine' | null>(null);
+  const [promptOpen, setPromptOpen] = useState(false);
   const [promptValue, setPromptValue] = useState('');
-  const [working, setWorking] = useState<'outline' | 'refine' | null>(null);
+  const [working, setWorking] = useState(false);
   const [proposal, setProposal] = useState<RefinedPlan | null>(null);
 
   // The rail renders the document's headings. There is no second copy of the
   // structure, so there is nothing to keep in step — editing a row edits the
   // page, and typing a heading into the page adds a row.
   const nodes = documentNodes;
-  const outline = useMemo(
-    () => nodes.map(node => ({ title: node.label, level: node.level })),
-    [nodes],
-  );
 
-  /** The headings nested directly under a row — what its introduction must avoid. */
-  const childrenOf = (node: OutlineNode) => {
-    const index = nodes.indexOf(node);
-    if (index < 0) return [];
-    const depth = node.level + 1;
-    const out: string[] = [];
-    for (let i = index + 1; i < nodes.length && nodes[i].level > node.level; i += 1) {
-      if (nodes[i].level === depth) out.push(nodes[i].label);
+  // Parents, children and subtree bounds, resolved once per outline instead of
+  // by re-scanning the flat list for every row that asks.
+  const tree = useMemo(() => indexOutline(nodes), [nodes]);
+
+  // One measurement per heading per render. This used to be called twice for
+  // every row and once more for the header count, each walking the document.
+  const words = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const node of nodes) {
+      if (!out.has(node.label)) out.set(node.label, measureSection(node.label));
     }
     return out;
-  };
+  }, [nodes, measureSection]);
+
+  const wordsOf = (node: OutlineNode) => words.get(node.label) ?? 0;
 
   const rows = useOutlineRows({
-    nodes, childrenOf, measureSection,
+    nodes,
+    childrenOf: node => {
+      const index = tree.byOffset.get(node.offset);
+      return index === undefined ? [] : childTitles(tree, index);
+    },
+    measureSection,
     onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onDeleteSection,
   });
 
   const writer = useSectionWriter({
-    format, projectName, nodes, outline, childrenOf, onInsertSection,
+    format, projectName, tree, wordsOf, onInsertSection, onFocusSection,
   });
 
-  const written = nodes.filter(node => measureSection(node.label) > 0).length;
+  const written = nodes.filter(node => wordsOf(node) > 0).length;
+  const totalWords = nodes.reduce((sum, node) => sum + wordsOf(node), 0);
+  const coverage = nodes.length ? Math.round((written / nodes.length) * 100) : 0;
 
   const startResize = useDragResize({
     from: () => width,
@@ -102,45 +120,52 @@ export function OutlineRail({
   });
 
   // ── AI over the structure ───────────────────────────────────────────────
-  const buildOutlineWith = async (source: 'subject' | 'draft', subject: string) => {
-    if (source === 'draft' && !content.trim()) {
+  /**
+   * One entry point, because there was never more than one intention behind
+   * the two buttons this replaced.
+   *
+   * "AI outline" and "Refine" asked the same question — what should this
+   * document's structure be — and differed only in whether a structure already
+   * existed. That is not something the writer should have to classify: with no
+   * outline the instruction is a subject, with one it is a change, and both
+   * come back as a proposal to accept or discard.
+   */
+  const runOutlineAi = async (instruction: string, fromDraft = false) => {
+    if (fromDraft && !content.trim()) {
       toast.info('Write something first — this reads the page you already have.');
       return;
     }
-    if (source === 'subject' && !subject.trim()) return;
-    setWorking('outline');
-    try {
-      const plan = source === 'draft'
-        ? await outlineDraft(content, format)
-        : await fetchHierarchy(subject);
-      // Staged rather than applied. The outline is the document now, so an AI
-      // outline rewrites the page — that is not something to do silently.
-      setProposal({ summary: `Proposed ${plan.length} sections.`, plan, changes: [] });
-      setPrompt(null);
-    } catch (error) {
-      toast.error(errorMessage(error, 'Failed to build an outline'));
-    } finally {
-      setWorking(null);
-    }
-  };
+    if (!fromDraft && !nodes.length && !instruction.trim()) return;
 
-  const runRefine = async (instruction: string) => {
-    if (!nodes.length) {
-      toast.info('There is no outline to refine yet.');
-      return;
-    }
-    setWorking('refine');
+    setWorking(true);
     try {
-      const result = await refinePlan(outline, projectName, instruction, format);
-      if (!result.changes.length) {
-        toast.info(result.summary || 'The model left the structure as it was.');
+      if (fromDraft) {
+        const plan = await outlineDraft(content, format);
+        setProposal({ summary: `Read the draft and proposed ${plan.length} sections.`, plan, changes: [] });
+      } else if (nodes.length) {
+        // There is a structure, so this is a change to it — and the model is
+        // told what each row already costs, since moving a section carrying
+        // 900 words is not the same proposition as moving an empty heading.
+        const result = await refinePlan(
+          nodes.map(node => ({ title: node.label, level: node.level, words: wordsOf(node) })),
+          projectName,
+          instruction,
+          format,
+        );
+        if (!result.changes.length) {
+          toast.info(result.summary || 'The model left the structure as it was.');
+        }
+        setProposal(result);
+      } else {
+        const plan = await fetchHierarchy(instruction);
+        setProposal({ summary: `Proposed ${plan.length} sections.`, plan, changes: [] });
       }
-      setProposal(result);
-      setPrompt(null);
+      setPromptOpen(false);
+      setPromptValue('');
     } catch (error) {
-      toast.error(errorMessage(error, 'Could not refine the outline'));
+      toast.error(errorMessage(error, 'The outline request failed'));
     } finally {
-      setWorking(null);
+      setWorking(false);
     }
   };
 
@@ -148,78 +173,116 @@ export function OutlineRail({
     if (!proposal) return;
     onApplyOutline(proposal.plan);
     rows.closeEdit();
+    onFocusSection(null);
     setProposal(null);
-  };
-
-  const openPrompt = (which: 'outline' | 'refine') => {
-    setPrompt(current => (current === which ? null : which));
-    setPromptValue('');
   };
 
   const addAtEnd = () => rows.addAfter(nodes[nodes.length - 1] ?? null);
 
+  /**
+   * Rewriting every section replaces prose that is already there, so it asks
+   * first — the same confirm deleting a section gets, counting the same thing
+   * it puts at risk. Writing only the empty ones takes nothing away and goes
+   * straight through.
+   */
+  const rewriteEverything = () => {
+    if (!written) { writer.writeAll('all'); return; }
+    toast(`Rewrite all ${nodes.length} sections?`, {
+      description: `${totalWords} words across ${written} written section${written === 1 ? '' : 's'} will be replaced.`,
+      action: { label: 'Rewrite all', onClick: () => writer.writeAll('all') },
+      cancel: { label: 'Cancel', onClick: () => {} },
+    });
+  };
+
+  /** Every row gesture points the document at the row it is acting on. */
+  const touching = (node: OutlineNode, run: () => void) => () => { onFocusSection(node); run(); };
+
+  const submitLabel = nodes.length ? 'Update outline' : 'Build outline';
+  const canSubmit = !working && (nodes.length > 0 || promptValue.trim().length > 0);
+
   return (
     <aside className="outline-rail" style={{ width }}>
+      {/* The count is the rail's one piece of status: how much of the
+          structure is actually written. It carries a title because "3/7" is
+          only obvious once someone has been told. */}
       <div className="outline-head">
-        <ListTree className="h-3.5 w-3.5" />
+        <ListTree className="h-3.5 w-3.5" aria-hidden="true" />
         <span>Outline</span>
-        <span className="outline-count">{written}/{nodes.length}</span>
-        <IconButton className="ml-auto" onClick={addAtEnd} title="Add a section" aria-label="Add a section">
-          <Plus className="h-3.5 w-3.5" />
-        </IconButton>
-        <IconButton onClick={onClose} title="Hide outline" aria-label="Hide outline">
+        {nodes.length > 0 && (
+          <span
+            className="outline-count"
+            title={`${written} of ${nodes.length} sections written · ${totalWords} words`}
+          >
+            {written}/{nodes.length}
+          </span>
+        )}
+        <IconButton className="ml-auto" onClick={onClose} title="Hide outline  ⌘\" aria-label="Hide outline">
           <PanelLeftClose className="h-3.5 w-3.5" />
         </IconButton>
       </div>
 
+      {/* Written-ness, once, as a line — rather than as a tick repeated down
+          every row of the list. */}
+      {nodes.length > 0 && (
+        <div className="outline-meter" role="presentation">
+          <div className="outline-meter-fill" style={{ width: `${coverage}%` }} />
+        </div>
+      )}
+
       <div className="outline-actions">
-        <button className="orail-btn" onClick={() => openPrompt('outline')} data-active={prompt === 'outline'}
-          disabled={working !== null} title="Build an outline from a subject">
-          {working === 'outline' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+        <button
+          className="orail-btn"
+          onClick={() => { setPromptOpen(open => !open); setPromptValue(''); }}
+          data-active={promptOpen}
+          disabled={working}
+          title={nodes.length ? 'Change the structure with an instruction' : 'Build the structure from a subject'}
+        >
+          {working ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
           AI outline
-        </button>
-        <button className="orail-btn" onClick={() => openPrompt('refine')} data-active={prompt === 'refine'}
-          disabled={working !== null || !nodes.length} title="Reorganise the structure and explain the changes">
-          {working === 'refine' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-          Refine
         </button>
       </div>
 
-      {prompt === 'outline' && (
+      {promptOpen && (
         <form
           className="orail-prompt"
-          onSubmit={event => { event.preventDefault(); buildOutlineWith('subject', promptValue); }}
+          onSubmit={event => { event.preventDefault(); runOutlineAi(promptValue); }}
         >
           <input
-            className="orail-input" autoFocus placeholder="What is this document about?"
+            className="orail-input" autoFocus
+            placeholder={nodes.length
+              ? 'Add a section on…, reorder, split, trim'
+              : 'What is this document about?'}
             value={promptValue} onChange={event => setPromptValue(event.target.value)}
           />
+
+          {/* Openers rather than presets: each one leaves the box editable, so
+              the common instructions cost a click and the unusual ones still
+              cost a sentence. */}
+          {nodes.length > 0 && (
+            <div className="orail-chips">
+              {SUGGESTIONS.map(suggestion => (
+                <button
+                  key={suggestion} type="button" className="orail-chip"
+                  onClick={() => setPromptValue(suggestion)}
+                >
+                  {suggestion.trim().replace(/\s+on$/, ' on…')}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="orail-prompt-row">
-            <button type="submit" className="orail-go" disabled={!promptValue.trim() || working !== null}>
-              Build outline
+            <button type="submit" className="orail-go" disabled={!canSubmit}>
+              {submitLabel}
             </button>
-            <button type="button" className="orail-link" onClick={() => buildOutlineWith('draft', '')}
-              disabled={working !== null}>
+            <button type="button" className="orail-link" onClick={() => runOutlineAi('', true)}
+              disabled={working}>
               From what I've written
             </button>
           </div>
-        </form>
-      )}
-
-      {prompt === 'refine' && (
-        <form
-          className="orail-prompt"
-          onSubmit={event => { event.preventDefault(); runRefine(promptValue); }}
-        >
-          <input
-            className="orail-input" autoFocus placeholder="Anything specific? (optional)"
-            value={promptValue} onChange={event => setPromptValue(event.target.value)}
-          />
-          <div className="orail-prompt-row">
-            <button type="submit" className="orail-go" disabled={working !== null}>
-              Refine structure
-            </button>
-          </div>
+          {nodes.length > 0 && (
+            <p className="orail-note">Leave it blank to let the model decide what to change.</p>
+          )}
         </form>
       )}
 
@@ -231,86 +294,134 @@ export function OutlineRail({
         />
       )}
 
-      <SectionSource
-        method={writer.method}
-        onMethod={writer.setMethod}
-        urls={writer.urls}
-        onUrls={writer.setUrls}
-        needsUrls={writer.needsUrls}
-      />
-
       {nodes.length === 0 ? (
+        // The only place the instructions live. They used to be pinned to the
+        // foot for the life of the document, where they were onboarding copy
+        // that never stopped onboarding; here they appear exactly while they
+        // are the thing you need.
         <div className="outline-empty">
-          <p>No structure yet.</p>
-          <p>Add sections by hand, or build one with <b>AI outline</b>.</p>
+          <ListTree className="h-6 w-6" aria-hidden="true" />
+          <p className="outline-empty-title">No structure yet</p>
+          <p>Add sections by hand, or build the whole shape with <b>AI outline</b>.</p>
           <button className="orail-add" onClick={() => rows.addAfter(null)}>
-            <Plus className="h-3.5 w-3.5" /> Add section
+            <Plus className="h-3.5 w-3.5" /> Add the first section
           </button>
         </div>
       ) : (
-        <div className="outline-list">
+        // A real list, so the count is announced and rows are navigable as
+        // items rather than as a run of anonymous buttons. The gestures are
+        // named here because they are mouse-only and appear in no menu.
+        <div
+          className="outline-list"
+          role="list"
+          aria-label={`Outline, ${nodes.length} sections`}
+          title="Click to jump · double-click to rename · drag to reorder"
+        >
           {nodes.map(node => (
             <OutlineRow
               key={node.id}
               item={{ id: node.id, title: node.label, level: node.level }}
               status={writer.status[node.label]}
-              inDocument={measureSection(node.label) > 0}
+              words={wordsOf(node)}
               active={node.label === activeLabel}
-              busy={writer.busy || writer.needsUrls}
+              busy={writer.busy}
+              canGenerate={!writer.needsUrls}
               editing={rows.editingOffset === node.offset}
               value={rows.editValue}
               onValue={rows.setEditValue}
-              onEdit={() => rows.startEdit(node)}
+              onEdit={touching(node, () => rows.startEdit(node))}
               onCommit={rows.commitEdit}
               onKeyDown={rows.editKeys(node)}
-              onPrimary={() => onJump(node)}
-              onGenerate={() => writer.writeSection(node)}
-              onIndent={() => onShiftHeading(node.offset, 1)}
-              onOutdent={() => onShiftHeading(node.offset, -1)}
-              onAddAfter={() => rows.addAfter(node)}
+              onPrimary={touching(node, () => onJump(node))}
+              onGenerate={touching(node, () => writer.writeSection(node))}
+              onIndent={touching(node, () => onShiftHeading(node.offset, 1))}
+              onOutdent={touching(node, () => onShiftHeading(node.offset, -1))}
+              onAddAfter={touching(node, () => rows.addAfter(node))}
               onDelete={() => rows.deleteRow(node)}
               dragging={rows.dragOffset === node.offset}
               dropEdge={rows.dropAt?.offset === node.offset ? rows.dropAt.edge : null}
               onDragStart={rows.rowDragStart(node)}
               onDragOver={rows.rowDragOver(node)}
-              onDrop={rows.rowDrop(node)}
+              onDrop={event => { onFocusSection(null); rows.rowDrop(node)(event); }}
               onDragEnd={rows.endDrag}
             />
           ))}
+          {/* Adding belongs at the end of the list, not pinned to the bottom
+              of the rail: it appends *there*, and putting the control where
+              its result appears is what stops it reading as a third,
+              unrelated "add" — the head icon and the foot button were the
+              other two, and both are gone. */}
+          <button className="orail-add-row" onClick={addAtEnd} title="Add a section at the end">
+            <Plus className="h-3 w-3" aria-hidden="true" /> Add section
+          </button>
         </div>
       )}
 
       <div className="outline-foot">
-        <button className="orail-add" onClick={addAtEnd} title="Add a section at the end">
-          <Plus className="h-3.5 w-3.5" /> Add section
-        </button>
+        {/* Where a generated section gets its material. This sat above the
+            outline, permanently, as though it described the structure; it
+            configures the button directly beneath it and now sits with it. */}
+        <SectionSource
+          method={writer.method}
+          onMethod={writer.setMethod}
+          urls={writer.urls}
+          onUrls={writer.setUrls}
+          needsUrls={writer.needsUrls}
+        />
 
         {writer.progress ? (
-          <>
+          <div className="gen-run">
             <div className="gen-progress">
               <div className="gen-progress-fill"
                 style={{ width: `${(writer.progress.done / writer.progress.total) * 100}%` }} />
             </div>
-            <button className="orail-primary" onClick={writer.stop}>
+            {/* Which section, not just how many. A bar that says 3/7 during a
+                four-minute run tells the writer nothing about what is landing
+                in their document. */}
+            <p className="gen-now" title={writer.progress.title}>
+              Writing <b>{writer.progress.title}</b>
+            </p>
+            <button className="orail-primary orail-primary--stop" onClick={writer.stop}>
               Stop · {writer.progress.done}/{writer.progress.total}
             </button>
-          </>
+          </div>
         ) : (
-          <button
-            className="orail-primary"
-            onClick={writer.writeAll}
-            disabled={writer.busy || writer.needsUrls || !nodes.length}
-            title={writer.needsUrls ? 'Add a URL first' : 'Write content for every section in the outline'}
-          >
-            <Sparkles className="h-3 w-3" />
-            Generate all sections
-          </button>
-        )}
+          <>
+            {/* The default writes what is *missing*. The single button here
+                used to rewrite every section every time, so adding one heading
+                to a finished draft and pressing the only control in the foot
+                regenerated the whole document — and the written/total count
+                above it had no bearing on what the button did. Rewriting
+                everything is still available; it is just no longer the thing
+                that happens by default. */}
+            <button
+              className="orail-primary"
+              onClick={() => (writer.missing ? writer.writeAll('missing') : rewriteEverything())}
+              disabled={writer.busy || writer.needsUrls || !nodes.length}
+              title={writer.needsUrls
+                ? 'Add a URL first'
+                : writer.missing
+                  ? 'Write the sections that have no content yet'
+                  : 'Every section has content — this rewrites them all'}
+            >
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
+              {writer.missing
+                ? `Write ${writer.missing} empty section${writer.missing === 1 ? '' : 's'}`
+                : `Rewrite all ${nodes.length} section${nodes.length === 1 ? '' : 's'}`}
+            </button>
 
-        <p className="ai-hint">
-          Click a section to jump to it, or to write it if it isn't there yet.
-          Double-click to rename, drag to reorder; <kbd>Tab</kbd> / <kbd>⇧Tab</kbd> change depth.
-        </p>
+            {writer.missing > 0 && written > 0 && (
+              <button
+                className="orail-link orail-foot-link"
+                onClick={rewriteEverything}
+                disabled={writer.busy || writer.needsUrls}
+                title="Regenerate every section, replacing what is already written"
+              >
+                Rewrite all {nodes.length} instead
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       <div className="outline-resize" onMouseDown={startResize} role="separator" aria-label="Resize outline" />

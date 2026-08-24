@@ -109,7 +109,10 @@ async def refine_outline(req: RefineOutlineRequest, *, credentials: AiCredential
     restructure that lands silently is one nobody can check.
     """
     indented = "\n".join(
-        "  " * max(node.level - 1, 0) + "- " + node.title
+        "  " * max(node.level - 1, 0)
+        + "- "
+        + node.title
+        + (f"  [{node.words} words written]" if node.words else "")
         for node in req.outline
         if node.title.strip()
     )
@@ -178,6 +181,8 @@ async def generate_section(req: GenerateSectionRequest, *, credentials: AiCreden
         context=await _grounding(req),
         hierarchy=req.hierarchy or "",
         children=req.children,
+        ancestors=req.ancestors,
+        section_number=req.section_number or "",
         level=req.level,
     )
     return (await generate_content(prompt, credentials)).strip()
