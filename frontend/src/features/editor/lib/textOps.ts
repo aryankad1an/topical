@@ -129,6 +129,41 @@ export function toggleWrap(
   };
 }
 
+// ── Rewriting whole lines ─────────────────────────────────────────────────
+
+/**
+ * Rewrite every line the selection touches, and move the selection with them.
+ *
+ * The bookkeeping is the whole point. Each rewritten line shifts everything
+ * after it, so the selection has to move by the change to its *own* first line
+ * at the front and by the total change at the back — and getting that subtly
+ * wrong leaves the caret drifting a character further off with every keypress.
+ * Indent, outdent and prefix-toggling each had their own copy of this loop.
+ */
+function mapLines(doc: string, sel: Range, rewrite: (line: Line) => string): EditResult {
+  let out = '';
+  let cursor = 0;
+  let total = 0;
+  let first = 0;
+
+  for (const line of linesIn(doc, sel)) {
+    const next = rewrite(line);
+    const change = next.length - line.text.length;
+    // The selection starts on this line, so its start moves by this change.
+    if (cursor <= sel.start) first = change;
+    total += change;
+    out += doc.slice(cursor, line.start) + next;
+    cursor = line.end;
+  }
+  out += doc.slice(cursor);
+
+  return {
+    content: out,
+    start: Math.max(0, sel.start + first),
+    end: Math.max(0, sel.end + total),
+  };
+}
+
 // ── Line prefixes (headings, quotes, lists) ───────────────────────────────
 
 /**
@@ -136,28 +171,13 @@ export function toggleWrap(
  * have it. Heading levels replace each other rather than stacking.
  */
 export function toggleLinePrefix(doc: string, sel: Range, prefix: string): EditResult {
-  const lines = linesIn(doc, sel);
   const family = prefixFamily(prefix);
-  const allHave = lines.every(l => l.text.startsWith(prefix));
+  const allHave = linesIn(doc, sel).every(line => line.text.startsWith(prefix));
 
-  let out = '';
-  let cursor = 0;
-  let delta = 0;
-  let firstDelta = 0;
-
-  for (const line of lines) {
-    out += doc.slice(cursor, line.start);
+  return mapLines(doc, sel, line => {
     const stripped = family ? line.text.replace(family, '') : line.text;
-    const next = allHave ? stripped : prefix + stripped;
-    const change = next.length - line.text.length;
-    if (cursor <= sel.start) firstDelta = change;
-    delta += change;
-    out += next;
-    cursor = line.end;
-  }
-  out += doc.slice(cursor);
-
-  return { content: out, start: Math.max(0, sel.start + firstDelta), end: Math.max(0, sel.end + delta) };
+    return allHave ? stripped : prefix + stripped;
+  });
 }
 
 /** Regex for the markers a prefix should replace (so `##` supersedes `#`). */
@@ -172,36 +192,24 @@ function prefixFamily(prefix: string): RegExp | null {
 // ── Indentation ───────────────────────────────────────────────────────────
 
 export function indentLines(doc: string, sel: Range, unit = '  '): EditResult {
-  const lines = linesIn(doc, sel);
-  let out = '';
-  let cursor = 0;
-  for (const line of lines) {
-    out += doc.slice(cursor, line.start) + unit + line.text;
-    cursor = line.end;
-  }
-  out += doc.slice(cursor);
-  return { content: out, start: sel.start + unit.length, end: sel.end + unit.length * lines.length };
+  return mapLines(doc, sel, line => unit + line.text);
 }
 
 export function outdentLines(doc: string, sel: Range, unit = '  '): EditResult {
-  const lines = linesIn(doc, sel);
-  let out = '';
-  let cursor = 0;
-  let delta = 0;
-  let firstDelta = 0;
-  for (const line of lines) {
-    const removed = line.text.startsWith(unit)
-      ? unit.length
-      : line.text.startsWith('\t')
-        ? 1
-        : Math.min(line.text.length - line.text.trimStart().length, unit.length);
-    out += doc.slice(cursor, line.start) + line.text.slice(removed);
-    if (cursor <= sel.start) firstDelta = removed;
-    delta += removed;
-    cursor = line.end;
-  }
-  out += doc.slice(cursor);
-  return { content: out, start: Math.max(0, sel.start - firstDelta), end: Math.max(0, sel.end - delta) };
+  return mapLines(doc, sel, line => line.text.slice(outdentWidth(line.text, unit)));
+}
+
+/**
+ * How much leading whitespace one outdent takes off a line.
+ *
+ * A full indent unit where there is one, a tab where the line uses tabs, and
+ * otherwise whatever partial indentation exists — a line sitting at one space
+ * should come back to the margin rather than refusing to move.
+ */
+function outdentWidth(text: string, unit: string): number {
+  if (text.startsWith(unit)) return unit.length;
+  if (text.startsWith('\t')) return 1;
+  return Math.min(text.length - text.trimStart().length, unit.length);
 }
 
 // ── Enter: keep lists and environments going ──────────────────────────────

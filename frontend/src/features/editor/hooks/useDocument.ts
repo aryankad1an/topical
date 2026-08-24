@@ -3,7 +3,7 @@ import { useRouterState } from '@tanstack/react-router';
 import type { EditorSearch } from '@/routes/_authenticated/editor';
 import { toast } from 'sonner';
 import { getLessonPlanById, saveLessonPlan } from '@/lib/api';
-import { stripFrontmatter } from '@/lib/utils';
+import { documentContent } from '@/lib/documents';
 import { formatOf, LATEX_PREFIX, type DocFormat, type LessonPlan } from '@/lib/types';
 import { useYjsCollab } from '@/hooks/useYjsCollab';
 
@@ -89,10 +89,7 @@ export function useDocument(currentUsername: string): DocumentModel {
         if ('error' in result) throw new Error(result.error);
         if (cancelled) return;
 
-        const combined = result.topics
-          .filter(t => t.mdxContent?.trim())
-          .map(t => stripFrontmatter(t.mdxContent))
-          .join('\n\n---\n\n');
+        const combined = documentContent(result.topics);
 
         setProjectId(result.id);
         setName(result.name);
@@ -138,7 +135,6 @@ export function useDocument(currentUsername: string): DocumentModel {
     setIsSaving(true);
     try {
       const result = await saveLessonPlan(planFor());
-      if ('error' in result) throw new Error(result.error);
       setProjectId(result.id);
       setIsDirty(false);
       setLastSavedAt(Date.now());

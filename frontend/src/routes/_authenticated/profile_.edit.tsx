@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
+// The server enforces this same rule on PATCH /api/profile.
+import { usernameProblem } from "@/lib/validation";
 import { ProfileEditorFields } from "@/components/ProfileEditorFields";
 import { PageHeader, Surface } from "@/components/ui/primitives";
 
@@ -34,11 +36,7 @@ function EditProfile() {
     bio !== (user?.bio || "") ||
     avatarUrl !== (user?.avatarUrl || null);
 
-  const usernameError =
-    username && username.length < 3 ? "At least 3 characters" :
-    username && username.length > 30 ? "At most 30 characters" :
-    username && !/^[a-zA-Z0-9_-]+$/.test(username) ? "Letters, numbers, hyphen and underscore only" :
-    null;
+  const usernameError = usernameProblem(username);
 
   const handleSave = async () => {
     if (usernameError) { toast.error(usernameError); return; }

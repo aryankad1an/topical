@@ -27,6 +27,7 @@ import {
 } from './lib/sections';
 import { countWords, documentStats } from './lib/stats';
 import { caretPosition, caretIndexFromPoint, insertBlock, lineAt, offsetOfLine, separatorFor, type EditResult } from './lib/textOps';
+import type { DocFormat } from '@/lib/types';
 import type { EditorAction } from './lib/actions';
 import { copyText, downloadSource, printPreview, wrapLatexDocument } from './lib/exporters';
 import { DEFAULT_OPTIONS, loadOptions, saveOptions, type ViewMode, type ViewOptions } from './lib/viewOptions';
@@ -149,18 +150,40 @@ export function EditorPage() {
     editing.apply(result);
   }, [editing]);
 
+  /**
+   * Run one of `lib/sections`' operations against the newest text.
+   *
+   * Every structural edit shares the same two rules, and they are stated here
+   * rather than at each call site: read the document through `contentRef`, and
+   * apply the result only when the operation found something to change (they
+   * return null when the heading isn't there). The first rule is the one that
+   * matters — "generate all sections" runs many of these without this
+   * component re-rendering in between, so an operation reading the `doc.content`
+   * closure would work once and then silently edit stale text.
+   */
+  const editSections = useCallback(
+    <Args extends unknown[], Result extends EditResult | null>(
+      operation: (content: string, format: DocFormat, ...args: Args) => Result,
+      ...args: Args
+    ): Result => {
+      const result = operation(contentRef.current, doc.format, ...args);
+      if (result) applyToDocument(result);
+      return result;
+    },
+    [applyToDocument, doc.format],
+  );
+
   /** File a generated section under its own heading, or append it. */
   const insertSection = useCallback((text: string, title: string, replace = false) => {
-    applyToDocument(placeSection(contentRef.current, doc.format, title, text, replace));
-  }, [applyToDocument, doc.format]);
+    editSections(placeSection, title, text, replace);
+  }, [editSections]);
 
   /** Remove a section and everything nested under it. */
   const deleteSection = useCallback((title: string) => {
-    const result = dropSection(contentRef.current, doc.format, title);
-    if (result) applyToDocument(result);
-  }, [applyToDocument, doc.format]);
+    editSections(dropSection, title);
+  }, [editSections]);
 
-  /**
+  /*
    * The outline rail's structural edits, applied to the document itself.
    *
    * The rail renders the document's headings rather than a copy of them, so
@@ -169,26 +192,22 @@ export function EditorPage() {
    * editing — including edits typed straight into the text.
    */
   const renameHeading = useCallback((offset: number, next: string) => {
-    const result = renameSection(contentRef.current, doc.format, offset, next);
-    if (result) applyToDocument(result);
-  }, [applyToDocument, doc.format]);
+    editSections(renameSection, offset, next);
+  }, [editSections]);
 
   const shiftHeading = useCallback((offset: number, delta: 1 | -1) => {
-    const result = shiftSection(contentRef.current, doc.format, offset, delta);
-    if (result) applyToDocument(result);
-  }, [applyToDocument, doc.format]);
+    editSections(shiftSection, offset, delta);
+  }, [editSections]);
 
   const moveHeading = useCallback((offset: number, target: number, edge: 'top' | 'bottom') => {
-    const result = moveSectionTo(contentRef.current, doc.format, offset, target, edge);
-    if (result) applyToDocument(result);
-  }, [applyToDocument, doc.format]);
+    editSections(moveSectionTo, offset, target, edge);
+  }, [editSections]);
 
   /** Returns where the new heading landed, so the rail can open it to type in. */
-  const addHeading = useCallback((afterOffset: number | null) => {
-    const result = addSectionAfter(contentRef.current, doc.format, afterOffset);
-    applyToDocument(result);
-    return result.headingOffset;
-  }, [applyToDocument, doc.format]);
+  const addHeading = useCallback(
+    (afterOffset: number | null) => editSections(addSectionAfter, afterOffset).headingOffset,
+    [editSections],
+  );
 
   /**
    * Rewrite the document so its headings match a proposed outline.

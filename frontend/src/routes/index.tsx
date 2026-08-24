@@ -42,7 +42,7 @@ function ProductPreview() {
 }
 
 function Home() {
-  const { isAuthenticated, registerUrl, registerAction } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const steps = [
     { n: '01', icon: Search, title: 'Name a topic', desc: 'Type any subject. Topical plans a full hierarchy of sections and subsections before writing a word.' },
@@ -81,9 +81,8 @@ function Home() {
           </p>
 
           <div className="animate-fade-in-delay-2 flex flex-col sm:flex-row items-center gap-3.5 mb-16">
-            <a
-              href={isAuthenticated ? '/projects' : registerUrl}
-              onClick={isAuthenticated ? undefined : registerAction}
+            <Link
+              to={isAuthenticated ? '/projects' : '/register'}
               className="cta-btn group"
               id="cta-hero-start"
             >
@@ -91,7 +90,7 @@ function Home() {
               <span className="cta-arrow cta-arrow-animated">
                 <ArrowRight className="h-5 w-5" />
               </span>
-            </a>
+            </Link>
             <Link to="/community"
               className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium text-[var(--ink-faint)] hover:text-[var(--ink-2)] hover:border-[var(--line-strong)] transition-all duration-300"
               style={{ border: '1px solid var(--line-soft)' }}>
@@ -210,16 +209,15 @@ function Home() {
               Add a provider key in your profile and start generating. Keys stay in your
               browser and are never stored on our servers.
             </p>
-            <a
-              href={isAuthenticated ? '/projects' : registerUrl}
-              onClick={isAuthenticated ? undefined : registerAction}
+            <Link
+              to={isAuthenticated ? '/projects' : '/register'}
               className="cta-btn group"
             >
               <span>{isAuthenticated ? 'Go to Projects' : 'Get started'}</span>
               <span className="cta-arrow cta-arrow-animated">
                 <ArrowRight className="h-5 w-5" />
               </span>
-            </a>
+            </Link>
           </div>
         </div>
       </section>

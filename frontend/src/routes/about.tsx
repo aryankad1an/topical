@@ -26,17 +26,17 @@ const FEATURES = [
 
 const STACK = [
   { name: 'React', desc: 'Frontend' },
-  { name: 'Hono', desc: 'Backend API' },
-  { name: 'FastAPI', desc: 'AI service' },
+  { name: 'FastAPI', desc: 'Backend' },
   { name: 'LiteLLM', desc: 'Multi-provider AI' },
   { name: 'TanStack', desc: 'Routing' },
-  { name: 'Drizzle', desc: 'Database' },
+  { name: 'SQLAlchemy', desc: 'Database' },
+  { name: 'Postgres', desc: 'Storage' },
   { name: 'Yjs', desc: 'Collaboration' },
   { name: 'MDX', desc: 'Content' },
 ];
 
 function About() {
-  const { isAuthenticated, registerUrl, registerAction } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen w-full" style={{ paddingInline: 'var(--gutter)' }}>
@@ -127,16 +127,15 @@ function About() {
                 ? 'Create another document or explore what the community has published.'
                 : 'Sign up, add a provider key, and make your first document in a couple of minutes.'}
             </p>
-            <a
-              href={isAuthenticated ? '/projects' : registerUrl}
-              onClick={isAuthenticated ? undefined : registerAction}
+            <Link
+              to={isAuthenticated ? '/projects' : '/register'}
               className="cta-btn group"
             >
               <span>{isAuthenticated ? 'Go to Projects' : 'Get started'}</span>
               <span className="cta-arrow cta-arrow-animated">
                 <ArrowRight className="h-5 w-5" />
               </span>
-            </a>
+            </Link>
           </div>
         </section>
 

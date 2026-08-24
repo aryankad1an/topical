@@ -10,8 +10,9 @@ dist/
 frontend/dist/
 
 # Python
-ai_service/venv/
-ai_service/__pycache__/
+.venv/
+venv/
+__pycache__/
 *.pyc
 
 # IDE
@@ -25,4 +26,4 @@ ai_service/__pycache__/
 *.log
 *.tgz
 .vercel
-server/uploads/
+uploads/

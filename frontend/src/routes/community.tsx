@@ -15,6 +15,7 @@ import { Avatar, EmptyState } from '@/components/ui/primitives';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
+import { formatDate } from '@/lib/format';
 import { getPublicLessonPlans, userByIdQueryOptions } from '@/lib/api';
 import { PostCard } from '@/components/community/PostCard';
 import { PostDetail } from '@/components/community/PostDetail';
@@ -118,11 +119,8 @@ function CommunityPage() {
   // Yours opens in the editor; everyone else's opens in the reader.
   const handleViewLesson = (id: number, ownerId: string) => {
     if (ownerId === user?.id) navigate({ to: '/editor', search: { id } });
-    else navigate({ to: '/read', search: { id } as never });
+    else navigate({ to: '/read', search: { id } });
   };
-
-  const formatDate = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
   return (
     <div className="community-root">
@@ -304,12 +302,14 @@ function CommunityPage() {
                       {plan.topics.length} {plan.topics.length === 1 ? 'topic' : 'topics'}
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Link
+                        to="/read"
+                        search={{ id: plan.id }}
+                        target="_blank"
                         className="glass-btn flex-1 h-8 text-xs flex items-center justify-center gap-1.5"
-                        onClick={() => window.open(`/read?id=${plan.id}`, '_blank')}
                       >
                         Read
-                      </button>
+                      </Link>
                       {isAuthenticated && (
                         <button
                           className="flex-1 h-8 text-xs rounded-lg flex items-center justify-center gap-1 font-medium transition-all"

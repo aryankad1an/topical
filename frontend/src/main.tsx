@@ -10,9 +10,9 @@ import { routeTree } from "./routeTree.gen";
 import { AuthProvider } from "./lib/auth-context";
 
 // Create a client. Auth state is intentionally NOT persisted to localStorage:
-// login/logout are full-page navigations (Kinde round-trip), and every such
-// reload should just ask the server for the current session rather than risk
-// showing a stale cached user from before the navigation. See auth-context.tsx.
+// the session lives in an httpOnly cookie the server controls, so every reload
+// should ask it who is signed in rather than trust a cached user that may have
+// been signed out since. See auth-context.tsx.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

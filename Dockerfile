@@ -1,48 +1,56 @@
 # syntax = docker/dockerfile:1
 
-# Adjust BUN_VERSION as desired
-ARG BUN_VERSION=1.0.29
-FROM oven/bun:${BUN_VERSION}-slim as base
+# One image, one process: the FastAPI backend serves the API, the
+# collaboration socket, and the built frontend.
 
-LABEL fly_launch_runtime="Bun"
+# ── Stage 1: build the frontend ──
+FROM node:22-slim AS frontend
 
-# Bun app lives here
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# ── Stage 2: the runtime ──
+# 3.12 rather than 3.13: crawl4ai's wheel set is complete there.
+FROM python:3.12-slim
+
+LABEL fly_launch_runtime="Python"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    ENVIRONMENT=production \
+    PORT=3000
+
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
-
-
-# Throw-away build stage to reduce size of final image
-FROM base as build
-
-# Install packages needed to build node modules
+# Build tools for the packages without a manylinux wheel (argon2-cffi's cffi,
+# asyncpg on some platforms). Removed again in the same layer.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install node modules
-COPY --link bun.lockb package.json ./
-RUN bun install --ci
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y build-essential && apt-get autoremove -y
 
-# Install frontend node modules
-COPY --link frontend/bun.lockb frontend/package.json ./frontend/
-RUN cd frontend && bun install --ci
+# crawl4ai's headless browser. Only the web-grounded generation mode needs it;
+# without it that mode falls back to a plain HTTP fetch.
+RUN crawl4ai-setup || echo "crawl4ai browser setup skipped; falling back to plain fetch"
 
-# Copy application code
-COPY --link . .
+COPY backend/ ./backend/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+COPY --from=frontend /app/frontend/dist ./frontend/dist
 
-# Change to frontend directory and build the frontend app
-WORKDIR /app/frontend
-RUN bun run build
-# Remove all files in frontend except for the dist folder
-RUN find . -mindepth 1 ! -regex '^./dist\(/.*\)?' -delete
+# Uploaded images. Mount a volume here to keep them across deploys.
+RUN mkdir -p /app/uploads
+VOLUME ["/app/uploads"]
 
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "bun", "run", "start" ]
+
+# Migrations run at boot: the baseline revision adopts an existing schema
+# rather than recreating it, so this is safe on every restart.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn backend.main:app --host 0.0.0.0 --port ${PORT}"]

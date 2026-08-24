@@ -1,74 +1,128 @@
-import { hc } from "hono/client";
-import { type ApiRoutes } from "@server/app";
 import { queryOptions } from "@tanstack/react-query";
 import type { DocFormat, LessonPlan } from "@/lib/types";
 import { getDefaultCredential } from "@/lib/aiCredentials";
 
 /**
- * Custom fetch used by the Hono client. For AI routes (`/api/ai/*`) it attaches
- * the user's default AI provider key/model from localStorage.
+ * The HTTP client every call in this file goes through.
+ *
+ * It replaced Hono's RPC client, which typed the routes end-to-end by importing
+ * the server's own route definitions — an arrangement that only works while
+ * the server is TypeScript. The backend is Python now, so the types live here
+ * instead, next to the functions that return them, and the request plumbing
+ * (JSON body, credentials, error unwrapping) exists once rather than at each
+ * call site.
  */
-const customFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-  const urlStr = typeof input === "string" ? input : (input as Request).url || input.toString();
 
-  if (!urlStr.includes("/api/ai/")) {
-    return fetch(input, init);
+/** Everything the API is reached at. Relative, so Vite's proxy and the
+ *  production server (which serves this bundle itself) both work unchanged. */
+const API_BASE = "/api";
+
+interface RequestOptions {
+  method?: string;
+  /** Serialised as JSON. Use `form` for multipart instead. */
+  body?: unknown;
+  form?: FormData;
+  query?: Record<string, string | number | undefined>;
+  /** Attach the user's own AI provider credentials to this request. */
+  ai?: boolean;
+  /** Sentence shown if the response carries no message of its own. */
+  failure: string;
+}
+
+function buildUrl(path: string, query?: RequestOptions["query"]): string {
+  const url = `${API_BASE}${path}`;
+  if (!query) return url;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) params.set(key, String(value));
   }
+  const search = params.toString();
+  return search ? `${url}?${search}` : url;
+}
 
+/**
+ * The user's provider key travels on the AI request that needs it and nowhere
+ * else — it lives in their browser, and the server never stores it.
+ */
+function aiHeaders(): Record<string, string> {
   const credential = getDefaultCredential();
-  const headers = new Headers(init?.headers);
-  if (credential) {
-    headers.set("X-AI-Provider", credential.provider);
-    headers.set("X-AI-Model", credential.model);
-    headers.set("X-AI-Api-Key", credential.apiKey);
-  }
-
-  // Errors are surfaced by the caller via ensureOk, so that each call site can
-  // give the failure context. Toasting here too produced two toasts per
-  // failure, with the caller's generic one landing on top of the useful one.
-  return fetch(input, { ...init, headers });
-};
-
-const client = hc<ApiRoutes>("/", { fetch: customFetch });
-
-export const api = client.api;
-
-/** Minimal shape shared by the Fetch `Response` and Hono's `ClientResponse`. */
-type ResponseLike = {
-  ok: boolean;
-  status: number;
-  statusText: string;
-  text: () => Promise<string>;
-};
+  if (!credential) return {};
+  return {
+    "X-AI-Provider": credential.provider,
+    "X-AI-Model": credential.model,
+    "X-AI-Api-Key": credential.apiKey,
+  };
+}
 
 /** Throw a descriptive Error if a response isn't OK; otherwise return it. */
-async function ensureOk<T extends ResponseLike>(res: T, message: string): Promise<T> {
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    // Both the Hono API and the FastAPI AI service report failures as
-    // {"detail": "..."} / {"error": "..."}; surface that sentence rather than
-    // the raw JSON, which used to be shown to users verbatim.
-    let detail = body;
-    try {
-      const parsed = JSON.parse(body);
-      detail = parsed?.detail || parsed?.error || body;
-    } catch {
-      // Not JSON — use the body as-is.
-    }
-    throw new Error(detail || `${message} (${res.status} ${res.statusText})`);
+async function ensureOk(res: Response, message: string): Promise<Response> {
+  if (res.ok) return res;
+
+  const body = await res.text().catch(() => "");
+  // The API reports every failure as {"error": "...", "detail": "..."};
+  // surface that sentence rather than the raw JSON, which used to be shown to
+  // users verbatim.
+  let detail = body;
+  try {
+    const parsed = JSON.parse(body);
+    detail = parsed?.error || parsed?.detail || body;
+  } catch {
+    // Not JSON — use the body as-is.
   }
-  return res;
+  throw new Error(detail || `${message} (${res.status} ${res.statusText})`);
+}
+
+/** Issue one request, and throw a readable Error if it fails. */
+async function request(path: string, options: RequestOptions): Promise<Response> {
+  const { method = "GET", body, form, query, ai, failure } = options;
+
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (ai) Object.assign(headers, aiHeaders());
+
+  const res = await fetch(buildUrl(path, query), {
+    method,
+    headers,
+    body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
+    // The session is an httpOnly cookie, so it has to be sent explicitly.
+    credentials: "same-origin",
+  });
+
+  return ensureOk(res, failure);
+}
+
+/** A request whose body is JSON. */
+async function json<T>(path: string, options: RequestOptions): Promise<T> {
+  const res = await request(path, options);
+  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+}
+
+/** A request whose body is the model's raw text. */
+async function text(path: string, options: RequestOptions): Promise<string> {
+  return (await request(path, options)).text();
 }
 
 // ── Current user ──────────────────────────────────────────────────────────
 
-async function getCurrentUser() {
-  const res = await api.me.$get();
-  // 401 is expected for anonymous visitors — treat as a null session rather
-  // than an error so react-query doesn't retry.
-  if (res.status === 401) return { user: null };
-  await ensureOk(res, "Failed to fetch current user");
-  return res.json();
+/** The shape `/api/me` and both sign-in routes answer with. */
+export interface SessionResponse {
+  user: {
+    id: string;
+    email?: string | null;
+    given_name?: string | null;
+    family_name?: string | null;
+    picture?: string | null;
+    username?: string | null;
+    bio?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  isNewUser?: boolean;
+}
+
+async function getCurrentUser(): Promise<SessionResponse> {
+  // An anonymous visitor is answered with 200 and a null user rather than a
+  // failure, so this never throws for the expected first-visit case.
+  return json<SessionResponse>("/me", { failure: "Failed to fetch current user" });
 }
 
 export const userQueryOptions = queryOptions({
@@ -85,42 +139,87 @@ export interface ProfileUpdate {
 }
 
 export async function updateProfile(update: ProfileUpdate) {
-  const res = await fetch("/api/profile", {
+  return json("/profile", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(update),
+    body: update,
+    failure: "Failed to update profile",
   });
-  await ensureOk(res, "Failed to update profile");
-  return res.json();
+}
+
+// ── Sign in, sign up, sign out ────────────────────────────────────────────
+
+export interface Credentials {
+  email: string;
+  password: string;
+}
+
+export interface Registration extends Credentials {
+  given_name?: string;
+  family_name?: string;
+}
+
+/** Create an account. The response is already signed in. */
+export async function registerAccount(payload: Registration): Promise<SessionResponse> {
+  return json<SessionResponse>("/auth/register", {
+    method: "POST",
+    body: payload,
+    failure: "Could not create that account",
+  });
+}
+
+export async function loginWithPassword(payload: Credentials): Promise<SessionResponse> {
+  return json<SessionResponse>("/auth/login", {
+    method: "POST",
+    body: payload,
+    failure: "Could not sign in",
+  });
+}
+
+/** End this browser's session. The cookie is cleared by the response. */
+export async function logoutSession(): Promise<void> {
+  await request("/auth/logout", { method: "POST", failure: "Could not sign out" });
+}
+
+/** Change the signed-in user's password, signing every other browser out. */
+export async function changePassword(payload: {
+  current_password: string;
+  new_password: string;
+}): Promise<void> {
+  await request("/auth/password", {
+    method: "POST",
+    body: payload,
+    failure: "Could not change your password",
+  });
 }
 
 /** Upload an image file (avatar, etc.) and return its public URL. */
 export async function uploadFile(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/files/upload", { method: "POST", body: fd });
-  await ensureOk(res, "Upload failed");
-  const { url } = (await res.json()) as { url: string };
+  const form = new FormData();
+  form.append("file", file);
+  const { url } = await json<{ url: string }>("/files/upload", {
+    method: "POST",
+    form,
+    failure: "Upload failed",
+  });
   return url;
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────
 
 /**
- * POST to an AI route; `customFetch` attaches the user's provider credentials.
+ * POST to an AI route, with the user's provider credentials attached.
  *
- * Every AI call goes through here, so the JSON body, the headers and the error
+ * Every AI call goes through here, so the body, the headers and the error
  * unwrapping exist once. They used to be spread across three idioms — the Hono
  * RPC client, a LaTeX-only helper, and bare `fetch` — which is how the same
  * failure reached the user with three different messages.
  */
-async function postAi(path: string, body: unknown, failure: string) {
-  const res = await customFetch(`/api/ai/${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return ensureOk(res, failure);
+function aiJson<T>(path: string, body: unknown, failure: string): Promise<T> {
+  return json<T>(`/ai/${path}`, { method: "POST", body, ai: true, failure });
+}
+
+function aiText(path: string, body: unknown, failure: string): Promise<string> {
+  return text(`/ai/${path}`, { method: "POST", body, ai: true, failure });
 }
 
 /** The envelope both hierarchy endpoints return: a ```json fence inside JSON. */
@@ -128,14 +227,16 @@ export type HierarchyEnvelope = { status: string; data?: { topics?: string } };
 
 /** Ask for a topic hierarchy for a subject the writer names. */
 export async function searchTopics(query: string) {
-  const res = await postAi("search-topics", { query }, "Failed to search topics");
-  return res.json() as Promise<HierarchyEnvelope>;
+  return aiJson<HierarchyEnvelope>("search-topics", { query }, "Failed to search topics");
 }
 
 /** Derive an outline from a draft that already exists. */
 export async function outlineFromDocument(document: string, format: DocFormat) {
-  const res = await postAi("outline-from-document", { document, format }, "Failed to outline this document");
-  return res.json() as Promise<HierarchyEnvelope>;
+  return aiJson<HierarchyEnvelope>(
+    "outline-from-document",
+    { document, format },
+    "Failed to outline this document",
+  );
 }
 
 /** Where a section's reference material comes from. */
@@ -159,8 +260,7 @@ export interface SectionBody {
 
 /** Write one section of a document. Returns the model's raw markup. */
 export async function requestSection(body: SectionBody): Promise<string> {
-  const res = await postAi("generate-section", body, "Failed to generate the section");
-  return res.text();
+  return aiText("generate-section", body, "Failed to generate the section");
 }
 
 export interface TransformRequest {
@@ -177,8 +277,7 @@ export interface TransformRequest {
 
 /** Rewrite, extend, or explain one passage. Returns the model's plain text. */
 export async function transformSelection(req: TransformRequest): Promise<string> {
-  const res = await postAi("transform", req, "The AI edit failed");
-  return res.text();
+  return aiText("transform", req, "The AI edit failed");
 }
 
 /** One row of a model-proposed restructure, with its justification. */
@@ -201,12 +300,11 @@ export async function refineOutline(
   instruction: string,
   format: DocFormat,
 ): Promise<RefinedOutline> {
-  const res = await postAi(
+  return aiJson<RefinedOutline>(
     "refine-outline",
     { outline, subject, instruction, format },
     "Could not refine the outline",
   );
-  return res.json() as Promise<RefinedOutline>;
 }
 
 // ── Lesson plans ──────────────────────────────────────────────────────────
@@ -235,46 +333,54 @@ export type ErrorResponse = { error: string };
 
 /** Create a new lesson plan, or update it in place when it already has an id. */
 export async function saveLessonPlan(lessonPlan: LessonPlan) {
-  const res = lessonPlan.id
-    ? await api.lessonPlans[":id"].$put({ param: { id: lessonPlan.id.toString() }, json: lessonPlan })
-    : await api.lessonPlans.$post({ json: lessonPlan });
-  await ensureOk(res, "Failed to save lesson plan");
-  return res.json();
+  return lessonPlan.id
+    ? json<LessonPlanResponse>(`/lessonPlans/${lessonPlan.id}`, {
+        method: "PUT",
+        body: lessonPlan,
+        failure: "Failed to save lesson plan",
+      })
+    : json<LessonPlanResponse>("/lessonPlans", {
+        method: "POST",
+        body: lessonPlan,
+        failure: "Failed to save lesson plan",
+      });
 }
 
 export async function getLessonPlans() {
-  const res = await api.lessonPlans.$get();
-  await ensureOk(res, "Failed to get lesson plans");
-  return res.json();
+  return json<{ lessonPlans: LessonPlanResponse[] }>("/lessonPlans", {
+    failure: "Failed to get lesson plans",
+  });
 }
 
 export async function getLessonPlanById(id: number): Promise<LessonPlanResponse | ErrorResponse> {
   try {
-    const res = await api.lessonPlans[":id"].$get({ param: { id: String(id) } });
-    await ensureOk(res, `Failed to get lesson plan ${id}`);
-    return (await res.json()) as LessonPlanResponse;
+    return await json<LessonPlanResponse>(`/lessonPlans/${id}`, {
+      failure: `Failed to get lesson plan ${id}`,
+    });
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
 
 export async function deleteLessonPlan(id: number) {
-  const res = await api.lessonPlans[":id"].$delete({ param: { id: String(id) } });
-  await ensureOk(res, "Failed to delete lesson plan");
+  await request(`/lessonPlans/${id}`, {
+    method: "DELETE",
+    failure: "Failed to delete lesson plan",
+  });
   return true;
 }
 
 export async function getPublicLessonPlans() {
-  const res = await api.lessonPlans.public.$get();
-  await ensureOk(res, "Failed to get public lesson plans");
-  return res.json();
+  return json<{ lessonPlans: LessonPlanResponse[] }>("/lessonPlans/public", {
+    failure: "Failed to get public lesson plans",
+  });
 }
 
 export async function getPublicLessonPlanById(id: number): Promise<LessonPlanResponse | ErrorResponse> {
   try {
-    const res = await api.lessonPlans.public[":id"].$get({ param: { id: String(id) } });
-    await ensureOk(res, `Failed to get public lesson plan ${id}`);
-    return (await res.json()) as LessonPlanResponse;
+    return await json<LessonPlanResponse>(`/lessonPlans/public/${id}`, {
+      failure: `Failed to get public lesson plan ${id}`,
+    });
   } catch (error) {
     return { error: error instanceof Error ? error.message : String(error) };
   }
@@ -282,23 +388,42 @@ export async function getPublicLessonPlanById(id: number): Promise<LessonPlanRes
 
 // ── Users ─────────────────────────────────────────────────────────────────
 
-export async function searchUsername(query: string) {
+/** One row of the co-author picker's autocomplete. */
+export interface UsernameMatch {
+  id: string;
+  username: string;
+  givenName?: string | null;
+}
+
+/** Username autocomplete. Answers with an empty list rather than throwing:
+ *  a failed lookup while typing should not surface as an error. */
+export async function searchUsername(query: string): Promise<UsernameMatch[]> {
   try {
-    const res = await fetch(`/api/search/username?q=${encodeURIComponent(query)}`);
-    await ensureOk(res, "Failed to search users");
-    const data = await res.json();
-    return data.users;
+    const data = await json<{ users: UsernameMatch[] }>("/search/username", {
+      query: { q: query },
+      failure: "Failed to search users",
+    });
+    return data.users ?? [];
   } catch {
     return [];
   }
 }
 
-async function getUserById(id: string) {
+/** Only what an attribution line needs. */
+export interface Byline {
+  id: string;
+  given_name?: string | null;
+  family_name?: string | null;
+  username?: string | null;
+  avatar_url?: string | null;
+}
+
+async function getUserById(id: string): Promise<Byline | null> {
   try {
-    const res = await api["user"][":id"].$get({ param: { id } });
-    await ensureOk(res, "Failed to fetch user");
-    const data = await res.json();
-    return "user" in data ? data.user : null;
+    const data = await json<{ user: Byline }>(`/user/${encodeURIComponent(id)}`, {
+      failure: "Failed to fetch user",
+    });
+    return data.user ?? null;
   } catch {
     return null;
   }
@@ -332,18 +457,20 @@ export interface PublishedDoc {
 
 /** Browse profiles. An empty query lists everyone with a username. */
 export async function fetchPeople(query = ""): Promise<Person[]> {
-  const res = await fetch(`/api/people?q=${encodeURIComponent(query)}`);
-  await ensureOk(res, "Failed to load people");
-  const data = await res.json();
+  const data = await json<{ people: Person[] }>("/people", {
+    query: { q: query },
+    failure: "Failed to load people",
+  });
   return data.people ?? [];
 }
 
 export async function fetchPersonProfile(
   username: string,
 ): Promise<{ person: Person; published: PublishedDoc[] }> {
-  const res = await fetch(`/api/people/${encodeURIComponent(username)}`);
-  await ensureOk(res, "Profile not found");
-  return res.json();
+  return json<{ person: Person; published: PublishedDoc[] }>(
+    `/people/${encodeURIComponent(username)}`,
+    { failure: "Profile not found" },
+  );
 }
 
 /** Full display name, falling back to the handle. */

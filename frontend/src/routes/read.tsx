@@ -4,14 +4,41 @@ import { toast } from 'sonner';
 import { ArrowLeft, Download, FileQuestion, Loader2, Printer } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { getLessonPlanById, getPublicLessonPlanById, type LessonPlanResponse } from '@/lib/api';
-import { stripFrontmatter } from '@/lib/utils';
+import { documentContent } from '@/lib/documents';
 import { formatOf, type DocFormat } from '@/lib/types';
 import { MarkdownPreview } from '@/features/preview/MarkdownPreview';
 import { LatexPreview } from '@/features/preview/LatexPreview';
 import { downloadSource, printPreview } from '@/features/editor/lib/exporters';
 import { EmptyState } from '@/components/ui/primitives';
 
-export const Route = createFileRoute('/read')({ component: ReaderPage });
+/** What the reader reads out of its own URL. */
+export interface ReaderSearch {
+  /** Document to open. Absent means there is nothing to show. */
+  id?: number;
+}
+
+/**
+ * The reader's URL contract, declared once — the same treatment `/editor` got.
+ *
+ * Without it the router types this route's search as empty, so the one
+ * `navigate({ to: '/read' })` call site had to escape the type system with
+ * `as never`, and the page dug its own id out of `window.location.search`.
+ * That hand-read ran in a mount-only effect, so following a second `/read`
+ * link while already on the page left the first document on screen.
+ */
+export const Route = createFileRoute('/read')({
+  component: ReaderPage,
+  validateSearch: (search: Record<string, unknown>): ReaderSearch => {
+    const id = Number(search.id);
+    return { id: Number.isFinite(id) && id > 0 ? id : undefined };
+  },
+});
+
+interface LoadedDocument {
+  name: string;
+  content: string;
+  format: DocFormat;
+}
 
 /**
  * Read-only view of a document.
@@ -20,37 +47,43 @@ export const Route = createFileRoute('/read')({ component: ReaderPage });
  * already stores, and rendered it with markup that existed nowhere else.
  */
 function ReaderPage() {
-  const [doc, setDoc] = useState<{ name: string; content: string; format: DocFormat } | null>(null);
+  const { id } = Route.useSearch();
+  const [doc, setDoc] = useState<LoadedDocument | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Keyed on the id, so following a link to another document reloads rather
+  // than leaving the previous one on screen under the new URL.
   useEffect(() => {
-    const id = Number(new URLSearchParams(window.location.search).get('id'));
     if (!id) {
+      setDoc(null);
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    let cancelled = false;
 
     (async () => {
       // Try it as one of yours first, then as a published document.
       let result: LessonPlanResponse | { error: string } = await getLessonPlanById(id);
       if ('error' in result) result = await getPublicLessonPlanById(id);
+      if (cancelled) return;
+
       if ('error' in result) {
         toast.error('That document is not available.');
-        setLoading(false);
-        return;
+        setDoc(null);
+      } else {
+        setDoc({
+          name: result.name,
+          format: formatOf(result.mainTopic),
+          content: documentContent(result.topics),
+        });
       }
-
-      setDoc({
-        name: result.name,
-        format: formatOf(result.mainTopic),
-        content: result.topics
-          .filter(topic => topic.mdxContent?.trim())
-          .map(topic => stripFrontmatter(topic.mdxContent))
-          .join('\n\n'),
-      });
       setLoading(false);
     })();
-  }, []);
+
+    return () => { cancelled = true; };
+  }, [id]);
 
   if (loading) {
     return (
