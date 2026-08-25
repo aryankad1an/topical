@@ -119,24 +119,16 @@
   box-shadow: var(--shadow-pop);
 }
 
-/* ── Brand mark ── */
-.auth-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 2.5rem;
-  width: 2.5rem;
-  border-radius: var(--radius-md);
-  background: var(--accent-400);
-  color: var(--accent-ink);
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 1.125rem;
-  line-height: 1;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+/* ── Brand ──
+   The shared lockup, at the head of the pitch column and nowhere else on the
+   screen. `.auth-mark` — a bare 2.5rem terracotta tile with a letter in it —
+   was printed twice per page, once here and once inside the form panel, on
+   top of the one already in the nav bar. */
+.auth-pitch-brand {
+  margin-bottom: 1.5rem;
 }
-
-.auth-mark--lg { height: 3rem; width: 3rem; border-radius: var(--radius-lg); font-size: 1.375rem; }
+.auth-pitch-brand .brand-tile { width: 30px; height: 30px; font-size: 15px; }
+.auth-pitch-brand .brand-word { font-size: 18px; }
 
 .auth-title {
   font-family: var(--font-serif);

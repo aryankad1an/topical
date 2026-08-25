@@ -21,6 +21,7 @@ import { Menu, X, Home, FolderOpen, Users, UserRound, Command } from "lucide-rea
 import { useAuth } from "@/lib/auth-context";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BrandMark } from "@/components/BrandMark";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -116,7 +117,6 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
             padding: '6px 10px 6px 8px',
             borderRadius: 100,
             marginRight: 2,
@@ -125,18 +125,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
             textDecoration: 'none',
           }}
         >
-          <div style={{
-            width: 22, height: 22, borderRadius: 7,
-            background: 'var(--accent-400)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.20)',
-            flexShrink: 0,
-          }}>
-            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 11, fontFamily: 'inherit' }}>T</span>
-          </div>
-          <span className="font-brand" style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
-            Topical
-          </span>
+          <BrandMark />
         </Link>
 
         {/* Divider */}
@@ -201,15 +190,8 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           background: 'var(--surface)',
           borderBottom: '1px solid var(--line-soft)',
         }}>
-        <Link to="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
-          <div style={{
-            width: 24, height: 24, borderRadius: 7,
-            background: 'var(--accent-400)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
-          </div>
-          <span className="font-brand text-base" style={{ color: 'var(--ink)' }}>Topical</span>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <BrandMark size="md" />
         </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />
@@ -229,11 +211,8 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
         <div className="fixed inset-0 z-[200] md:hidden mobile-menu-overlay">
           <div className="flex flex-col h-full">
             <div className="flex justify-between items-center p-5 border-b border-[var(--line-soft)]">
-              <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                <div style={{ width: 24, height: 24, borderRadius: 7, background: 'var(--accent-400)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: 'var(--accent-ink)', fontWeight: 800, fontSize: 12 }}>T</span>
-                </div>
-                <span className="font-brand text-lg" style={{ color: 'var(--ink)' }}>Topical</span>
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                <BrandMark size="md" />
               </Link>
               <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 text-[var(--ink-muted)]"><X size={20} /></button>
             </div>
@@ -281,7 +260,15 @@ function Root() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    /* The editor is a fixed application shell, not a document: it sizes itself
+       to the viewport and scrolls inside its own panes. `min-h-screen` lets the
+       page grow past the viewport, so any stray height from a sibling made the
+       whole shell scrollable — you could drag the page and leave blank ground
+       below the status bar. On the editor route the shell is pinned to the
+       viewport and told not to scroll; every other route keeps growing. */
+    <div className={isEditorRoute
+      ? 'h-screen overflow-hidden flex flex-col relative'
+      : 'min-h-screen flex flex-col relative'}>
       {/* Unconditional: the editor hides the nav and the page ground, but its
           own toolbars are glass and reference these by id. */}
       <GlassFilters />
@@ -293,7 +280,7 @@ function Root() {
         isAuthenticated={isAuthenticated}
       />
       <OnboardingModal />
-      <main className={`flex-1 w-full mx-auto relative z-10 ${isEditorRoute ? '' : 'px-4 py-6 mt-20 md:mt-24'}`}>
+      <main className={`flex-1 w-full mx-auto relative z-10 ${isEditorRoute ? 'min-h-0' : 'px-4 py-6 mt-20 md:mt-24'}`}>
         <Outlet />
       </main>
       <Toaster

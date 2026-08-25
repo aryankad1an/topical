@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -64,8 +64,16 @@ function CopyButton({ text }: { text: string }) {
 /**
  * Markdown/MDX rendering used by the editor, the reader and the community
  * pages, so a document looks the same everywhere it appears.
+ *
+ * Memoised, and that is load-bearing rather than a micro-optimisation. Every
+ * render re-parses the whole source through remark and rehype — GFM, math and
+ * syntax highlighting — which on a 58,000-character document is tens of
+ * milliseconds. The editor's split divider used to set React state on every
+ * `mousemove`, so dragging it re-parsed the entire document sixty times a
+ * second and the drag crawled. Both props are primitives, so the comparison
+ * is exact and a drag now re-renders nothing here at all.
  */
-export function MarkdownPreview({ content, trackSource }: Props) {
+function MarkdownPreviewInner({ content, trackSource }: Props) {
   const heading = (level: number) =>
     function Heading({ node, children }: { node?: HastNode; children?: ReactNode }) {
       const Tag = `h${level}` as 'h1';
@@ -148,3 +156,5 @@ export function MarkdownPreview({ content, trackSource }: Props) {
     </div>
   );
 }
+
+export const MarkdownPreview = memo(MarkdownPreviewInner);

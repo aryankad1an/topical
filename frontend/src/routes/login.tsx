@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
-import { Mail, PenLine, Share2, Sparkles } from 'lucide-react';
+import { PenLine, Share2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth-context';
@@ -51,8 +51,8 @@ function LoginPage() {
       subtitle="Sign in to reach your documents."
       pitch={
         <AuthPitch
-          headline="Pick up where you left off."
-          body="Your outlines, drafts and published pieces are exactly as you left them."
+          headline="Your topics are where you left them."
+          body="Every outline, draft and published piece, exactly as it was — and the field is ready for the next one."
           points={[
             { icon: PenLine, text: 'Markdown and LaTeX in one editor, with a live preview' },
             { icon: Sparkles, text: 'An outline rail that drafts and refines structure with you' },
@@ -72,7 +72,6 @@ function LoginPage() {
         id="email"
         label="Email"
         type="email"
-        icon={Mail}
         placeholder="you@example.com"
         autoComplete="email"
         value={email}

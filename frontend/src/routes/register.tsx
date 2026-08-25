@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { KeyRound, Mail, ShieldCheck, User } from 'lucide-react';
+import { KeyRound, ShieldCheck, ListTree } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth-context';
@@ -55,12 +55,12 @@ function RegisterPage() {
       subtitle="Everything you write stays yours until you publish it."
       pitch={
         <AuthPitch
-          headline="Write it once. Structure it properly."
-          body="Topical is a writing surface for long, structured pieces — outline first, draft in Markdown or LaTeX, publish when it holds together."
+          headline="All you need is a topic."
+          body="Name one, and Topical proposes the outline. You approve it, and every section is researched against your document and the live web — cited, editable, yours."
           points={[
-            { icon: KeyRound, text: 'Your account lives here — no third-party sign-in required' },
-            { icon: ShieldCheck, text: 'Passwords are stored as Argon2id hashes, never as text' },
-            { icon: User, text: 'A public profile only exists once you publish something' },
+            { icon: ListTree, text: 'The outline is settled before a word gets written' },
+            { icon: KeyRound, text: 'Bring your own model key — it never leaves your browser' },
+            { icon: ShieldCheck, text: 'Your account lives here; passwords are Argon2id hashes, never text' },
           ]}
         />
       }
@@ -95,7 +95,6 @@ function RegisterPage() {
         id="email"
         label="Email"
         type="email"
-        icon={Mail}
         placeholder="you@example.com"
         autoComplete="email"
         value={email}

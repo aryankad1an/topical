@@ -14,7 +14,7 @@ interface Options {
   format: DocFormat;
   projectName: string;
   tree: OutlineTree;
-  /** Words already written under a heading. */
+  /** Words already written under a heading, by source offset. */
   wordsOf: (node: OutlineNode) => number;
   onInsertSection: (text: string, title: string, replace: boolean) => void;
   /** Keep the document showing whichever section is being written. */
@@ -37,7 +37,14 @@ interface Options {
 export function useSectionWriter({
   format, projectName, tree, wordsOf, onInsertSection, onFocusSection,
 }: Options) {
-  const [status, setStatus] = useState<Record<string, RowStatus>>({});
+  /**
+   * Which rows are working or have failed, keyed by source offset.
+   *
+   * Not by title: two sections may legitimately share a name, and keying on it
+   * put the spinner on every row called "Overview" the moment one of them
+   * started, then cleared them all together.
+   */
+  const [status, setStatus] = useState<Record<number, RowStatus>>({});
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number; title: string } | null>(null);
   const [method, setMethod] = useState<GenerationMethod>('web');
@@ -56,7 +63,7 @@ export function useSectionWriter({
     if (index === undefined) return false;
 
     setBusy(true);
-    setStatus(prev => ({ ...prev, [node.label]: 'generating' }));
+    setStatus(prev => ({ ...prev, [node.offset]: 'generating' }));
     onFocusSection?.(node);
     try {
       const text = await generateSection({
@@ -77,12 +84,12 @@ export function useSectionWriter({
       // The heading is always already on the page, so this always replaces
       // what sits under it rather than adding a second copy.
       onInsertSection(text, node.label, true);
-      setStatus(prev => { const next = { ...prev }; delete next[node.label]; return next; });
+      setStatus(prev => { const next = { ...prev }; delete next[node.offset]; return next; });
       return true;
     } catch (error) {
       // Mark it failed rather than clearing it: a row that looks untouched
       // gives no hint anything went wrong, and the spinner would hang forever.
-      setStatus(prev => ({ ...prev, [node.label]: 'failed' }));
+      setStatus(prev => ({ ...prev, [node.offset]: 'failed' }));
       toast.error(errorMessage(error, `Could not write "${node.label}"`));
       return false;
     } finally {

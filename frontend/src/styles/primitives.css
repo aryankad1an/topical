@@ -100,28 +100,83 @@
 
 /* Hover is a lift, not a recolour. The card rises a little and its shadow
    deepens to match — one gesture, and it does not fight whatever the card
-   uses to show that it is selected. */
-.step-card:hover,
-.bento-item:hover,
-.person-card:hover,
-.doc-card:hover,
-.doc-row:hover,
-.pub-row:hover,
-.provider-tile:hover,
-.brand-card:hover,
-.community-card:hover,
-.lesson-community-card:hover,
-.new-tile:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
+   uses to show that it is selected.
+
+   Gated on a real pointer. A touch device fires `:hover` on tap and then
+   holds it until something else is tapped, so an ungated lift leaves one
+   card in a grid standing up for no reason long after the finger has gone. */
+@media (hover: hover) and (pointer: fine) {
+  .step-card:hover,
+  .bento-item:hover,
+  .person-card:hover,
+  .doc-card:hover,
+  .doc-row:hover,
+  .pub-row:hover,
+  .provider-tile:hover,
+  .brand-card:hover,
+  .community-card:hover,
+  .lesson-community-card:hover,
+  .new-tile:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  /* Rows stay put. A 700px-wide strip that jumps 2px on hover makes a list
+     look like it is twitching. */
+  .doc-row:hover,
+  .pub-row:hover {
+    transform: none;
+  }
 }
 
-/* Rows stay put. A 700px-wide strip that jumps 2px on hover makes a list
-   look like it is twitching. */
-.doc-row:hover,
-.pub-row:hover {
-  transform: none;
+/* Pressed. A card you can open is a control, and a control that does not
+   move under the finger leaves the tap feeling unheard — on a slow route
+   transition that half-second of silence is where a second tap comes from.
+   The scale is smaller than a button's: the same 3% on a 340px card is a
+   visible jolt, where on a 90px button it is a nudge. */
+.doc-card:active,
+.doc-row:active,
+.pub-row:active,
+.person-card:active,
+.provider-tile:active,
+.brand-card:active,
+.community-card:active,
+.lesson-community-card:active,
+.new-tile:active {
+  transform: scale(0.994);
+  transition-duration: var(--dur-press);
+}
+
+/* ── Touch: nothing lifts ──
+   The gate above covers the cards this file owns, but a dozen hover-lifts
+   are declared next to their components in `pages.css` and would leak
+   through — and any added later would leak the same way. This file loads
+   after that one, so one block here is the backstop.
+
+   The problem it solves is specific: a tap fires `:hover` and then *keeps*
+   it until something else is tapped, so a card stays standing up long after
+   the finger has gone, and on a card that navigates it stays lifted through
+   the whole route change. `@media (hover: none)` is the honest test for it —
+   not viewport width, which says nothing about the pointer. */
+@media (hover: none) {
+  .step-card:hover,
+  .bento-item:hover,
+  .person-card:hover,
+  .doc-card:hover,
+  .doc-row:hover,
+  .pub-row:hover,
+  .provider-tile:hover,
+  .brand-card:hover,
+  .community-card:hover,
+  .lesson-community-card:hover,
+  .new-tile:hover,
+  .surface--interactive:hover {
+    transform: none;
+  }
+  .cta-btn:hover .cta-arrow {
+    transform: none;
+  }
 }
 
 /* The create tile stays dashed and unfilled: it is an invitation, not an
@@ -177,6 +232,19 @@
 .avatar--xl {
   height: 88px; width: 88px; border-radius: var(--radius-xl); font-size: 2rem;
   box-shadow: var(--shadow-lg);
+}
+
+/* ── Card heading ──
+   Named here rather than left to Tailwind utilities on the component, so the
+   size and the family are decided once for every card in the product. */
+.card-heading {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
+  color: var(--ink);
 }
 
 /* ── Unified chip ── */

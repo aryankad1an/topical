@@ -84,7 +84,14 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
                 <>
                   <button
                     className="text-[10.5px] font-semibold px-2 py-1 rounded-md transition-colors"
-                    style={{ color: 'var(--status-danger)', background: 'var(--status-danger)', border: '1px solid var(--status-danger)' }}
+                    /* The label was `--status-danger` on a `--status-danger`
+                       fill: a red lozenge with an invisible word in it. The
+                       fill is the tint, the label is the colour. */
+                    style={{
+                      color: 'var(--status-danger)',
+                      background: 'rgb(var(--danger-rgb) / 0.12)',
+                      border: '1px solid rgb(var(--danger-rgb) / 0.35)',
+                    }}
                     onClick={() => onDelete(post.id)}
                   >
                     Delete?
@@ -126,7 +133,11 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
         )}
 
         {/* Meta row — pinned to bottom */}
-        <div className="community-card-meta" style={{ marginTop: 'auto', paddingTop: 8, borderTop: '1px solid var(--line-soft)' }}>
+        {/* No rule above this row. A full-width hairline three-quarters of the
+            way down a card cuts it into two stacked cards, and a list of them
+            reads as twice as many objects as there are posts. Space separates
+            it well enough. */}
+        <div className="community-card-meta">
           <span className="meta-item">
             <User className="h-3 w-3" />
             {post.authorName}

@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Mail, User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from "lucide-react";
+import { Loader2, User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
-import { IdentityBanner, EmptyState } from "@/components/ui/primitives";
+import { Avatar, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { ChangePasswordCard } from "@/components/auth/ChangePasswordCard";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -40,76 +40,95 @@ function Profile() {
   }
 
   return (
-    <div className="w-full mx-auto py-10" style={{ maxWidth: '68rem', paddingInline: 'var(--gutter)' }}>
-      {/* ── Identity banner ── */}
-      <IdentityBanner
-        className="mb-6"
-        seed={user.id}
-        name={[user.given_name, user.family_name].filter(Boolean).join(' ') || 'Your Profile'}
-        handle={user.username}
-        bio={user.bio}
-        bioFallback="No bio yet — add one from Edit profile."
-        avatarUrl={user.avatarUrl || user.picture}
-        meta={<>
-          {user.email && (
-            <span className="inline-flex items-center gap-1.5"><Mail className="h-3 w-3" />{user.email}</span>
-          )}
-          <span className="inline-flex items-center gap-1.5">
-            <Key className="h-3 w-3" />
-            {credentials.length
-              ? `${credentials.length} provider${credentials.length === 1 ? '' : 's'} connected`
-              : 'No AI provider yet'}
-          </span>
-        </>}
+    <div className="page-shell">
+      {/* ── The header ──
+          This page opened with a full-bleed `IdentityBanner`: a tinted slab
+          with an 88px avatar in it, where every other screen in the product
+          opens with a left-aligned line of text. Nothing else in the app has
+          that shape, so arriving here read as landing in a different
+          application — which is what "the profile looks weird" was.
+
+          The banner is right for `/u/:username`, which is a page *about* a
+          person. This one is your own settings, so it gets the same header as
+          Projects and Community, and the identity moves into the card below
+          where the rest of your details already are. */}
+      <PageHeader
+        kicker={[user.given_name, user.family_name].filter(Boolean).join(' ') || user.email}
+        title="Your account"
+        subtitle="Your name, handle and bio are public. Everything else on this page is yours alone."
         actions={
-          <Button onClick={logout} disabled={isNavigating} variant="ghost" size="sm"
-            className="text-[var(--ink-faint)] hover:text-[var(--ink-2)] hover:bg-[var(--ink-a04)]">
-            {isNavigating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><LogOut className="h-3.5 w-3.5 mr-1.5" /> Sign out</>}
-          </Button>
+          /* `.btn-subtle`, the product's secondary tier — this was a shadcn
+             ghost `Button` with four Tailwind colour overrides, the only page
+             action in the app that was not one of the three control tiers
+             `buttons.css` owns. */
+          <button className="btn-subtle h-9 px-4" onClick={logout} disabled={isNavigating}>
+            {isNavigating
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <><LogOut className="h-3.5 w-3.5" /> Sign out</>}
+          </button>
         }
       />
 
       {/* The identity form carries more fields, so it gets the wider column.
           An even 50/50 split at max-w-3xl left both sides cramped. */}
       <div className="grid gap-6 md:grid-cols-[1.15fr_1fr] items-start">
+        {/* ── What the banner does not already say ──
+            This card used to open with Username and Bio, both of which the
+            banner two hundred pixels above prints in full — the same three
+            facts twice on one screen, the second time smaller and greyer.
+            What is left is the part of the account that is *not* public: the
+            address it is reachable at, what it is allowed to do, and the two
+            ways to change how it looks to everyone else. */}
         <Card>
           <CardHeader>
-            <CardTitle>Your details</CardTitle>
-            <CardDescription>What other members see on your public profile.</CardDescription>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>Only you see this page. Your name, handle and bio are public.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3.5">
-            <div>
-              <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1">Username</div>
-              {user.username
-                ? <span className="person-handle">@{user.username}</span>
-                : <span className="text-[13px] text-[var(--ink-faint)] italic">Not set — required to publish</span>}
+            {/* The avatar keeps its seeded hue and is the one place on this
+                page a colour changes per account. */}
+            <div className="account-identity">
+              <Avatar seed={user.id} src={user.avatarUrl || user.picture} name={user.given_name || user.email || 'You'} size="lg" />
+              <div className="min-w-0">
+                <div className="account-identity-name">
+                  {[user.given_name, user.family_name].filter(Boolean).join(' ') || 'Unnamed'}
+                </div>
+                <p className="account-identity-bio">
+                  {user.bio || <span className="detail-empty">No bio yet — add one from Edit profile.</span>}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1">Bio</div>
-              <p className="text-[13px] text-[var(--ink-muted)] leading-relaxed">
-                {user.bio || <span className="text-[var(--ink-ghost)] italic">No bio yet</span>}
-              </p>
+            <div className="detail-row">
+              <span className="detail-label">Email</span>
+              <span className="detail-value">{user.email || <span className="detail-empty">Not set</span>}</span>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Username</span>
+              <span className="detail-value">
+                {user.username
+                  ? <span className="person-handle">@{user.username}</span>
+                  : <span className="detail-empty">Not set — required to publish</span>}
+              </span>
             </div>
 
             {user.roles && user.roles.length > 0 && (
-              <div>
-                <div className="text-[10.5px] uppercase tracking-wider text-[var(--ink-ghost)] mb-1.5">Roles</div>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="detail-row">
+                <span className="detail-label">Roles</span>
+                <span className="detail-value flex flex-wrap gap-1.5">
                   {user.roles.map(role => (
-                    <span key={role} className="text-[10.5px] px-2 py-0.5 rounded-full"
-                      style={{ background: "var(--accent-soft)", color: "var(--accent-500)", border: "1px solid var(--accent-line)" }}>
-                      <Shield className="h-2.5 w-2.5 inline mr-1" />{role}
+                    <span key={role} className="chip chip--accent">
+                      <Shield className="h-2.5 w-2.5" />{role}
                     </span>
                   ))}
-                </div>
+                </span>
               </div>
             )}
 
             {/* Editing is its own screen — this page is for viewing. */}
-            <div className="flex items-center gap-2.5 pt-1">
-              <Link to="/profile/edit"
-                className="btn-subtle h-9 px-4">
+            <div className="flex items-center gap-2.5 pt-1.5">
+              <Link to="/profile/edit" className="btn-subtle h-9 px-4">
                 <Pencil className="h-3.5 w-3.5" /> Edit profile
               </Link>
               {user.username && (
@@ -132,10 +151,7 @@ function Profile() {
         <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              AI Providers
-            </CardTitle>
+            <CardTitle>AI providers</CardTitle>
             <CardDescription>The models Topical generates with.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

@@ -5,7 +5,7 @@ import { IconButton } from '@/components/ui/primitives';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import type { OutlineNode } from '../lib/outline';
-import { childTitles, indexOutline } from '../lib/tree';
+import { ancestorDepths, childTitles, indexOutline, sectionWords } from '../lib/tree';
 import { fetchHierarchy, outlineDraft, refinePlan, type RefinedPlan } from '../lib/generation';
 import { MAX_OUTLINE_WIDTH, MIN_OUTLINE_WIDTH } from '../lib/viewOptions';
 import { useDragResize } from '../hooks/useDragResize';
@@ -30,7 +30,8 @@ interface Props {
   content: string;
   /** Headings actually present in the document right now. */
   documentNodes: OutlineNode[];
-  activeLabel: string | null;
+  /** Id of the heading the caret is inside — not its title. See below. */
+  activeId: string | null;
   width: number;
   onWidth: (width: number) => void;
   onClose: () => void;
@@ -40,8 +41,6 @@ interface Props {
   onInsertSection: (text: string, title: string, replace: boolean) => void;
   /** Remove a section and everything nested under it from the document. */
   onDeleteSection: (title: string) => void;
-  /** Words a delete would take with it, for the warning before it happens. */
-  measureSection: (title: string) => number;
   onRenameHeading: (offset: number, next: string) => void;
   onShiftHeading: (offset: number, delta: 1 | -1) => void;
   onMoveHeading: (offset: number, target: number, edge: 'top' | 'bottom') => void;
@@ -65,8 +64,8 @@ interface Props {
  * that restructure the whole outline at once.
  */
 export function OutlineRail({
-  format, projectName, content, documentNodes, activeLabel, width, onWidth,
-  onClose, onJump, onFocusSection, onInsertSection, onDeleteSection, measureSection,
+  format, projectName, content, documentNodes, activeId, width, onWidth,
+  onClose, onJump, onFocusSection, onInsertSection, onDeleteSection,
   onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onApplyOutline,
 }: Props) {
   const [promptOpen, setPromptOpen] = useState(false);
@@ -82,18 +81,35 @@ export function OutlineRail({
   // Parents, children and subtree bounds, resolved once per outline instead of
   // by re-scanning the flat list for every row that asks.
   const tree = useMemo(() => indexOutline(nodes), [nodes]);
+  /* The sections the active row sits inside, each with how far above it is.
+     Lighting only the active row tells you where the caret is but not where
+     that *is*: in a deep outline a lit third-level row, with its parents
+     looking identical to every other row, leaves you scanning upward to work
+     out which chapter you are in. */
+  const ancestors = useMemo(() => ancestorDepths(tree, activeId), [tree, activeId]);
 
-  // One measurement per heading per render. This used to be called twice for
-  // every row and once more for the header count, each walking the document.
-  const words = useMemo(() => {
-    const out = new Map<string, number>();
-    for (const node of nodes) {
-      if (!out.has(node.label)) out.set(node.label, measureSection(node.label));
-    }
-    return out;
-  }, [nodes, measureSection]);
+  /*
+   * How much is written under each heading, keyed by where the heading is.
+   *
+   * By title, this was wrong twice over. Two sections may legitimately share a
+   * name — an outline with four "Overview" rows gave all four the first one's
+   * count, and marked all four written as soon as any one of them was. And the
+   * per-title helper rebuilt the whole outline on every call, so drawing the
+   * rail cost one full scan of the document per row. This is one pass.
+   */
+  const words = useMemo(() => sectionWords(tree, content, format), [content, format, tree]);
 
-  const wordsOf = (node: OutlineNode) => words.get(node.label) ?? 0;
+  /**
+   * What a row has written *itself*.
+   *
+   * A parent's prose stops at its first child. Counting the subtree instead
+   * marked every chapter heading written the moment anything under it was,
+   * which made the coverage count a tally of nothing: a document of eight
+   * headings and one paragraph read as "5 of 16 written".
+   */
+  const wordsOf = (node: OutlineNode) => words.own.get(node.offset) ?? 0;
+  /** What deleting a row would take with it — its children included. */
+  const subtreeWordsOf = (node: OutlineNode) => words.subtree.get(node.offset) ?? 0;
 
   const rows = useOutlineRows({
     nodes,
@@ -101,7 +117,7 @@ export function OutlineRail({
       const index = tree.byOffset.get(node.offset);
       return index === undefined ? [] : childTitles(tree, index);
     },
-    measureSection,
+    wordsOf: subtreeWordsOf,
     onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onDeleteSection,
   });
 
@@ -203,8 +219,9 @@ export function OutlineRail({
   return (
     <aside className="outline-rail" style={{ width }}>
       {/* The count is the rail's one piece of status: how much of the
-          structure is actually written. It carries a title because "3/7" is
-          only obvious once someone has been told. */}
+          structure is actually written. It says so in words — a bare "5/16"
+          in a pill is a number with no unit, and the tooltip that explained
+          it only reached people who already suspected it meant something. */}
       <div className="outline-head">
         <ListTree className="h-3.5 w-3.5" aria-hidden="true" />
         <span>Outline</span>
@@ -213,7 +230,7 @@ export function OutlineRail({
             className="outline-count"
             title={`${written} of ${nodes.length} sections written · ${totalWords} words`}
           >
-            {written}/{nodes.length}
+            {written}/{nodes.length} written
           </span>
         )}
         <IconButton className="ml-auto" onClick={onClose} title="Hide outline  ⌘\" aria-label="Hide outline">
@@ -321,9 +338,13 @@ export function OutlineRail({
             <OutlineRow
               key={node.id}
               item={{ id: node.id, title: node.label, level: node.level }}
-              status={writer.status[node.label]}
+              status={writer.status[node.offset]}
               words={wordsOf(node)}
-              active={node.label === activeLabel}
+              // Identity is the node, never its text. Comparing titles lit up
+              // every row that happened to be called the same thing — an
+              // outline of h2/h3 headings highlighted half the rail at once.
+              active={node.id === activeId}
+              ancestorDepth={ancestors.get(node.id)}
               busy={writer.busy}
               canGenerate={!writer.needsUrls}
               editing={rows.editingOffset === node.offset}

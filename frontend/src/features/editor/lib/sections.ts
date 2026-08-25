@@ -10,7 +10,6 @@
 
 import type { DocFormat } from '@/lib/types';
 import { buildOutline, headingLabel, rawHeadings, type OutlineNode, type RawHeading } from './outline';
-import { countWords } from './stats';
 import { headingMarkup, MAX_PLAN_LEVEL, stripLeadingHeading } from './plan';
 import { insertBlock, type EditResult } from './textOps';
 
@@ -128,16 +127,6 @@ export function dropSection(
   return { content: next, start: caret, end: caret };
 }
 
-/**
- * How much prose a section would take with it, for the warning before a
- * delete. Counts the body and every nested section, but not its own heading —
- * that line is what the writer is already looking at.
- */
-export function sectionWordCount(content: string, format: DocFormat, title: string): number {
-  const span = findSection(content, format, title);
-  if (!span) return 0;
-  return countWords(content.slice(span.headingEnd, span.end), format);
-}
 
 
 // ---------------------------------------------------------------------------

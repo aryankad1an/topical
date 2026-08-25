@@ -15,6 +15,8 @@
  * document is still the only structure, and this is a view of it.
  */
 
+import type { DocFormat } from '@/lib/types';
+import { countWords } from './stats';
 import type { OutlineNode } from './outline';
 
 export interface OutlineEntry {
@@ -95,15 +97,42 @@ export function childTitles(tree: OutlineTree, index: number): string[] {
   return (tree.entries[index]?.children ?? []).map(child => tree.nodes[child].label);
 }
 
-/** Titles from the top of the document down to (but not including) this row. */
-export function ancestorTitles(tree: OutlineTree, index: number): string[] {
-  const titles: string[] = [];
+/** Indices of every row this one is nested inside, outermost first. */
+export function ancestorIndices(tree: OutlineTree, index: number): number[] {
+  const out: number[] = [];
   let entry = tree.entries[index] ?? null;
   while (entry && entry.parent !== null) {
     entry = tree.entries[entry.parent];
-    titles.unshift(entry.node.label);
+    out.unshift(entry.index);
   }
-  return titles;
+  return out;
+}
+
+/** Titles from the top of the document down to (but not including) this row. */
+export function ancestorTitles(tree: OutlineTree, index: number): string[] {
+  return ancestorIndices(tree, index).map(index => tree.nodes[index].label);
+}
+
+/**
+ * The sections one row is nested inside, each with how far above it sits.
+ *
+ * Depth counts *upward from the active row*: 1 is its immediate parent, 2 the
+ * grandparent, and so on. Numbering that way makes the number mean something
+ * on its own — "two levels above where I am" — and keeps a row's label the
+ * same whatever the document does further up. Numbering downward from the
+ * top would instead just restate reading order, which the rail already shows.
+ */
+export function ancestorDepths(tree: OutlineTree, id: string | null): Map<string, number> {
+  const depths = new Map<string, number>();
+  if (!id) return depths;
+  const index = tree.nodes.findIndex(node => node.id === id);
+  if (index < 0) return depths;
+  // `ancestorIndices` runs outermost first, so the last entry is the parent.
+  const chain = ancestorIndices(tree, index);
+  chain.forEach((ancestor, position) => {
+    depths.set(tree.nodes[ancestor].id, chain.length - position);
+  });
+  return depths;
 }
 
 /** "2.3" — the number a reader would give this section. */
@@ -128,6 +157,58 @@ export function subtreeSpan(
   if (!entry) return null;
   const next = tree.nodes[entry.subtreeEnd];
   return { start: entry.node.offset, end: next ? next.offset : contentLength };
+}
+
+export interface SectionWordCounts {
+  /**
+   * Words written under a heading *before its first sub-heading* — the prose
+   * that section is itself responsible for.
+   */
+  own: Map<number, number>;
+  /** Words under a heading and everything nested beneath it. */
+  subtree: Map<number, number>;
+}
+
+/**
+ * How much prose stands behind every heading, both ways, keyed by offset.
+ *
+ * The two numbers answer different questions and conflating them was a bug
+ * the rail wore on its face. **Own** is what a row has written: a parent's
+ * introduction stops at its first child, because the children write
+ * themselves. **Subtree** is what deleting a row would destroy.
+ *
+ * The rail used to show subtree words everywhere, so a chapter heading with
+ * no introduction of its own was marked written — and counted toward
+ * "5 of 16 written" — purely because something below it had been. A heading
+ * that has produced no text is not a written section, however much its
+ * children contain.
+ *
+ * Keyed by offset because two sections may legitimately be called the same
+ * thing. One pass for the whole outline; the per-title helper this replaced
+ * re-derived the entire outline on every call.
+ */
+export function sectionWords(
+  tree: OutlineTree,
+  content: string,
+  format: DocFormat,
+): SectionWordCounts {
+  const own = new Map<number, number>();
+  const subtree = new Map<number, number>();
+
+  tree.entries.forEach(entry => {
+    const newline = content.indexOf('\n', entry.node.offset);
+    const from = newline === -1 ? content.length : newline;
+
+    // Own prose stops at the next heading of *any* level.
+    const nextAny = tree.nodes[entry.index + 1];
+    own.set(entry.node.offset, countWords(content.slice(from, nextAny ? nextAny.offset : content.length), format));
+
+    // The subtree stops at the next heading that is not below this one.
+    const nextPeer = tree.nodes[entry.subtreeEnd];
+    subtree.set(entry.node.offset, countWords(content.slice(from, nextPeer ? nextPeer.offset : content.length), format));
+  });
+
+  return { own, subtree };
 }
 
 interface DigestOptions {

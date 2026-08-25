@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { BrandMark } from '@/components/BrandMark';
 
 import { passwordStrength } from '@/lib/validation';
 import { cn } from '@/lib/utils';
@@ -39,8 +40,11 @@ export function AuthCard({
       <div className="auth-layout">
         {pitch && <div className="auth-pitch">{pitch}</div>}
 
+        {/* No mark on the panel. The nav bar carries the lockup and the
+            pitch column carries it again at 40px — a third copy inside the
+            form meant three "T" tiles were visible at once on a screen whose
+            entire job is one decision. */}
         <div className="auth-panel animate-fade-in">
-          <span className="auth-mark" aria-hidden="true">T</span>
           <h1 className="auth-title">{title}</h1>
           {subtitle && <p className="auth-sub">{subtitle}</p>}
 
@@ -76,7 +80,9 @@ export function AuthPitch({
 }) {
   return (
     <>
-      <span className="auth-mark auth-mark--lg" aria-hidden="true">T</span>
+      {/* The lockup, not a bare tile. A terracotta square on its own above a
+          headline reads as a decoration that failed to load. */}
+      <div className="auth-pitch-brand"><BrandMark size="md" /></div>
       <h2 className="auth-pitch-title">{headline}</h2>
       <p className="auth-pitch-sub">{body}</p>
       <ul className="auth-points">
@@ -169,10 +175,12 @@ export function AuthPasswordField({
         {labelAside}
       </label>
 
+      {/* No decorative glyph. A padlock inside a field labelled "Password",
+          directly under the word "Password", is the third thing on screen
+          saying so — and it was only ever on two of the four fields, so the
+          text in a sign-up form started at two different left edges. The eye
+          stays: it is a control, not an ornament. */}
       <div className="auth-input-wrap">
-        <span className="auth-input-icon" aria-hidden="true">
-          <LockIcon />
-        </span>
         <input
           id={id}
           type={revealed ? 'text' : 'password'}
@@ -181,7 +189,7 @@ export function AuthPasswordField({
           onChange={(e) => onChange(e.target.value)}
           aria-describedby={showStrength && value ? meterId : undefined}
           {...props}
-          className={cn('auth-input auth-input--reveal', className)}
+          className={cn('auth-input auth-input--bare auth-input--reveal', className)}
         />
         <button
           type="button"
@@ -220,17 +228,6 @@ export function AuthPasswordField({
 
       {hint && <span className="auth-hint">{hint}</span>}
     </div>
-  );
-}
-
-/** Drawn here rather than imported so the field has no icon prop to forget. */
-function LockIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-    </svg>
   );
 }
 

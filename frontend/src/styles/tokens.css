@@ -37,6 +37,10 @@
        leans on — the direction of the tint has to flip with the theme. */
     --ink-a02: rgba(31, 28, 23, 0.02);
     --ink-a04: rgba(31, 28, 23, 0.04);
+    /* The same tint as `--ink-a04`, expressed as a mix percentage. Needed
+       wherever a translucent hover has to be reproduced *opaquely* — see the
+       outline row's tool tray in editor.css. */
+    --ink-a04-pct: 4%;
     --ink-a06: rgba(31, 28, 23, 0.06);
     --ink-a08: rgba(31, 28, 23, 0.08);
     --ink-a12: rgba(31, 28, 23, 0.12);
@@ -84,11 +88,21 @@
     --hue-violet: #6b4e9e;
 
     /* ── Type ─────────────────────────────────────────────────────────
-       A sans for the interface and a display grotesque for headings.
-       `--font-serif` keeps its name because every rule in the app already
-       references it; what it *holds* is the display face. */
+       A sans for the interface, and a serif for headings and for reading.
+
+       `--font-serif` finally holds a serif. It carried Bricolage Grotesque —
+       a display *grotesque* — so the app had a sans set against a sans, and
+       every heading was distinguished from its body text only by weight and
+       tracking. Newsreader gives the document a voice: it has a genuine
+       italic and an optical-size axis, which is what lets one family set both
+       a 3rem hero and 17px of body copy without either looking borrowed from
+       the other.
+
+       The fallbacks are real serifs. They were `IBM Plex Sans, system-ui`,
+       which meant a failed webfont load silently turned the whole editorial
+       layer back into the interface sans. */
     --font-sans:  'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --font-serif: 'Bricolage Grotesque', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Newsreader', 'Iowan Old Style', Charter, Georgia, 'Times New Roman', serif;
     --font-mono:  'IBM Plex Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
 
     /* A full ramp with no gaps. The old scale jumped straight from 1.75rem
@@ -118,6 +132,15 @@
     --radius-lg: 14px;    /* cards and panels */
     --radius-xl: 18px;    /* dialogs and sheets */
     --radius-pill: 999px;
+
+    /* ── Control heights ──
+       One height for every control that can sit in a toolbar row: search
+       fields, segmented trays, tabs. `--control-inner-h` is what goes *inside*
+       a 3px-padded, 1px-bordered tray to make the tray itself `--control-h`,
+       so a tray and a bare field on the same row line up by construction
+       rather than by two numbers that have to be kept equal by hand. */
+    --control-h: 40px;
+    --control-inner-h: 32px;
 
     /* ── Elevation ────────────────────────────────────────────────────
        Barely-there. A card is defined by its hairline; the shadow only
@@ -151,7 +174,23 @@
     /* ── Motion ───────────────────────────────────────────────────────
        Transitions only — nothing loops, nothing breathes. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    /* For things that move *on* screen rather than entering or leaving it:
+       they accelerate away and decelerate into place, which an ease-out
+       applied to a move makes look like a shove. */
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
     --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+    /* There is deliberately no ease-in curve here. It withholds movement in
+       the first frames — exactly when the eye is watching hardest — so the
+       same duration reads as slower than an ease-out of equal length. */
+    /* What a control is allowed to transition. `transition: all` was written
+       on sixteen of them, which hands the browser every property that ever
+       changes — including `width`, `padding` and `height`, each of which
+       relayouts the page on every frame — and animates whatever a future
+       edit happens to add. This is the list that is actually wanted:
+       appearance and the pressed scale, all of them compositor-friendly. */
+    --transition-control: background-color, border-color, color, box-shadow, transform;
+
+    --dur-press: 140ms;   /* pressed feedback: perceptible, never a wait */
     --dur-fast: 110ms;
     --dur-base: 180ms;
     --dur-slow: 300ms;
@@ -251,6 +290,7 @@
        white-on-dark reads weaker than black-on-light at the same alpha. */
     --ink-a02: rgba(255, 252, 245, 0.03);
     --ink-a04: rgba(255, 252, 245, 0.05);
+    --ink-a04-pct: 5%;
     --ink-a06: rgba(255, 252, 245, 0.07);
     --ink-a08: rgba(255, 252, 245, 0.09);
     --ink-a12: rgba(255, 252, 245, 0.13);
@@ -341,14 +381,23 @@
   }
 }
 
-/* Respect the OS reduced-motion setting. */
+/* Respect the OS reduced-motion setting.
+
+   "Reduced" is not "none". This block used to collapse every transition in
+   the product to 0.01ms, which also took out the fades and colour changes
+   that carry meaning — a menu that appears between two frames, a hover that
+   snaps, a toast that teleports. What causes trouble is *movement*, so
+   movement is what is removed: transitions are narrowed to the properties
+   that do not travel, and looping animations are stopped. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: opacity, color, background-color, border-color,
+                         box-shadow, fill, stroke, filter !important;
+    transition-duration: 140ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -386,11 +435,14 @@
      where the serif would just look like a different website. */
   h1, h2 {
     font-family: var(--font-serif);
-    font-weight: 700;
-    /* Bricolage is wider and looser than the serif it replaced, so the
-       display sizes are tracked in rather than out. */
-    letter-spacing: -0.03em;
-    font-variation-settings: 'wdth' 92, 'opsz' 48;
+    font-weight: 600;
+    /* A serif needs far less tracking than the grotesque this replaced. At
+       -0.03em Newsreader's serifs start colliding — the counters close up and
+       a headline turns into a texture. `opsz` does the work instead: the
+       browser picks the letterforms drawn for the size actually being set,
+       which is the whole reason to use a family that has the axis. */
+    letter-spacing: -0.015em;
+    font-optical-sizing: auto;
     color: var(--ink);
   }
   h3, h4, h5, h6 {
@@ -548,9 +600,12 @@ html[data-theme='dark'] { color-scheme: dark; }
 /* ─── Brand wordmark ─── */
 .font-brand {
   font-family: var(--font-serif);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  font-variation-settings: 'wdth' 85, 'opsz' 24;
+  /* 800 was a width the grotesque had and this serif does not: asking for it
+     gets the heaviest cut, which at wordmark size reads as ink rather than as
+     a name. */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-optical-sizing: auto;
 }
 
 /* ─── Page ground ───
@@ -600,9 +655,9 @@ html[data-theme='dark'] { color-scheme: dark; }
 .gradient-text {
   color: var(--ink);
   font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  font-variation-settings: 'wdth' 92, 'opsz' 40;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-optical-sizing: auto;
 }
 
 

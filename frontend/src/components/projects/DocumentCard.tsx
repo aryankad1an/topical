@@ -112,9 +112,13 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
       {/* A miniature of the document, set in its own words. Hidden from
           assistive tech: the same text is announced properly by the title and
           metadata below, and reading a truncated duplicate first is worse
-          than not reading it. */}
+          than not reading it.
+
+          It does not repeat the document's name. It used to print it at the
+          top in 12px serif, forty pixels above the real title — the same
+          string twice on one card, and the copy up here was the one that
+          could not truncate gracefully or be clicked. */}
       <div className="doc-thumb" aria-hidden="true">
-        <div className="doc-thumb-title">{doc.name}</div>
         {preview.length > 0 ? (
           <div className="doc-thumb-doc">
             {preview.map((line, i) => (
@@ -142,8 +146,12 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
             </div>
           </div>
           {isAuthor && doc.id != null && (
+            /* `.icon-btn--danger`, not a hand-rolled hover: the hover here set
+               the icon *and* the background to `--status-danger`, so pointing
+               at delete made the bin vanish into a solid red block. The shared
+               class tints the well and leaves the icon to read against it. */
             <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="h-7 w-7 rounded-lg flex items-center justify-center text-[var(--ink-ghost)] hover:text-[var(--status-danger)] hover:bg-[var(--status-danger)] transition-all shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+              className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
@@ -222,7 +230,7 @@ export function DocumentRow({ doc, isAuthor, onRead, onEdit, onDelete, formatDat
           </button>
           {isAuthor && (
             <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="h-8 w-8 rounded-lg flex items-center justify-center text-[var(--ink-ghost)] hover:text-[var(--status-danger)] transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+              className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}

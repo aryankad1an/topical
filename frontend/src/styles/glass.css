@@ -84,7 +84,6 @@
 .new-post-dialog,
 .dialog-glass,
 .mobile-menu-overlay,
-.editor-menu,
 .lesson-picker,
 .shortcuts-sheet {
   background: var(--glass-tint-strong);
@@ -101,7 +100,6 @@
 .post-detail-panel,
 .new-post-dialog,
 .dialog-glass,
-.editor-menu,
 .lesson-picker,
 .shortcuts-sheet {
   border-radius: var(--radius-xl);
@@ -119,7 +117,13 @@
   border-color: var(--glass-border);
 }
 
-/* The outline rail is a solid panel, not glass — see `.outline-rail` in
+/* The header's dropdowns are solid too — see `.editor-menu` in editor.css.
+   They are children of frosted chrome, and a backdrop-filtered ancestor is
+   the backdrop root for everything inside it: the menu frosted the header's
+   own pixels rather than the document's, which below the bar are none. Do not
+   put them back in the lists above.
+
+   The outline rail is a solid panel, not glass — see `.outline-rail` in
    editor.css. It is a wall of the layout rather than something floating
    over it, and frosting a panel whose backdrop is the page ground shows
    nothing at all. */
@@ -155,7 +159,6 @@
   .new-post-dialog,
   .dialog-glass,
   .lesson-picker,
-  .editor-menu,
   .shortcuts-sheet {
     -webkit-backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
     backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
@@ -209,7 +212,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 :is(.liquid-glass, .glass-card, .auth-panel, .cmdk-panel, .post-detail-panel,
-    .new-post-dialog, .dialog-glass, .editor-menu, .lesson-picker, .nav-glass,
+    .new-post-dialog, .dialog-glass, .lesson-picker, .nav-glass,
     .shortcuts-sheet)
 :is(.surface, .chip, .btn, .btn-subtle, .doc-btn, .accent-soft, .model-option,
     .pub-row, .doc-row, .segmented, .sort-pill, .community-tab, .nav-kbd,
@@ -231,7 +234,7 @@
   .liquid-glass--heavy,
   .liquid-glass--light,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
-  .dialog-glass, .mobile-menu-overlay, .editor-menu, .lesson-picker,
+  .dialog-glass, .mobile-menu-overlay, .lesson-picker,
   .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status {
     background: var(--surface);
     border-color: var(--line);
@@ -245,7 +248,7 @@
   .liquid-glass--heavy,
   .liquid-glass--light,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
-  .dialog-glass, .mobile-menu-overlay, .editor-menu, .lesson-picker,
+  .dialog-glass, .mobile-menu-overlay, .lesson-picker,
   .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status,
   .outline-rail, .outline-head, .orail-prompt {
     background: var(--surface);

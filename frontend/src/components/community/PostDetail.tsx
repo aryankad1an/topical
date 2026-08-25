@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { X, Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
+import { useDialogDismiss } from '@/hooks/useDialogDismiss';
+import { Avatar } from '@/components/ui/primitives';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -96,6 +98,8 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
     },
   });
 
+  useDialogDismiss(onClose);
+
   const relTime = (d: string | null) => {
     if (!d) return '';
     const diff = Date.now() - new Date(d).getTime();
@@ -119,7 +123,10 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="h-6 w-6 rounded-full border-2 border-[var(--line)] border-t-white/40 animate-spin" />
+            {/* `border-t-white/40` — a literal white on a page whose ground is
+                cream, so in the light theme the moving part of the spinner was
+                the one part you could not see. */}
+            <div className="detail-spinner" />
           </div>
         ) : post ? (
           <div className="post-detail-body">
@@ -131,7 +138,10 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                 <button className="vote-btn" onClick={() => vote.mutate(-1)} disabled={!isAuthenticated}><ArrowDown className="h-3.5 w-3.5" /></button>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-[var(--ink)] leading-snug mb-1">{post.title}</h2>
+                {/* The same string, in the same face, as the card this was
+                    opened from — clicking a post should not change the
+                    typeface of its own title. */}
+                <h2 className="post-detail-title">{post.title}</h2>
                 <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
                   <span>by {post.authorName}</span>
                   <span><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relTime(post.createdAt)}</span>
@@ -170,10 +180,15 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
               return (
                 <div key={c.id} className="comment-row group"
                   style={pending ? { opacity: 0.55 } : undefined}>
-                  <div className="comment-avatar">{c.authorName[0]?.toUpperCase()}</div>
+                  {/* The shared avatar, so a person is the same colour here as
+                      in the people list, the nav and their profile. This was a
+                      grey circle with an initial in it — a second avatar
+                      implementation, and the only one that made everybody look
+                      identical. */}
+                  <Avatar seed={c.userId} name={c.authorName} size="xs" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-[var(--ink-muted)]">{c.authorName}</span>
+                      <span className="comment-author">{c.authorName}</span>
                       <span className="text-[10px] text-[var(--ink-ghost)]">
                         {pending ? 'sending…' : relTime(c.createdAt)}
                       </span>
@@ -189,7 +204,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                         </button>
                       )}
                     </div>
-                    <p className="text-sm text-[var(--ink-faint)] leading-relaxed whitespace-pre-wrap">{c.body}</p>
+                    <p className="comment-body">{c.body}</p>
                   </div>
                 </div>
               );

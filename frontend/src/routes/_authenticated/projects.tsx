@@ -17,13 +17,11 @@ import { formatDate } from '@/lib/format';
 import { formatOf, LATEX_PREFIX, type DocFormat } from '@/lib/types';
 import { MarkdownPreview } from '@/features/preview/MarkdownPreview';
 import { LatexPreview } from '@/features/preview/LatexPreview';
-import {
-  FileType2, FileCode2, Plus, Loader2, Search, FolderOpen, X, LayoutGrid, List,
-} from 'lucide-react';
+import { Plus, Loader2, Search, FolderOpen, X, LayoutGrid, List } from 'lucide-react';
+import { TopicStarter } from '@/components/projects/TopicStarter';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { PageHeader, StatStrip, EmptyState, PillToggle } from '@/components/ui/primitives';
+import { EmptyState, PillToggle, PageHeader } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -35,10 +33,7 @@ function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [showNameDialog, setShowNameDialog] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [projectName, setProjectName] = useState('');
-  const [projectType, setProjectType] = useState<DocFormat>('mdx');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -75,30 +70,26 @@ function ProjectsPage() {
     return 'Good evening';
   })();
 
-  const openCreateDialog = (type: DocFormat) => {
-    setProjectType(type);
-    setProjectName('');
-    setShowNameDialog(true);
-  };
-
-  const handleCreate = async () => {
-    const name = projectName.trim();
-    if (!name) { toast.error('Please enter a project name'); return; }
+  /**
+   * The topic is the document's name and its subject at once — which is what
+   * it always was. The dialog this replaces asked for a "project name" and
+   * then wrote that same string into `mainTopic`, so the extra step collected
+   * nothing the field below does not.
+   */
+  const handleStart = async (topic: string, format: DocFormat) => {
     // The round trip to the database is not instant. Without this guard the
-    // button looks dead for the length of it and a second click creates a
+    // button looks dead for the length of it and a second submit creates a
     // second project — which is what "the create button doesn't work" was.
     if (isCreating) return;
 
     setIsCreating(true);
     try {
-      const mainTopic = projectType === 'latex' ? `${LATEX_PREFIX}${name}` : name;
-      const result = await saveLessonPlan({ name, mainTopic, topics: [] });
+      const mainTopic = format === 'latex' ? `${LATEX_PREFIX}${topic}` : topic;
+      const result = await saveLessonPlan({ name: topic, mainTopic, topics: [] });
       // Not awaited: the editor does not read this list, so making the
       // navigation wait for a refetch only delays it.
       queryClient.invalidateQueries({ queryKey: ['user-lesson-plans'] });
-      setShowNameDialog(false);
-      navigate({ to: '/editor', search: { id: result.id, type: projectType } });
-      toast.success(`Project "${name}" created`);
+      navigate({ to: '/editor', search: { id: result.id, type: format } });
     } catch {
       toast.error('Failed to create project');
     } finally {
@@ -151,67 +142,51 @@ function ProjectsPage() {
   const dialogStyle = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px' };
 
   return (
-    <div className="flex flex-col min-h-screen w-full py-8" style={{ paddingInline: 'var(--gutter)' }}>
-      <div className="mx-auto w-full relative z-10" style={{ maxWidth: '72rem' }}>
+    <div className="page-shell relative z-10">
+      <div>
 
-        {/* ── Header ── */}
+        {/* The greeting is the small thing and the question is the large one.
+            It used to be the other way round: "Workspace" in display type over
+            a line of pleasantries, then four statistics at 24px, and only
+            after all of that the controls that actually start work. */}
         <PageHeader
-          className="mb-7"
-          title="Workspace"
-          subtitle={`${greeting}, ${user?.given_name || 'there'}. ${projects.length
-            ? `You have ${projects.length} document${projects.length === 1 ? '' : 's'}.`
-            : 'Start your first document below.'}`}
-          // No action here on purpose. This was a "New document" button that
-          // silently chose MDX, sitting a few centimetres above two tiles that
-          // ask which format you want — three controls for one intention, and
-          // the quickest of them made the choice for you.
+          className="page-head--tight"
+          kicker={`${greeting}, ${user?.given_name || 'there'}.`}
+          title="What are you writing about?"
         />
 
-        {/* ── Stats ── */}
-        <StatStrip className="mb-7" items={[
-          { label: 'Documents', value: projects.length },
-          { label: 'Words written', value: totalWords.toLocaleString() },
-          { label: 'Published', value: publicCount },
-          { label: 'Last edited', value: lastEdited ? formatDate(lastEdited) : '—', small: true },
-        ]} />
+        <TopicStarter onStart={handleStart} busy={isCreating} />
 
-        {/* ── Start something ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-9">
-          <button className="new-tile" onClick={() => openCreateDialog('mdx')}>
-            <span className="new-tile-icon">
-              <FileType2 className="h-4 w-4" style={{ color: 'var(--accent-500)' }} />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-[var(--ink)]">Blank MDX document</span>
-              <span className="block text-[12px] text-[var(--ink-faint)] mt-0.5">Interactive, with AI generation and live preview</span>
-            </span>
-            <Plus className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
-          </button>
-
-          <button className="new-tile" onClick={() => openCreateDialog('latex')}
-            style={{ ['--tile-accent-soft' as string]: 'var(--latex-soft)', ['--tile-accent-line' as string]: 'var(--latex-500)' }}>
-            <span className="new-tile-icon">
-              <FileCode2 className="h-4 w-4" style={{ color: 'var(--latex-500)' }} />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-[var(--ink)]">Blank LaTeX document</span>
-              <span className="block text-[12px] text-[var(--ink-faint)] mt-0.5">For mathematical and scientific writing</span>
-            </span>
-            <Plus className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
-          </button>
-        </div>
+        {/* One quiet line, not a four-cell scoreboard. The facts are worth
+            having and none of them is worth 24px of numeral on a page whose
+            job is to start the next document. */}
+        {projects.length > 0 && (
+          <p className="workspace-facts">
+            <span><b>{projects.length}</b> document{projects.length === 1 ? '' : 's'}</span>
+            <span><b>{totalWords.toLocaleString()}</b> words</span>
+            <span><b>{publicCount}</b> published</span>
+            {lastEdited && <span>last edited {formatDate(lastEdited)}</span>}
+          </p>
+        )}
 
         {/* ── Documents ── */}
         <div>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-            <PageHeader level="section" title="Your documents" className="mb-0" />
+            <h2 className="section-title" style={{ fontSize: 'var(--text-lg)' }}>Your documents</h2>
             <div className="flex items-center gap-2.5">
               {projects.length > 0 && (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--ink-ghost)]" />
-                  <input type="text" placeholder="Search…" value={searchQuery}
+                <div className="search-field" style={{ width: 200 }}>
+                  <Search className="search-field-icon" />
+                  <input type="text" placeholder="Search documents…" value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="glass-input h-9 pl-9 pr-3 text-sm" style={{ width: 180 }} />
+                    onKeyDown={e => { if (e.key === 'Escape') setSearchQuery(''); }}
+                    aria-label="Search documents"
+                    className={`glass-input search-input${searchQuery ? ' search-input--clearable' : ''}`} />
+                  {searchQuery && (
+                    <button className="search-clear" onClick={() => setSearchQuery('')} aria-label="Clear search">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               )}
               <div className="segmented" role="group" aria-label="View mode">
@@ -283,39 +258,16 @@ function ProjectsPage() {
                 ? 'Try a different search term.'
                 : 'Start a blank document and let AI draft the sections for you.'}
               action={!searchQuery && (
-                <button onClick={() => openCreateDialog('mdx')}
+                <button
+                  onClick={() => document.getElementById('workspace-topic')?.focus()}
                   className="accent-btn inline-flex items-center gap-2 h-9 px-5 rounded-full text-xs">
-                  <Plus className="h-3.5 w-3.5" /> New MDX project
+                  <Plus className="h-3.5 w-3.5" /> Name a topic
                 </button>
               )}
             />
           )}
         </div>
       </div>
-
-      {/* Create Name Dialog */}
-      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
-        <DialogContent className="sm:max-w-md" style={dialogStyle}>
-          <DialogHeader>
-            <DialogTitle className="text-[var(--ink)]">Name your project</DialogTitle>
-            <DialogDescription className="text-[var(--ink-faint)]">Give your {projectType === 'mdx' ? 'MDX' : 'LaTeX'} project a name.</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input placeholder="e.g. Machine Learning Fundamentals" value={projectName}
-              onChange={e => setProjectName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleCreate(); }}
-              className="glass-input" disabled={isCreating} autoFocus />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowNameDialog(false)} disabled={isCreating}
-              className="glass-btn border-[var(--line)]">Cancel</Button>
-            <Button onClick={handleCreate} disabled={isCreating || !projectName.trim()}
-              className="text-[var(--accent-ink)] font-semibold"
-              style={{ background: 'var(--accent-400)' }}>
-              {isCreating ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Creating…</> : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

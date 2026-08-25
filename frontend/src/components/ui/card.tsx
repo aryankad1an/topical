@@ -36,7 +36,11 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      // The product's headings are set in the serif; this was shadcn's
+      // default 1.5rem sans, so every card in the application announced
+      // itself in a different voice from every section around it — and at a
+      // size meant for a page title, on a panel.
+      "card-heading",
       className
     )}
     {...props}

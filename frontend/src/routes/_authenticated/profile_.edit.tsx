@@ -60,7 +60,7 @@ function EditProfile() {
   }
 
   return (
-    <div className="w-full mx-auto py-10" style={{ maxWidth: "44rem", paddingInline: "var(--gutter)" }}>
+    <div className="page-shell page-shell--narrow">
       <Link to="/profile"
         className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
         <ArrowLeft className="h-3.5 w-3.5" /> Back to profile

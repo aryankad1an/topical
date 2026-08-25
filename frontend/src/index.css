@@ -12,7 +12,11 @@
    is the reflex for a writing tool and the reason every one of them looks
    alike. Body and mono: the IBM Plex family, drawn for technical
    documentation — which is the thing this application makes. */
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400;12..96,75..100,600;12..96,75..100,700;12..96,75..100,800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+/* Newsreader is loaded with its optical-size and italic axes, both of which
+   are used: display sizes and reading sizes want different letterforms from
+   the same family, and emphasis in a document has to be a real italic rather
+   than a slanted roman. */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @import './styles/tailwind.css';
 @import './styles/tokens.css';

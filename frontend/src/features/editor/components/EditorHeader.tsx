@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowLeft, Copy, Download, Eye, FileCode, Loader2, Printer, Redo2, Save,
+  ArrowLeft, Copy, Download, Eye, FileCode, FileDown, Loader2, Printer, Redo2, Save,
   Settings2, SplitSquareHorizontal, Undo2, Users, ListTree, Check,
 } from 'lucide-react';
 import { IconButton } from '@/components/ui/primitives';
@@ -26,7 +26,7 @@ interface Props {
   onViewMode: (mode: ViewMode) => void;
   options: ViewOptions;
   onOptions: (next: Partial<ViewOptions>) => void;
-  onExport: (kind: 'source' | 'copy' | 'print') => void;
+  onExport: (kind: 'source' | 'copy' | 'print' | 'pdf') => void;
 }
 
 const VIEWS: { mode: ViewMode; icon: typeof Eye; label: string }[] = [
@@ -178,8 +178,11 @@ export function EditorHeader(props: Props) {
               <button className="editor-menu-item" onClick={() => { onExport('copy'); setMenu('none'); }}>
                 <Copy className="h-3.5 w-3.5" /> Copy to clipboard
               </button>
+              <button className="editor-menu-item" onClick={() => { onExport('pdf'); setMenu('none'); }}>
+                <FileDown className="h-3.5 w-3.5" /> Export PDF…
+              </button>
               <button className="editor-menu-item" onClick={() => { onExport('print'); setMenu('none'); }}>
-                <Printer className="h-3.5 w-3.5" /> Print / save as PDF
+                <Printer className="h-3.5 w-3.5" /> Print
               </button>
             </div>
           )}

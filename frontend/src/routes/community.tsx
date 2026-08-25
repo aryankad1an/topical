@@ -7,11 +7,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon } from 'lucide-react';
+import { Search, TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, EmptyState } from '@/components/ui/primitives';
+import { Avatar, EmptyState, PageHeader } from '@/components/ui/primitives';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
@@ -123,23 +123,18 @@ function CommunityPage() {
   };
 
   return (
-    <div className="community-root">
+    <div className="page-shell">
       {/* ── Header ── */}
-      <section className="community-hero">
-        <div>
-          <h1 className="community-hero-title">Community</h1>
-          <p className="community-hero-sub">
-            Discuss ideas, share lessons, and learn together.
-          </p>
-        </div>
-        {isAuthenticated && tab === 'forum' && (
+      <PageHeader
+        title="Community"
+        subtitle="Discuss ideas, share lessons, and learn together."
+        actions={isAuthenticated && (
           <button className="new-post-btn" onClick={() => setShowNewPost(true)}>
             <Plus className="h-4 w-4" /> New Post
           </button>
         )}
-      </section>
+      />
 
-      {/* ── Tabs + search ── */}
       <div className="community-controls">
         <div className="community-tabs">
           <button className={`community-tab ${tab === 'forum' ? 'active' : ''}`} onClick={() => setTab('forum')}>
@@ -153,15 +148,21 @@ function CommunityPage() {
           </button>
         </div>
 
-        <div className="community-search-wrap">
-          <Search className="community-search-icon" />
+        <div className="search-field search-field--grow">
+          <Search className="search-field-icon" />
           <input
             type="text"
-            className="glass-input community-search"
+            className={`glass-input search-input${search ? ' search-input--clearable' : ''}`}
             placeholder={tab === 'forum' ? 'Search posts…' : tab === 'people' ? 'Search people…' : 'Search lessons…'}
             value={search}
             onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape') setSearch(''); }}
           />
+          {search && (
+            <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -185,9 +186,29 @@ function CommunityPage() {
           </div>
 
           {postsLoading ? (
-            <div className="forum-skeleton">
+            /* A skeleton has to be the shape of what is coming, or it is just
+               four blank rectangles pulsing at you. These were exactly that:
+               empty 88px cards on Tailwind's `animate-pulse`, which fades the
+               whole box in and out rather than sweeping it, and told the
+               reader nothing about whether a post is a title, a paragraph or
+               a row of numbers. Now it is a vote gutter, a headline, a line of
+               body and a meta row — the real card, unloaded. */
+            <div className="forum-skeleton" aria-hidden="true">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="community-card animate-pulse" style={{ height: 88 }} />
+                <div key={i} className="community-card">
+                  <div className="community-vote-col">
+                    <div className="skeleton" style={{ height: 12, width: 20 }} />
+                  </div>
+                  <div className="community-card-content">
+                    <div className="skeleton" style={{ height: 15, width: `${72 - i * 9}%`, marginBottom: 10 }} />
+                    <div className="skeleton" style={{ height: 10, width: '92%', marginBottom: 6 }} />
+                    <div className="skeleton" style={{ height: 10, width: '48%' }} />
+                    <div className="community-card-meta">
+                      <div className="skeleton" style={{ height: 9, width: 64 }} />
+                      <div className="skeleton" style={{ height: 9, width: 44 }} />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : filteredPosts.length > 0 ? (

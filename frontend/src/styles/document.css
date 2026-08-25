@@ -16,14 +16,77 @@
   overscroll-behavior: contain;
   background: var(--bg);
 }
+/* ── The sheet ──
+   Width is a reading decision, not a layout one. At 46rem of 15.5px sans this
+   ran to roughly 95 characters a line — half again past the point where the
+   eye starts losing its place on the return sweep. Sized to land around 70,
+   which is what the measure should have been all along and matters more now
+   that the text is set in a serif. */
 .doc-sheet {
-  max-width: 46rem;
+  /* Fluid, and measured against the *pane* rather than the viewport. `cqi` is
+     1% of the query container's inline size, so dragging the split divider
+     re-measures the column — which a flat `max-width` did not. At the old
+     fixed 40rem the sheet was 640px at a 700px pane and still 640px at
+     1600px: everything above ~700px was inert, and resizing changed nothing
+     except how much empty space sat beside the text.
+
+     The ceiling stays 40rem, and that part is deliberate. Measured on this
+     face at this size, 40rem lands at ~77 characters a line — already the top
+     of what an eye tracks without losing the return sweep. Growing the column
+     further with the pane would buy nothing but a harder read, so once
+     `66cqi` reaches the ceiling the width holds and the type takes over. */
+  width: 100%;
+  max-width: clamp(26rem, 66cqi, 40rem);
   margin: 0 auto;
   /* The preview has no caret to keep clear, so it only needs to not end
      flush against the frame. */
   padding: 2.75rem 2.25rem 6rem;
 }
-.doc-sheet[data-format='latex'] { max-width: 48rem; }
+
+/* Past the measure ceiling a wider pane buys more type, not more characters:
+   the page comes closer rather than getting wider. A point and a half across
+   the whole range — enough that a very wide pane is not inert, small enough
+   that it barely moves where the lines break. */
+.doc-sheet .md-body,
+.doc-sheet.md-body {
+  /* Tuned so it is a flat 17px until the column has stopped growing (~1000px
+     of pane), then climbs gently, reaching 18.5px only on a pane wide enough
+     that 17px would read as small and far away. A steeper coefficient hit the
+     ceiling at a 900px pane, which made the type jump around during an
+     ordinary divider drag. */
+  font-size: clamp(17px, 15.5px + 0.16cqi, 18.5px);
+}
+
+/* ── …but not in split view ──
+   Centring a measure-limited column is right when the preview *is* the
+   window. In a split it is not: the two panes exist to be read against each
+   other — scroll sync is on, and `.doc-focus` marks the same section on both
+   sides — so every pixel between the divider and the rendered text is
+   distance the eye has to cross to compare a line with its output.
+
+   On an 1800px window with the editor at its narrowest (22%), the preview
+   pane is 1400px and the sheet is 640: 416px of empty gutter on each side,
+   pushing the rendered text a third of a pane away from the source it
+   corresponds to. It reads as a document floating in the middle of nothing,
+   which is what it is.
+
+   The sheet keeps its measure and its padding; it just stops centring. */
+.editor-preview[data-split='true'] .doc-sheet {
+  margin-inline: 0;
+  /* No measure cap in a split.
+     The reading argument for capping a column is that the writer has no other
+     control over line length — but in a split they do: the divider *is* the
+     width control, and it is right there. Capping it as well meant dragging
+     the divider wider did nothing but grow the empty space beside the text,
+     which reads as a layout bug whatever the typographic justification.
+
+     So the pane fills, and the measure is the writer's to set. The type still
+     scales with the pane (see the `cqi` clamp above), which is what keeps a
+     very wide pane from also being a very small one. */
+  max-width: none;
+}
+/* LaTeX runs denser — more notation per line, and equations that want room. */
+.doc-sheet[data-format='latex'] { max-width: clamp(28rem, 70cqi, 43rem); }
 
 /* ── The section the outline rail is pointing at ──
    The rendered half marks the same span the editor does, so a row touched in
@@ -106,32 +169,60 @@
 .doc-empty p { font-size: 13px; }
 .doc-empty-sub { font-size: 11.5px; color: var(--ink-ghost); max-width: 30ch; }
 
-/* ── Markdown ── */
+/* ── Markdown ──
+   The document is set in the serif, and the interface stays in the sans.
+
+   Before this the preview inherited `--font-sans` from `html`, so the thing
+   the writer is actually making looked like another panel of the app — the
+   same face as the toolbar, the outline rail and the buttons. A document
+   should read as a document. The serif also does something the sans could
+   not: it gives emphasis a real italic instead of a slanted roman, which is
+   the difference between a stressed word and a word that looks broken.
+
+   Chrome inside the document — code, tables, the callout labels — stays in
+   the sans and the mono, because those are data and controls rather than
+   prose. */
 .md-body {
   color: var(--ink-2);
-  font-size: 15.5px;
-  line-height: 1.75;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  /* A serif carries a smaller x-height than Plex Sans at the same nominal
+     size, so 15.5px set in one is not 15.5px set in the other. 17px puts the
+     lowercase back where it was and reads as a page rather than as a caption. */
+  font-size: 17px;
+  line-height: 1.68;
+  /* Old-style figures would fight the code and the tables; lining, tabular
+     figures keep a document with numbers in it from looking typeset twice. */
+  font-variant-numeric: lining-nums;
 }
 .md-body > *:first-child { margin-top: 0; }
 .md-body p { margin: 0 0 1.05em; }
-.md-body strong { color: var(--ink); font-weight: 700; }
-.md-body em { color: var(--ink); }
+.md-body strong { color: var(--ink); font-weight: 600; }
+.md-body em { color: var(--ink-2); font-style: italic; }
 
+/* Headings are the same family as the body now, so the hierarchy is carried
+   by size, weight and the space around them rather than by a change of voice.
+   That is what makes a document look set rather than assembled — and it is
+   only possible because the family has an optical-size axis to keep a 2rem
+   title and 17px of prose from looking like two different typefaces. */
 .md-body .md-h {
   position: relative;
   font-family: var(--font-serif);
+  font-optical-sizing: auto;
   color: var(--ink);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   scroll-margin-top: 1rem;
+  text-wrap: balance;
 }
-.md-body h1.md-h { font-size: 2rem; font-weight: 700; margin: 0 0 1rem; line-height: 1.2; }
+.md-body h1.md-h { font-size: 2.1rem; font-weight: 600; margin: 0 0 1rem; line-height: 1.18; }
 .md-body h2.md-h {
-  font-size: 1.4rem; font-weight: 650;
+  font-size: 1.45rem; font-weight: 600;
   margin: 2.1rem 0 0.85rem;
+  line-height: 1.28;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--line);
 }
-.md-body h3.md-h { font-size: 1.15rem; font-weight: 600; margin: 1.6rem 0 0.6rem; }
+.md-body h3.md-h { font-size: 1.18rem; font-weight: 600; margin: 1.6rem 0 0.6rem; line-height: 1.35; }
 .md-body h4.md-h, .md-body h5.md-h, .md-body h6.md-h {
   font-size: 1rem; font-weight: 600; margin: 1.3rem 0 0.5rem;
   color: var(--ink-2);
@@ -204,7 +295,9 @@
   border-radius: var(--radius-sm);
   font-size: 10.5px; font-weight: 600;
   color: var(--ink-faint);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .md-copy:hover { color: var(--ink); background: var(--ink-a06); }
 .md-code pre {
@@ -218,7 +311,14 @@
 .md-code pre code { font-family: var(--font-mono); background: none; padding: 0; border: none; }
 
 .md-table-wrap { margin: 1.3em 0; overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--line); }
-.md-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+/* Tables are data, not prose: the sans, with tabular figures so columns of
+   numbers line up. Left in the serif they read as a quotation. */
+.md-table-wrap table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
 .md-table-wrap th {
   padding: 9px 13px;
   text-align: left;
@@ -258,11 +358,17 @@
 
 /* ── LaTeX ──
    Typeset like a paper: serif body, numbered structure, centred floats. */
+/* The LaTeX preview was already set in a serif — but a *different* one, named
+   directly as a stack of system faces, so the two previews rendered the same
+   document in two typefaces and neither matched anything else in the app. It
+   takes the same family as everything else now. */
 .lx-doc {
   color: var(--ink-2);
-  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-  font-size: 15.5px;
-  line-height: 1.72;
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-size: 16.5px;
+  line-height: 1.68;
+  font-variant-numeric: lining-nums;
 }
 .lx-titleblock { text-align: center; margin-bottom: 2.4rem; }
 .lx-title {
@@ -289,12 +395,33 @@
 .lx-doc .lx-h2 { font-size: 1.18rem; font-weight: 600; margin: 1.6rem 0 0.55rem; }
 .lx-doc .lx-h3 { font-size: 1.03rem; font-weight: 600; margin: 1.3rem 0 0.45rem; color: var(--ink); }
 .lx-doc .lx-h4, .lx-doc .lx-h5 { font-size: 0.95rem; font-weight: 600; margin: 1.1rem 0 0.35rem; }
+/* ── Section numbers ──
+   One `min-width` for every depth cannot work: each level's number is one
+   component longer than the last, so a box wide enough for `2` is overflowed
+   by `2.1.1` — and an overflowed inline-block is exactly as wide as its text,
+   leaving no space at all before the title. That is why `\subsubsection`
+   rendered as "2.1.1Fixed-size Chunking" while `\section` and
+   `\subsection` looked fine.
+
+   The gap is a margin rather than padding because `box-sizing: border-box`
+   applies document-wide, so padding would be eaten by `min-width` at the
+   shallow levels and there would still be none at the deep one. A margin is
+   always additive, so the separation survives however long the number gets;
+   the per-level minimums then keep numbers of the same depth aligned with
+   each other, which is all LaTeX itself aligns. */
 .lx-num {
   display: inline-block;
-  min-width: 2.1em;
+  min-width: 1.4em;
+  margin-right: 0.55em;
   color: var(--latex-500);
   font-variant-numeric: tabular-nums;
 }
+/* `lx-hN` numbers the LaTeX level, not the HTML tag: `\subsection` is an
+   `<h3 class="lx-h2">` and `\subsubsection` an `<h4 class="lx-h3">`. */
+.lx-doc .lx-h2 .lx-num,
+.lx-toc-item[data-level='2'] .lx-num { min-width: 2.2em; }
+.lx-doc .lx-h3 .lx-num,
+.lx-toc-item[data-level='3'] .lx-num { min-width: 3em; }
 
 .lx-p { margin: 0 0 1rem; }
 .lx-doc .lx-list { margin: 0 0 1rem 1.4rem; }

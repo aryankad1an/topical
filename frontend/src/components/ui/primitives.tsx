@@ -55,8 +55,10 @@ export function Surface({
 export interface PageHeaderProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
-  /** Small uppercase label above the title. */
+  /** Small uppercase pill above the title. */
   eyebrow?: React.ReactNode;
+  /** A plain line above the title — a greeting, a count, a breadcrumb. */
+  kicker?: React.ReactNode;
   /** Right-aligned actions (a button, usually). */
   actions?: React.ReactNode;
   /** `display` for top-level pages, `section` for headings within one. */
@@ -64,23 +66,40 @@ export interface PageHeaderProps {
   className?: string;
 }
 
+/**
+ * The header every screen uses.
+ *
+ * `kicker` is a plain line above the title — a greeting, a count, a "back to"
+ * breadcrumb. `eyebrow` is the pill, for the rare page that wants one. The
+ * page title used to be `font-brand text-3xl md:text-4xl gradient-text`,
+ * which put it in a different size *and* a different treatment from the two
+ * screens that hand-rolled their own headers, so the heading jumped between
+ * tabs.
+ */
 export function PageHeader({
-  title, subtitle, eyebrow, actions, level = 'page', className,
+  title, subtitle, eyebrow, kicker, actions, level = 'page', className,
 }: PageHeaderProps) {
-  return (
-    <div className={cn('page-header', className)}>
-      <div className="min-w-0">
-        {eyebrow && <div className="mb-3"><span className="eyebrow">{eyebrow}</span></div>}
-        {level === 'page' ? (
-          <h1 className="font-brand text-3xl md:text-4xl tracking-tight gradient-text mb-1 leading-tight">
-            {title}
-          </h1>
-        ) : (
+  if (level === 'section') {
+    return (
+      <div className={cn('page-head', className)}>
+        <div className="page-head-text">
           <h2 className="section-title">{title}</h2>
-        )}
-        {subtitle && <p className="section-sub" style={{ marginTop: level === 'page' ? '0.15rem' : undefined }}>{subtitle}</p>}
+          {subtitle && <p className="section-sub">{subtitle}</p>}
+        </div>
+        {actions && <div className="page-actions">{actions}</div>}
       </div>
-      {actions && <div className="flex items-center gap-2.5 shrink-0">{actions}</div>}
+    );
+  }
+
+  return (
+    <div className={cn('page-head', className)}>
+      <div className="page-head-text">
+        {eyebrow && <div className="mb-3"><span className="eyebrow">{eyebrow}</span></div>}
+        {kicker && <p className="page-kicker">{kicker}</p>}
+        <h1 className="page-title">{title}</h1>
+        {subtitle && <p className="page-sub">{subtitle}</p>}
+      </div>
+      {actions && <div className="page-actions">{actions}</div>}
     </div>
   );
 }
@@ -238,6 +257,10 @@ export function PillToggle({ checked, onChange, label, disabled, className }: Pi
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      /* The same string as the accessible name, as a tooltip: the switch
+         carries no visible text, so a sighted user pointing at it had
+         nothing to tell them what it turns on. */
+      title={label}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : 0}
       className={cn('pill-toggle', className)}

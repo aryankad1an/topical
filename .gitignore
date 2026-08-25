@@ -27,3 +27,6 @@ __pycache__/
 *.tgz
 .vercel
 uploads/
+
+.claude
+.agents

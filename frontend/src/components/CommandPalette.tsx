@@ -3,7 +3,9 @@ import { useNavigate } from '@tanstack/react-router';
 import {
   Search, Home, Users, FolderOpen, User as UserIcon,
   FilePlus2, FileCode2, BookOpen, CornerDownLeft, Info, KeyRound,
+  LogIn, LogOut, UserPlus,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 export interface Command {
   id: string;
@@ -28,6 +30,11 @@ interface Props {
  */
 export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
   const navigate = useNavigate();
+  // Signing out was reachable from exactly one place: a ghost button on the
+  // profile page, two navigations deep, with nothing in the app's chrome
+  // pointing at it. The palette is the one surface reachable from every
+  // screen including the editor, so it is where the account actions belong.
+  const { logout } = useAuth();
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +47,13 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
       { id: 'community', label: 'Community', group: 'Go to', icon: Users, run: go('/community') },
       { id: 'about', label: 'About Topical', group: 'Go to', icon: Info, run: go('/about') },
     ];
-    if (!isAuthenticated) return base;
+    if (!isAuthenticated) {
+      return [
+        ...base,
+        { id: 'sign-in', label: 'Sign in', group: 'Account', icon: LogIn, run: go('/login') },
+        { id: 'sign-up', label: 'Create an account', hint: 'All you need is a topic', group: 'Account', icon: UserPlus, run: go('/register') },
+      ];
+    }
     return [
       { id: 'new-mdx', label: 'New MDX document', hint: 'Interactive, with live preview', group: 'Create', icon: FilePlus2,
         run: () => { navigate({ to: '/editor', search: { type: 'mdx' } }); onClose(); } },
@@ -51,8 +64,13 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
       { id: 'lessons', label: 'Public lessons', group: 'Go to', icon: BookOpen, run: go('/community') },
       { id: 'profile', label: 'Profile', group: 'Go to', icon: UserIcon, run: go('/profile') },
       { id: 'providers', label: 'AI providers', hint: 'Connect a model', group: 'Go to', icon: KeyRound, run: go('/providers') },
+      // Last, and in its own group. It is the one command here that ends the
+      // session, so it should never be the thing sitting under the cursor
+      // when the palette opens.
+      { id: 'sign-out', label: 'Sign out', group: 'Account', icon: LogOut,
+        run: () => { onClose(); logout(); } },
     ];
-  }, [isAuthenticated, navigate, onClose]);
+  }, [isAuthenticated, navigate, onClose, logout]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();

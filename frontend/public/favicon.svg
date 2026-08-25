@@ -1,4 +1,14 @@
+<!-- The mark, at tab size. It was a black tile with a green "T" — the colours
+     of a design language this product left behind, so the one piece of brand
+     that shows up outside the app was the only place the old one survived.
+     Terracotta on cream now, matching the mark in the nav bar.
+
+     A serif "T", because the wordmark is set in one and a tab is where the
+     two are seen side by side. Optical rather than geometric centring: the
+     serif's arms make the glyph read high and left of its own box. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="32" fill="#050505" stroke="rgba(34,197,94,0.3)" stroke-width="4" />
-  <text x="64" y="94" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="88" fill="#22c55e" text-anchor="middle">T</text>
+  <rect width="128" height="128" rx="30" fill="#c25e38" />
+  <text x="64" y="96" text-anchor="middle"
+        font-family="Iowan Old Style, Charter, Georgia, 'Times New Roman', serif"
+        font-weight="600" font-size="92" fill="#faf9f5">T</text>
 </svg>

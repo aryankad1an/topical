@@ -7,7 +7,7 @@ interface Options {
   /** Headings nested directly under a row. */
   childrenOf: (node: OutlineNode) => string[];
   /** Words a delete would take with it, for the warning before it happens. */
-  measureSection: (title: string) => number;
+  wordsOf: (node: OutlineNode) => number;
   onRenameHeading: (offset: number, next: string) => void;
   onShiftHeading: (offset: number, delta: 1 | -1) => void;
   onMoveHeading: (offset: number, target: number, edge: 'top' | 'bottom') => void;
@@ -26,7 +26,7 @@ interface Options {
  * legitimately share a name and a title lookup would reshape the wrong one.
  */
 export function useOutlineRows({
-  nodes, childrenOf, measureSection,
+  nodes, childrenOf, wordsOf,
   onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onDeleteSection,
 }: Options) {
   const [editingOffset, setEditingOffset] = useState<number | null>(null);
@@ -95,7 +95,7 @@ export function useOutlineRows({
       setEditingOffset(null);
       onDeleteSection(node.label);
     };
-    const words = measureSection(node.label);
+    const words = wordsOf(node);
     if (!words) { drop(); return; }
 
     const nested = childrenOf(node).length;

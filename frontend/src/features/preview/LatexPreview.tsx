@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { renderLatex } from './latex/render';
 
@@ -13,7 +13,9 @@ interface Props {
  * theorem blocks, footnotes and a references list — laid out like a paper
  * rather than like a web page.
  */
-export function LatexPreview({ content, showIssues = true }: Props) {
+/** Memoised for the same reason as `MarkdownPreview`: the split divider must
+ *  not re-parse the document on every frame of a drag. */
+function LatexPreviewInner({ content, showIssues = true }: Props) {
   const doc = useMemo(() => renderLatex(content), [content]);
   const [issuesOpen, setIssuesOpen] = useState(false);
 
@@ -51,3 +53,5 @@ export function LatexPreview({ content, showIssues = true }: Props) {
     </article>
   );
 }
+
+export const LatexPreview = memo(LatexPreviewInner);

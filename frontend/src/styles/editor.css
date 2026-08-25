@@ -12,7 +12,11 @@
 .editor-root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* `100%` of a shell that is already pinned to the viewport, not a second
+     independent `100vh`. Two elements each claiming the full viewport height
+     inside one another is how the page ended up taller than the screen. */
+  height: 100%;
+  min-height: 0;
   width: 100%;
   overflow: hidden;
   background: var(--bg);
@@ -24,7 +28,20 @@
 }
 
 /* ── Header ── */
+/* ── The chrome bars ──
+   Both are frosted, and `backdrop-filter` creates a stacking context. That is
+   the whole reason these carry a z-index: the header's menus are absolutely
+   positioned children of the header, so their own `z-index: 60` is sealed
+   inside it and cannot lift them over anything outside. The toolbar, being
+   later in the document with a stacking context of its own, therefore painted
+   *on top of the open menu* — its first item disappeared behind the bar, and
+   the toolbar's frosting turned the rest of the panel into a smear.
+
+   Ordering the bars against each other fixes it: whatever the header contains
+   now sits above the toolbar, and the toolbar above the document. */
 .editor-header {
+  position: relative;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -38,9 +55,15 @@
   background: transparent;
   border: none;
   outline: none;
+  /* The document's name, set in the document's own face. It is the one piece
+     of editorial text in a bar full of controls, and the serif is what says
+     so — at 15.5px, because a serif needs the extra point to hold its own
+     next to 13px of interface sans. */
   font-family: var(--font-serif);
-  font-size: 14.5px;
+  font-optical-sizing: auto;
+  font-size: 15.5px;
   font-weight: 600;
+  letter-spacing: -0.005em;
   color: var(--ink);
   padding: 5px 9px;
   border-radius: var(--radius);
@@ -91,6 +114,17 @@
 
 /* Popover menus in the header */
 .editor-menu-wrap { position: relative; }
+/* ── Header menus ──
+   Solid, and they have to be. They hang off a bar that is itself frosted, and
+   an element with `backdrop-filter` is the backdrop root for its descendants:
+   a frosted menu inside frosted chrome filters the *header's* pixels, not the
+   document's — and where the menu hangs below the bar the header has painted
+   nothing at all, so the panel came out as a translucent hole with the
+   toolbar showing through it.
+
+   That is the same rule glass.css states as "no nested glass"; this is one
+   more place it applies. A menu is a surface you read, not chrome floating
+   over moving content. */
 .editor-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -102,6 +136,11 @@
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-pop);
+  /* Anchored under the right edge of its trigger, so that is where it grows
+     from. The default `center` scales a menu out of its own middle, which
+     puts the first frame of the animation in a place the menu never occupies
+     and detaches it from the button that opened it. */
+  transform-origin: top right;
   animation: cmdk-rise 0.16s var(--ease-out);
 }
 .editor-menu-label {
@@ -133,6 +172,8 @@
 
 /* ── Formatting toolbar ── */
 .editor-toolbar {
+  position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -216,7 +257,17 @@
 /* ── Panes ── */
 .editor-main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 .editor-pane { position: relative; height: 100%; display: flex; flex-direction: column; min-width: 0; }
-.editor-preview { height: 100%; min-width: 0; overflow: hidden; display: flex; }
+/* The query container the rendered sheet measures itself against. Without it
+   the sheet's `cqi` units resolve against whatever ancestor happens to be a
+   container — or the small-viewport fallback — and the measure stops tracking
+   the divider, which is the whole point of using them. */
+.editor-preview {
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  container-type: inline-size;
+}
 
 .editor-divider {
   width: 5px;
@@ -448,7 +499,9 @@
   color: var(--ink-muted);
   background: var(--surface);
   border: 1px solid var(--line);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .orail-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--line-strong); }
 .orail-btn[data-active='true'] {
@@ -519,7 +572,9 @@
   color: var(--ink-muted);
   background: var(--ink-a04);
   border: 1px solid transparent;
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .orail-chip:hover {
   color: var(--accent-600);
@@ -607,15 +662,13 @@
    from, and a type scale that makes depth legible without measuring.
    ═══════════════════════════════════════════════════════════════════════ */
 .orow {
-  --orow-step: 14px;
-  --orow-gutter: 9px;
   position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 3px 5px;
   /* The indent, derived from the level the row published. */
-  padding-left: calc(var(--orow-gutter) - 3px + (var(--orow-level, 1) - 1) * var(--orow-step));
+  padding-left: calc(6px + (var(--orow-level, 1) - 1) * 14px);
   border-radius: var(--radius-sm);
   font-size: 12px;
   color: var(--ink-muted);
@@ -623,32 +676,14 @@
               color var(--dur-fast) linear;
 }
 
-/* ── Tree guides ──
-   One full-height rule per ancestor, at that ancestor's own indent. Rows sit
-   flush, so the rules of a subtree meet end to end and read as one line down
-   the side of it.
-
-   The previous version painted a single hairline as a `background-image` on
-   each row. A background is clipped to the element that paints it, so what
-   appeared was a stack of short dashes — one per row, at the *immediate*
-   parent's indent only — with nothing joining them and no rule at all for the
-   grandparents. It looked like an artefact because it was describing nothing.
-
-   Real elements also give the pseudo-elements back: `::before`/`::after` on
-   `.orow` remain the drop indicators, and the row no longer has to route its
-   depth through the one property those two are fighting over. */
-.orow-guide {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(var(--orow-gutter) + (var(--orow-guide, 1) - 1) * var(--orow-step));
-  width: 1px;
-  background: var(--line);
-  pointer-events: none;
-}
-/* The rule the active row hangs from is lit for its whole height, so a
-   selected sub-section shows which parent it belongs to. */
-.orow[data-active='true'] .orow-guide:last-of-type { background: var(--accent-line); }
+/* ── Depth ──
+   Indentation and the type scale, and nothing else. Two attempts at guide
+   rules have now been removed from this file: a `background-image` hairline
+   that was clipped to each row (so it drew disconnected dashes at the
+   immediate parent's indent and nothing for the grandparents), and a set of
+   real full-height elements that joined up correctly and still read as
+   decoration — in a 300px column, a rule per level is furniture standing
+   where the section titles should be. */
 
 /* Depth as weight and size, not only as position. */
 .orow[data-level='1'] .orow-name { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
@@ -666,9 +701,22 @@
    quietest thing in the list, not the loudest: the title keeps its own colour
    and weight so the type scale still reads as depth. */
 .orow[data-active='true'] {
-  background-color: rgb(var(--accent-rgb) / 0.055);
-  box-shadow: inset 2px 0 0 rgb(var(--accent-rgb) / 0.5);
+  background-color: rgb(var(--accent-rgb) / 0.07);
 }
+
+/* ── No leading edges ──
+   Every state on this row is carried by fill and by type, never by a bar down
+   the left. An inset edge follows the row's border radius, so it renders as a
+   rounded bracket rather than a straight rule — one of them reads as a stray
+   parenthesis, and a path three deep reads as a stack of them.
+
+   ── The path down to the active row ──
+   The sections the active one is nested inside are labelled, not lit: `P1` is
+   its parent, `P2` the grandparent. A label survives what a fill cannot —
+   ancestors are *not* adjacent to the active row, since the rows between them
+   are its siblings and cousins, so anything that tints a row implies a
+   contiguous block that does not exist and stripes the rail. */
+.orow[data-status='failed'] .orow-name { color: var(--status-danger); }
 
 /* ── Dragging ──
    The grip is held open by its own width so revealing it on hover doesn't
@@ -718,11 +766,27 @@
   transition: opacity var(--dur-fast) linear;
 }
 .orow-meta[data-kind='generating'] { color: var(--accent-500); }
+.orow-meta[data-kind='ancestor'] { color: var(--accent-500); }
+.orow-parent {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-xs);
+  color: var(--accent-500);
+  background: rgb(var(--accent-rgb) / 0.12);
+}
 /* Failed reads as "still to do, and something went wrong" — the row stays
    clickable because clicking ✨ is the retry. */
 .orow-meta[data-kind='failed'] { color: var(--status-danger); }
-.orow:hover .orow-meta[data-kind='words'],
-.orow:hover .orow-meta[data-kind='todo'] { opacity: 0; }
+/* Every kind, not just the quiet two. `generating` and `failed` used to be
+   held visible here on the grounds that they need chasing, but the tool tray
+   covers this slot the moment the row is hovered — so they were not actually
+   readable, only overlapping. Failure is now carried by the row itself (see
+   `[data-status='failed']` above), which no tray can sit on top of. */
+.orow:hover .orow-meta { opacity: 0; }
 
 /* A section with nothing behind it yet is a promise, and reads like one. */
 .orow[data-written='false'] .orow-name { color: var(--ink-faint); }
@@ -794,14 +858,23 @@
 .orow:focus-within .orow-tools { opacity: 1; pointer-events: auto; }
 
 /* The fade has to end in the row's own colour, or a pale band appears where
-   the gradient lands on a differently-tinted row. */
+   the gradient lands on a differently-tinted row.
+
+   Both stops mix a *percentage of an opaque colour* into the ground rather
+   than mixing the translucent token itself. `color-mix` averages alpha along
+   with the channels, so `color-mix(in srgb, var(--ink-a04), var(--bg-subtle))`
+   returned alpha 0.53 — a backdrop that was half see-through in the only
+   state where it is ever shown. The row's own status mark sat underneath it
+   and printed straight through the tool icons: a failed section's warning
+   triangle appeared on top of the delete button. Mixing `var(--ink)` at the
+   token's own percentage gives the identical colour at alpha 1. */
 .orow:hover .orow-tools {
   background: linear-gradient(90deg, transparent 0,
-    color-mix(in srgb, var(--ink-a04), var(--bg-subtle)) 16px);
+    color-mix(in srgb, var(--ink) var(--ink-a04-pct), var(--bg-subtle)) 16px);
 }
 .orow[data-active='true'] .orow-tools {
   background: linear-gradient(90deg, transparent 0,
-    color-mix(in srgb, rgb(var(--accent-rgb) / 0.055), var(--bg-subtle)) 16px);
+    color-mix(in srgb, var(--accent-500) 5.5%, var(--bg-subtle)) 16px);
 }
 
 .orow-tool {
@@ -816,7 +889,8 @@
 .orow-tool:disabled { opacity: 0.25; cursor: default; }
 .orow-tool--go:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
 .orow-tool--add:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-500); }
-.orow-tool--danger:hover:not(:disabled) { background: rgb(var(--danger-rgb) / 0.12); color: var(--status-danger); }
+/* `.orow-tool--danger`'s hover lives in buttons.css, with the other
+   destructive ghost buttons — it is overridden from there otherwise. */
 
 /* The foot is now one thing — generate — plus the setting that configures
    it. It used to carry a second "add section" and three lines of permanent
@@ -842,7 +916,9 @@
   color: var(--ink-2);
   background: var(--surface);
   border: 1px dashed var(--line-strong);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .orail-add:hover {
   color: var(--accent-500);
@@ -983,7 +1059,9 @@
   color: var(--ink-muted);
   background: var(--ink-a04);
   border: 1px solid var(--line);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .find-btn:hover:not(:disabled) { color: var(--ink); background: var(--ink-a06); }
 .find-btn:disabled { opacity: 0.35; }
@@ -1001,6 +1079,8 @@
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-pop);
+  /* Positioned from its top-left at the caret, so it grows from the caret. */
+  transform-origin: top left;
   animation: cmdk-rise 0.14s var(--ease-out);
 }
 .slash-group {
@@ -1050,7 +1130,17 @@
   padding: 0 4px; border-radius: 4px;
   background: var(--ink-a06);
 }
-.ai-chip:hover { filter: brightness(1.07); }
+/* A filter change with nothing to carry it snaps between two brightnesses.
+   Gated on a real pointer for the same reason the card lifts are: on touch
+   the chip would stay lit after the tap that opened the panel. */
+.ai-chip {
+  transition: filter var(--dur-fast) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ai-chip:hover { filter: brightness(1.07); }
+}
+.ai-chip:active { transform: scale(0.96); }
 
 .ai-assist {
   position: absolute;
@@ -1061,6 +1151,8 @@
   border: 1px solid var(--line);
   box-shadow: var(--shadow-pop);
   overflow: hidden;
+  /* Same anchor as the slash menu: top-left, at the selection. */
+  transform-origin: top left;
   animation: cmdk-rise 0.16s var(--ease-out);
 }
 .ai-assist-head {
@@ -1132,7 +1224,9 @@
   color: var(--ink-2);
   background: var(--ink-a04);
   border: 1px solid var(--line);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .ai-btn:hover:not(:disabled) { color: var(--ink); background: var(--ink-a06); }
 .ai-btn:disabled { opacity: 0.4; }
@@ -1158,7 +1252,9 @@
   border-radius: var(--radius);
   font-size: 11.5px; font-weight: 600;
   color: var(--ink-faint);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
 }
 .method-btn:hover { color: var(--ink-2); }
 .method-btn[data-active='true'] { color: var(--accent-600); background: var(--accent-soft); }
@@ -1263,3 +1359,120 @@
   border: 1px solid var(--line);
   box-shadow: 0 1px 0 var(--line);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Export PDF — the options asked before the file is made
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pdf-dialog {
+  width: 100%;
+  max-width: 30rem;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  /* A modal is not anchored to a trigger, so it grows from its own centre. */
+  animation: cmdk-rise var(--dur-base) var(--ease-out);
+}
+.pdf-body {
+  padding: 1.1rem 1.15rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pdf-field { display: flex; flex-direction: column; gap: 0.45rem; }
+.pdf-field-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.pdf-choices { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+
+.pdf-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pdf-choice:hover { color: var(--ink); border-color: var(--line-strong); }
+}
+.pdf-choice:active { transform: scale(0.97); }
+.pdf-choice[data-active='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-600);
+  font-weight: 600;
+}
+/* The swatch has its own hairline: three of these are near-white, and without
+   one "Paper" and "Plain" are two invisible circles on a white chip. */
+.pdf-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-a20);
+  flex-shrink: 0;
+}
+
+.pdf-toggles { display: flex; flex-direction: column; gap: 0.4rem; }
+.pdf-toggle {
+  display: flex;
+  /* `center` put the box halfway down a two-line label. */
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.pdf-toggle input { margin-top: 2px; }
+.pdf-toggle:has(input:disabled) { cursor: default; opacity: 0.75; }
+/* The consequence, next to the control that causes it — a trade-off explained
+   only in a tooltip is a trade-off nobody knows they took. */
+.pdf-toggle-note {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink-ghost);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.pdf-toggle input { accent-color: var(--accent-400); }
+
+.pdf-note {
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--ink-faint);
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+}
+.pdf-note b { color: var(--ink-2); font-weight: 600; }
+
+.pdf-error {
+  font-size: var(--text-xs);
+  color: var(--status-danger);
+}
+
+.pdf-submit {
+  width: 100%;
+  height: 40px;
+  font-size: var(--text-base);
+}
+

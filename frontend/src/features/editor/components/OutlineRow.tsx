@@ -12,6 +12,8 @@ interface RowProps {
   /** Words written under this heading. Zero means the section is still a promise. */
   words: number;
   active: boolean;
+  /** Levels above the active row, if this one contains it. 1 is its parent. */
+  ancestorDepth?: number;
   /** A generation run is in flight — every row's write button waits for it. */
   busy: boolean;
   /** False when the chosen source is not configured yet (URLs, with none given). */
@@ -53,7 +55,7 @@ function shortCount(words: number): string {
  * only a run in progress or a failure puts a symbol in it.
  */
 export function OutlineRow({
-  item, status, words, active, busy, canGenerate, editing, value, onValue, onEdit, onCommit,
+  item, status, words, active, ancestorDepth, busy, canGenerate, editing, value, onValue, onEdit, onCommit,
   onKeyDown, onPrimary, onGenerate, onIndent, onOutdent, onAddAfter, onDelete,
   dragging, dropEdge, onDragStart, onDragOver, onDrop, onDragEnd,
 }: RowProps) {
@@ -64,10 +66,6 @@ export function OutlineRow({
     : written
       ? `Go to "${item.title}" — ${words} words`
       : `Write "${item.title}" into the document`;
-
-  // One rule per ancestor, so the tree lines run the full height of a subtree
-  // instead of appearing and stopping on individual rows.
-  const ancestors = Array.from({ length: Math.max(0, item.level - 1) }, (_, i) => i + 1);
 
   return (
     <div
@@ -85,28 +83,15 @@ export function OutlineRow({
       onDragOver={onDragOver}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      // Depth travels to CSS as a number, not just as padding: the guides and
-      // the per-level type scale both need to know it, and three places
-      // computing `(level - 1) * 14` independently is how they end up
-      // disagreeing by a pixel.
+      // Depth travels to CSS as a number, not just as padding: the indent and
+      // the per-level type scale both need it, and two places computing
+      // `(level - 1) * 14` independently is how they end up disagreeing by a
+      // pixel. There are no guide rules — indentation and the type scale carry
+      // the hierarchy on their own, and a hairline per level in a column this
+      // narrow is decoration standing where information should be.
       style={{ ['--orow-level' as string]: item.level }}
       data-level={Math.min(item.level, 4)}
     >
-      {/* Real elements, not a background image on the row. A background is
-          clipped to the row that paints it, which is why the old guides read
-          as a stack of disconnected dashes rather than as a tree: each row
-          drew its own short segment at its own parent's indent and nothing
-          joined them up. These are full-height, one per ancestor, and rows
-          are flush, so they meet. */}
-      {ancestors.map(depth => (
-        <i
-          key={depth}
-          className="orow-guide"
-          aria-hidden="true"
-          style={{ ['--orow-guide' as string]: depth }}
-        />
-      ))}
-
       <span className="orow-grip" aria-hidden title="Drag to reorder">
         <GripVertical className="h-3 w-3" />
       </span>
@@ -142,11 +127,17 @@ export function OutlineRow({
           a section being written or one that failed takes the slot over,
           because those are the only two states that need chasing. */}
       {!editing && (
-        <span className="orow-meta" data-kind={status ?? (written ? 'words' : 'todo')}>
+        <span className="orow-meta" data-kind={status ?? (ancestorDepth != null ? 'ancestor' : written ? 'words' : 'todo')}>
           {status === 'generating' ? (
             <Loader2 className="h-2.5 w-2.5 animate-spin" aria-label="Writing" />
           ) : status === 'failed' ? (
             <AlertTriangle className="h-2.5 w-2.5" aria-label="Failed — click ✨ to retry" />
+          ) : ancestorDepth != null ? (
+            // Takes the slot the same way "writing" and "failed" do: being on
+            // the path to the caret outranks knowing the section's length.
+            <span className="orow-parent" title={`${ancestorDepth} level${ancestorDepth === 1 ? '' : 's'} above the section you are in`}>
+              P{ancestorDepth}
+            </span>
           ) : written ? (
             <span className="orow-words" title={`${words} words`}>{shortCount(words)}</span>
           ) : null}

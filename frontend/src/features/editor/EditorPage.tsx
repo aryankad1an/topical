@@ -25,13 +25,14 @@ import { activeNode, buildOutline, type OutlineNode } from './lib/outline';
 import { indexOutline, subtreeSpan } from './lib/tree';
 import {
   addSectionAfter, applyOutline, dropSection, moveSectionTo, placeSection,
-  renameSection, sectionWordCount, shiftSection,
+  renameSection, shiftSection,
 } from './lib/sections';
 import { countWords, documentStats } from './lib/stats';
 import { caretPosition, caretIndexFromPoint, insertBlock, lineAt, offsetOfLine, separatorFor, type EditResult } from './lib/textOps';
 import type { DocFormat } from '@/lib/types';
 import type { EditorAction } from './lib/actions';
 import { copyText, downloadSource, printPreview, wrapLatexDocument } from './lib/exporters';
+import { ExportPdfDialog } from './components/ExportPdfDialog';
 import { DEFAULT_OPTIONS, loadOptions, saveOptions, type ViewMode, type ViewOptions } from './lib/viewOptions';
 
 /**
@@ -55,6 +56,7 @@ export function EditorPage() {
   const mainRef = useRef<HTMLDivElement>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [showPdf, setShowPdf] = useState(false);
   const [options, setOptions] = useState<ViewOptions>(DEFAULT_OPTIONS);
   const [splitRatio, setSplitRatio] = useState(50);
   const [caret, setCaret] = useState(0);
@@ -109,10 +111,14 @@ export function EditorPage() {
   const stats = useMemo(() => documentStats(doc.content, doc.format), [doc.content, doc.format]);
   const position = useMemo(() => caretPosition(doc.content, caret), [doc.content, caret]);
   const tree = useMemo(() => indexOutline(outline), [outline]);
-  const activeLabel = useMemo(() => {
-    const id = activeNode(outline, caret);
-    return outline.find(node => node.id === id)?.label ?? null;
-  }, [caret, outline]);
+  /**
+   * The heading the caret is inside, as an id.
+   *
+   * This used to be resolved to a *label* and the rail compared titles, so a
+   * document with more than one section of the same name showed every one of
+   * them as the current section at once.
+   */
+  const activeId = useMemo(() => activeNode(outline, caret), [caret, outline]);
 
   /** The heading and everything nested under it — what one rail row stands for. */
   const focusSpan = useMemo(() => {
@@ -302,12 +308,6 @@ export function EditorPage() {
     }
   }, [applyToDocument, doc.format]);
 
-  /** How much prose a delete would take with it, for the warning. */
-  const measureSection = useCallback(
-    (title: string) => sectionWordCount(contentRef.current, doc.format, title),
-    [doc.format],
-  );
-
   /** The split between editor and preview, as a percentage of the shared row. */
   const startSplitDrag = useDragResize({
     from: () => splitRatio,
@@ -404,13 +404,18 @@ export function EditorPage() {
   }, [assistOpen, doc, find, options.outline, syncSelection, updateOptions]);
 
   // ── Export ──────────────────────────────────────────────────────────────
-  const handleExport = useCallback((kind: 'source' | 'copy' | 'print') => {
+  const handleExport = useCallback((kind: 'source' | 'copy' | 'print' | 'pdf') => {
     const body = doc.format === 'latex' ? wrapLatexDocument(doc.name, doc.content) : doc.content;
     if (kind === 'source') {
       downloadSource(doc.name, body, doc.format);
       toast.success('Downloaded');
     } else if (kind === 'copy') {
       copyText(body).then(() => toast.success('Copied to clipboard'));
+    } else if (kind === 'pdf') {
+      // The dialog reads the rendered HTML when it submits, so the preview has
+      // to exist. In code-only view it does not.
+      if (viewMode === 'code') setViewMode('split');
+      setShowPdf(true);
     } else {
       if (viewMode === 'code') setViewMode('split');
       // Let the preview paint before the print dialog samples the page.
@@ -479,7 +484,7 @@ export function EditorPage() {
             projectName={doc.name}
             content={doc.content}
             documentNodes={outline}
-            activeLabel={activeLabel}
+            activeId={activeId}
             width={options.outlineWidth}
             onWidth={next => updateOptions({ outlineWidth: next })}
             onClose={() => updateOptions({ outline: false })}
@@ -487,7 +492,6 @@ export function EditorPage() {
             onFocusSection={node => setFocusOffset(node ? node.offset : null)}
             onInsertSection={insertSection}
             onDeleteSection={deleteSection}
-            measureSection={measureSection}
             onRenameHeading={renameHeading}
             onShiftHeading={shiftHeading}
             onMoveHeading={moveHeading}
@@ -589,8 +593,14 @@ export function EditorPage() {
           />
         )}
 
+        {/* `data-split` so the rendered sheet can stop centring itself when
+            there is a source pane beside it to be read against. */}
         {showPreview && (
-          <div className="editor-preview" style={{ flex: showEditor ? 100 - splitRatio : 100 }}>
+          <div
+            className="editor-preview"
+            data-split={showEditor ? 'true' : undefined}
+            style={{ flex: showEditor ? 100 - splitRatio : 100 }}
+          >
             <PreviewPane
               ref={previewRef}
               content={doc.content}
@@ -600,6 +610,18 @@ export function EditorPage() {
           </div>
         )}
       </div>
+
+      {showPdf && (
+        <ExportPdfDialog
+          title={doc.name}
+          author={user?.given_name ? [user.given_name, user.family_name].filter(Boolean).join(' ') : null}
+          /* Read at submit time, not at open time: the preview keeps rendering
+             while the dialog is up, and the export should carry whatever the
+             document says when the button is actually pressed. */
+          getHtml={() => document.querySelector('.doc-preview .doc-sheet')?.innerHTML ?? null}
+          onClose={() => setShowPdf(false)}
+        />
+      )}
 
       <StatusBar
         saveState={doc.saveState}
