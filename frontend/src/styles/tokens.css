@@ -466,8 +466,6 @@
   }
 
   button,
-  .btn,
-  a.btn,
   input[type="button"],
   input[type="submit"] {
     min-height: 2.5rem;

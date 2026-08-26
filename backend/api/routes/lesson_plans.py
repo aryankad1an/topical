@@ -1,16 +1,24 @@
 """Documents — the storage still calls them lesson plans.
 
-Route order matters in one place: ``/public`` is declared ahead of ``/{id}`` so
-the literal segment is not read as an id.
+One document is fetched one way: ``/{id}/shared``, which answers with the
+document *and* what the caller may do with it. There used to be two more —
+``/{id}`` for a document you could write and ``/public/{id}`` for one that had
+been published — and a client that did not already know which it was holding
+had to try them in turn and read the access rule off which one failed.
 """
 
 from __future__ import annotations
 
 from fastapi import APIRouter, Response, status
 
-from ...schemas.lesson_plan import LessonPlanInput, LessonPlanList, LessonPlanOut
+from ...schemas.lesson_plan import (
+    LessonPlanInput,
+    LessonPlanList,
+    LessonPlanOut,
+    SharedLessonPlan,
+)
 from ...services import lesson_plans as service
-from ..deps import CurrentUser, Db, RowId
+from ..deps import CurrentUser, Db, MaybeUser, RowId
 
 router = APIRouter(tags=["lesson-plans"])
 
@@ -27,14 +35,16 @@ async def list_public(db: Db) -> LessonPlanList:
     return LessonPlanList(lessonPlans=[LessonPlanOut.model_validate(plan) for plan in plans])
 
 
-@router.get("/public/{plan_id}", response_model=LessonPlanOut)
-async def get_public(plan_id: RowId, db: Db) -> LessonPlanOut:
-    return LessonPlanOut.model_validate(await service.get_public(db, plan_id))
+@router.get("/{plan_id}/shared", response_model=SharedLessonPlan)
+async def get_shared(plan_id: RowId, db: Db, user: MaybeUser) -> SharedLessonPlan:
+    """One document as its share link reaches it, whoever is holding the link.
 
-
-@router.get("/{plan_id}", response_model=LessonPlanOut)
-async def get_one(plan_id: RowId, db: Db, user: CurrentUser) -> LessonPlanOut:
-    return await service.get_writable(db, plan_id, user.id)
+    Deliberately not behind ``CurrentUser``: a signed-out visitor following a
+    link to a published document is an expected caller here, not a rejected
+    one. What they may *do* with it comes back in ``access``.
+    """
+    plan, access = await service.get_shared(db, plan_id, user.id if user else None)
+    return SharedLessonPlan(plan=plan, access=access)
 
 
 @router.post("", response_model=LessonPlanOut, status_code=status.HTTP_201_CREATED)

@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReadRouteImport } from './routes/read'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as GlassRouteImport } from './routes/glass'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -22,6 +21,7 @@ import { Route as AuthenticatedProvidersRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedEditorRouteImport } from './routes/_authenticated/editor'
+import { Route as ProjectsFormatIdRouteImport } from './routes/projects.$format.$id'
 import { Route as AuthenticatedProfileEditRouteImport } from './routes/_authenticated/profile_.edit'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -37,11 +37,6 @@ const ReadRoute = ReadRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GlassRoute = GlassRouteImport.update({
-  id: '/glass',
-  path: '/glass',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -88,6 +83,11 @@ const AuthenticatedEditorRoute = AuthenticatedEditorRouteImport.update({
   path: '/editor',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ProjectsFormatIdRoute = ProjectsFormatIdRouteImport.update({
+  id: '/projects/$format/$id',
+  path: '/projects/$format/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedProfileEditRoute =
   AuthenticatedProfileEditRouteImport.update({
     id: '/profile_/edit',
@@ -99,7 +99,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
-  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -109,12 +108,12 @@ export interface FileRoutesByFullPath {
   '/providers': typeof AuthenticatedProvidersRoute
   '/u/$username': typeof UUsernameRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/projects/$format/$id': typeof ProjectsFormatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
-  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -124,6 +123,7 @@ export interface FileRoutesByTo {
   '/providers': typeof AuthenticatedProvidersRoute
   '/u/$username': typeof UUsernameRoute
   '/profile/edit': typeof AuthenticatedProfileEditRoute
+  '/projects/$format/$id': typeof ProjectsFormatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,7 +131,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/community': typeof CommunityRoute
-  '/glass': typeof GlassRoute
   '/login': typeof LoginRoute
   '/read': typeof ReadRoute
   '/register': typeof RegisterRoute
@@ -141,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated/providers': typeof AuthenticatedProvidersRoute
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/profile_/edit': typeof AuthenticatedProfileEditRoute
+  '/projects/$format/$id': typeof ProjectsFormatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,7 +148,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/community'
-    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -158,12 +157,12 @@ export interface FileRouteTypes {
     | '/providers'
     | '/u/$username'
     | '/profile/edit'
+    | '/projects/$format/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/community'
-    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -173,13 +172,13 @@ export interface FileRouteTypes {
     | '/providers'
     | '/u/$username'
     | '/profile/edit'
+    | '/projects/$format/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/about'
     | '/community'
-    | '/glass'
     | '/login'
     | '/read'
     | '/register'
@@ -189,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authenticated/providers'
     | '/u/$username'
     | '/_authenticated/profile_/edit'
+    | '/projects/$format/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,11 +196,11 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   CommunityRoute: typeof CommunityRoute
-  GlassRoute: typeof GlassRoute
   LoginRoute: typeof LoginRoute
   ReadRoute: typeof ReadRoute
   RegisterRoute: typeof RegisterRoute
   UUsernameRoute: typeof UUsernameRoute
+  ProjectsFormatIdRoute: typeof ProjectsFormatIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,13 +224,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/glass': {
-      id: '/glass'
-      path: '/glass'
-      fullPath: '/glass'
-      preLoaderRoute: typeof GlassRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -296,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEditorRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/projects/$format/$id': {
+      id: '/projects/$format/$id'
+      path: '/projects/$format/$id'
+      fullPath: '/projects/$format/$id'
+      preLoaderRoute: typeof ProjectsFormatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/profile_/edit': {
       id: '/_authenticated/profile_/edit'
       path: '/profile/edit'
@@ -331,11 +331,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   CommunityRoute: CommunityRoute,
-  GlassRoute: GlassRoute,
   LoginRoute: LoginRoute,
   ReadRoute: ReadRoute,
   RegisterRoute: RegisterRoute,
   UUsernameRoute: UUsernameRoute,
+  ProjectsFormatIdRoute: ProjectsFormatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

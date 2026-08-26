@@ -252,8 +252,8 @@
 
 /* ── Destructive ghost buttons ──
    These modifiers used to live beside their components (`.icon-btn--danger`
-   in pages.css, `.orow-tool--danger` in editor.css) at `(0,2,0)` and
-   `(0,3,0)`, and the generic ghost hover four rules above is `(0,3,0)` in a
+   in pages.css, `.orow-tool--danger` in editor.css) at `(0, 2, 0)` and
+   `(0, 3, 0)`, and the generic ghost hover four rules above is `(0, 3, 0)` in a
    file that loads after both of them — so the danger tint never once painted
    and every delete button hovered the same neutral grey as every other icon.
    They belong here, after the rule they are meant to override.
@@ -280,8 +280,7 @@
 /* ── Tabs and segmented trays ──
    These are navigation, not actions, so they must not look like the
    primary button. Previously both the section tabs and the sort pills
-   filled solid accent when active — two rows of identical bright blocks,
-   with nothing to say which one changed the page and which one reordered
+   filled solid accent when active — two rows of identical bright blocks, with nothing to say which one changed the page and which one reordered
    a list.
 
    The tray is now the recessed thing and the active tab is the raised one:
@@ -357,8 +356,7 @@
    Labels, not controls. They keep the pill shape precisely so they cannot
    be mistaken for something clickable: in this system rounded rectangles
    act and pills describe. */
-.chip,
-.accent-soft {
+.chip {
   border-radius: var(--radius-pill);
   background-image: none;
   box-shadow: none;

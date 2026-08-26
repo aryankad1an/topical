@@ -1,5 +1,7 @@
-import { FileType2, FileCode2, Eye, Pencil, Trash2, Globe, Lock, Users } from 'lucide-react';
+import { useMemo } from 'react';
+import { FileType2, FileCode2, ArrowUpRight, Trash2 } from 'lucide-react';
 import { docTypeVars } from '@/components/ui/primitives';
+import { Collaborators } from '@/components/Collaborators';
 import { formatOf } from '@/lib/types';
 
 export interface DocLike {
@@ -12,7 +14,7 @@ export interface DocLike {
   createdAt?: string | null;
   updatedAt?: string | null;
   authorUsername?: string | null;
-  coAuthorUsernames?: string[];
+  coAuthorUsernames?: (string | null)[];
   topics?: { mdxContent?: string }[];
 }
 
@@ -91,19 +93,40 @@ function previewContent(doc: DocLike, max = 7): PreviewLine[] {
 interface Props {
   doc: DocLike;
   isAuthor: boolean;
-  onRead: (id: number) => void;
-  onEdit: (id: number) => void;
+  /**
+   * One action, not two.
+   *
+   * These cards used to carry "Read" and "Edit" side by side, which asked the
+   * reader to choose a mode before they had seen the thing they were choosing
+   * for — and offered "Edit" on documents the viewer had no write access to.
+   * A project is opened; what you can do with it once it is open is decided
+   * from the document and the viewer, not from which button was pressed.
+   */
+  onOpen: (id: number) => void;
   onDelete: (id: number) => void;
   formatDate: (d: string | null) => string;
+  /**
+   * The visibility control, supplied by the page because only it knows what a
+   * publish costs — the confirmation, the request and the caches to refresh.
+   * It leads the metadata row: whether a document is published is the first
+   * thing about it that is not on the card already.
+   */
   children?: React.ReactNode;
 }
 
-export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDate, children }: Props) {
+export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, children }: Props) {
   const type = formatOf(doc.mainTopic);
   const isLatex = type === 'latex';
   const Icon = isLatex ? FileCode2 : FileType2;
-  const preview = previewContent(doc);
-  const words = wordCount(doc);
+  /* Keyed on the document, not recomputed per render. Both of these walk the
+     whole of the document's text — `previewContent` splits it into lines and
+     runs a dozen regexes over each, `wordCount` runs one over all of it — and
+     a card re-renders for reasons that have nothing to do with its contents:
+     a keystroke in the search field above it, or a route change. On a hundred
+     documents that was several milliseconds of regex per keystroke, for text
+     that had not changed. */
+  const preview = useMemo(() => previewContent(doc), [doc]);
+  const words = useMemo(() => wordCount(doc), [doc]);
 
   return (
     <div className="doc-card group" style={docTypeVars(type)}>
@@ -157,29 +180,21 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-[10.5px] text-[var(--ink-faint)] px-2 py-0.5 rounded-full"
-            style={{ background: 'var(--ink-a04)', border: '1px solid var(--line-soft)' }}>
-            {doc.isPublic ? <Globe className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
-            {doc.isPublic ? 'Public' : 'Private'}
-          </span>
-          {doc.coAuthorUsernames && doc.coAuthorUsernames.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-[10.5px] text-[var(--ink-faint)] px-2 py-0.5 rounded-full"
-              style={{ background: 'var(--ink-a02)', border: '1px solid var(--line-soft)' }}>
-              <Users className="h-2.5 w-2.5" />
-              {doc.coAuthorUsernames.length + 1}
-            </span>
-          )}
+        {/* The document's facts, all at one height — see `--doc-chip-h`. */}
+        <div className="doc-meta">
           {children}
+          {doc.coAuthorUsernames && doc.coAuthorUsernames.length > 0 && (
+            <Collaborators
+              authorUsername={doc.authorUsername ?? null}
+              coAuthorUsernames={doc.coAuthorUsernames}
+            />
+          )}
         </div>
 
         {doc.id != null && (
           <div className="doc-actions">
-            <button className="doc-btn" onClick={() => onRead(doc.id!)}>
-              <Eye className="h-3.5 w-3.5" /> Read
-            </button>
-            <button className="doc-btn doc-btn--primary" onClick={() => onEdit(doc.id!)}>
-              <Pencil className="h-3.5 w-3.5" /> Edit
+            <button className="doc-btn doc-btn--primary" onClick={() => onOpen(doc.id!)}>
+              Open <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
@@ -188,11 +203,11 @@ export function DocumentCard({ doc, isAuthor, onRead, onEdit, onDelete, formatDa
   );
 }
 
-export function DocumentRow({ doc, isAuthor, onRead, onEdit, onDelete, formatDate }: Props) {
+export function DocumentRow({ doc, isAuthor, onOpen, onDelete, formatDate, children }: Props) {
   const type = formatOf(doc.mainTopic);
   const isLatex = type === 'latex';
   const Icon = isLatex ? FileCode2 : FileType2;
-  const words = wordCount(doc);
+  const words = useMemo(() => wordCount(doc), [doc]);
 
   return (
     <div className="doc-row group" style={docTypeVars(type)}>
@@ -212,21 +227,20 @@ export function DocumentRow({ doc, isAuthor, onRead, onEdit, onDelete, formatDat
         <div className="flex items-center gap-1.5 text-[11px] text-[var(--ink-ghost)] mt-0.5">
           <span>{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</span>
           {words > 0 && <><span className="text-[var(--ink-ghost)]">·</span><span>{words.toLocaleString()} words</span></>}
-          <span className="text-[var(--ink-ghost)]">·</span>
-          <span className="inline-flex items-center gap-1">
-            {doc.isPublic ? <Globe className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
-            {doc.isPublic ? 'Public' : 'Private'}
-          </span>
         </div>
       </div>
 
       {doc.id != null && (
         <div className="flex items-center gap-2 shrink-0">
-          <button className="doc-btn px-3" style={{ flex: 'none' }} onClick={() => onRead(doc.id!)}>
-            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Read</span>
-          </button>
-          <button className="doc-btn doc-btn--primary px-3" style={{ flex: 'none' }} onClick={() => onEdit(doc.id!)}>
-            <Pencil className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Edit</span>
+          {children}
+          {doc.coAuthorUsernames && doc.coAuthorUsernames.length > 0 && (
+            <Collaborators
+              authorUsername={doc.authorUsername ?? null}
+              coAuthorUsernames={doc.coAuthorUsernames}
+            />
+          )}
+          <button className="doc-btn doc-btn--primary px-3" style={{ flex: 'none' }} onClick={() => onOpen(doc.id!)}>
+            Open <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
           {isAuthor && (
             <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}

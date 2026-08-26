@@ -16,7 +16,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Menu, X, Home, FolderOpen, Users, UserRound, Command } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -34,8 +34,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
   const { isAuthenticated, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const routerState = useRouterState();
-  const currentPath = routerState.location.pathname;
+  /* Selected, not the whole router state. A bare `useRouterState()` subscribes
+     this component to every field of it — including the transition status,
+     which changes several times per navigation — so the nav re-rendered, and
+     re-measured its sliding indicator, repeatedly during a single route change.
+     The pathname is the only part it reads. */
+  const currentPath = useRouterState({ select: state => state.location.pathname });
 
   useEffect(() => {
     const handleResize = () => {
@@ -73,10 +77,16 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
       const shell = shellRef.current;
       if (!shell) return;
       const active = shell.querySelector<HTMLElement>("[data-active='true']");
-      if (!active) { setIndicator(null); return; }
+      if (!active) { setIndicator(prev => (prev === null ? prev : null)); return; }
       const a = active.getBoundingClientRect();
       const s = shell.getBoundingClientRect();
-      setIndicator({ x: a.left - s.left, w: a.width });
+      const next = { x: a.left - s.left, w: a.width };
+      /* Bail out when nothing moved. `measure` runs on mount, on every path
+         change, on resize, and again when the fonts land — and each run set a
+         freshly-allocated object, so React saw a new value and re-rendered the
+         bar even when the pill was already exactly where it belonged. Half the
+         nav's renders during a navigation were this. */
+      setIndicator(prev => (prev && prev.x === next.x && prev.w === next.w ? prev : next));
     };
     measure();
     window.addEventListener('resize', measure);
@@ -241,11 +251,29 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 function Root() {
   const { isAuthenticated } = useAuth();
 
-  // All hooks must run unconditionally on every render (Rules of Hooks) — in
-  // particular, before the early return below, which only some renders take.
-  const routerState = useRouterState();
-  const isEditorRoute = routerState.location.pathname.startsWith('/editor');
+  /**
+   * Whether a document is on screen — read or write.
+   *
+   * Both are the same full-height application shell: reading is the document
+   * screen with its writing surface absent, not a page in the site chrome, so
+   * both take the viewport over and both carry their own way back out. Any
+   * path below `/projects/` is a document; `/projects` itself is the list.
+   *
+   * Selected down to a boolean on purpose. This was `useRouterState()` with no
+   * selector, which subscribes the entire application shell to every change in
+   * router state — every navigation re-rendered the shell, the nav bar, the
+   * command palette and the toaster several times over, before the destination
+   * had even mounted. Now the shell re-renders only when the answer flips.
+   */
+  const isEditorRoute = useRouterState({
+    select: state => state.location.pathname.startsWith('/projects/'),
+  });
   const [commandOpen, setCommandOpen] = useState(false);
+  /* Stable, because the palette memoises its command list against it. As an
+     inline arrow this changed identity on every render of the shell — which
+     happens on every route change — so the whole list, including one entry
+     per document, was rebuilt and re-rendered each time. */
+  const closeCommand = useCallback(() => setCommandOpen(false), []);
 
   // ⌘K / Ctrl-K anywhere, including the editor.
   useEffect(() => {
@@ -276,7 +304,7 @@ function Root() {
       {!isEditorRoute && <NavBar onOpenCommand={() => setCommandOpen(true)} />}
       <CommandPalette
         open={commandOpen}
-        onClose={() => setCommandOpen(false)}
+        onClose={closeCommand}
         isAuthenticated={isAuthenticated}
       />
       <OnboardingModal />

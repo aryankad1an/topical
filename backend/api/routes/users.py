@@ -14,7 +14,7 @@ from ...schemas.user import (
     UsernameMatch,
 )
 from ...services import users as users_service
-from ..deps import CurrentUser, Db, RowId  # noqa: F401
+from ..deps import CurrentUser, Db
 
 router = APIRouter(tags=["users"])
 

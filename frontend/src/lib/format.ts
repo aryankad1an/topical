@@ -23,3 +23,24 @@ export function formatMonthYear(value: string | null | undefined): string {
     ? ''
     : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 }
+
+/**
+ * How long ago, coarsely: "just now", "5m ago", "3h ago", "2d ago".
+ *
+ * For timestamps a reader is scanning rather than reading — post and comment
+ * bylines — where "how recent" is the whole question and the exact date is
+ * noise. Both community surfaces carried their own copy of this, and they had
+ * already drifted apart in the day/hour branch.
+ */
+export function relativeTime(value: string | null | undefined): string {
+  if (!value) return '';
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return '';
+
+  const minutes = Math.floor((Date.now() - then) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+}

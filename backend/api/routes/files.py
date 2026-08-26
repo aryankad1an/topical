@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 
 from ...core.errors import AppError
 from ...services import files as service
-from ..deps import CurrentUser, Db  # noqa: F401
+from ..deps import CurrentUser
 
 router = APIRouter(tags=["files"])
 

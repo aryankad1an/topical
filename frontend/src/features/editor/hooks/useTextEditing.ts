@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { DocFormat } from '@/lib/types';
 import {
   autoPair, continueBlock, indentLines, outdentLines, skipClosing,
@@ -40,18 +40,34 @@ export function useTextEditing({ textareaRef, content, setContent, format }: Opt
   }, [content.length, textareaRef]);
 
   const apply = useCallback((result: EditResult) => {
-    setContent(result.content);
     pendingCaret.current = { start: result.start, end: result.end };
-    // The value lands on the next paint; restore the caret right after it.
-    requestAnimationFrame(() => {
-      const ta = textareaRef.current;
-      const caret = pendingCaret.current;
-      if (!ta || !caret) return;
-      ta.focus();
-      ta.setSelectionRange(caret.start, caret.end);
-      pendingCaret.current = null;
-    });
-  }, [setContent, textareaRef]);
+    setContent(result.content);
+  }, [setContent]);
+
+  /**
+   * Restore the caret after React has actually written the new value.
+   *
+   * This used to run on a `requestAnimationFrame` after `setContent`, which is
+   * a guess about when the commit happens rather than a fact about it. When
+   * the frame won the race the range was set against the *old* value and then
+   * discarded — a textarea drops its selection to the end whenever its value
+   * is replaced — so an AI edit that rewrote a paragraph left the caret at the
+   * bottom of the document and scrolled the writer there with it. The longer
+   * the document, the more reliably it lost.
+   *
+   * A layout effect keyed on the content runs after the DOM holds the new
+   * text and before the browser paints, so the caret is never wrong on screen
+   * and there is no race left to lose.
+   */
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    if (!caret) return;
+    pendingCaret.current = null;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.focus();
+    ta.setSelectionRange(caret.start, caret.end);
+  }, [content, textareaRef]);
 
   const run = useCallback((action: EditorAction) => {
     apply(action.apply(content, selection()));

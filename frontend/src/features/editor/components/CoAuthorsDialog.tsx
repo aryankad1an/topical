@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { Search as SearchIcon, UserPlus, Users, X } from 'lucide-react';
 import { searchUsername } from '@/lib/api';
 import { Avatar, IconButton } from '@/components/ui/primitives';
-import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -12,8 +11,9 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   coAuthors: string[];
-  coAuthorUsernames: string[];
-  onChange: (ids: string[], usernames: string[]) => void;
+  coAuthorUsernames: (string | null)[];
+  /** Usernames are positional against `ids`, and null where unset. */
+  onChange: (ids: string[], usernames: (string | null)[]) => void;
 }
 
 /** Add people who can open and edit this document live. */
@@ -56,13 +56,22 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative mt-2">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--ink-faint)]" />
-          <Input
+        {/* The shared search field, not a hand-built one.
+            This was a `<Input className="pl-9">` with an absolutely positioned
+            icon, and the padding never applied: `.glass-input` sets shorthand
+            `padding` in `tokens.css`, which loads *after* Tailwind, so it beat
+            the utility outright. The icon therefore sat on top of the first
+            letter of the placeholder. Every other search box in the product
+            already uses `.search-field`, which reserves the space in the same
+            stylesheet that draws the icon. */}
+        <div className="search-field mt-2">
+          <SearchIcon className="search-field-icon" />
+          <input
+            className="glass-input search-input"
             placeholder="Search by username…"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="pl-9 bg-[var(--ink-a04)] border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus-visible:ring-1 focus-visible:ring-[var(--line-strong)]"
+            autoFocus
           />
         </div>
 

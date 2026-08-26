@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowUp, ArrowDown, Clock } from 'lucide-react';
+import { relativeTime } from '@/lib/format';
 
 interface PostDetailProps {
   postId: number;
@@ -100,16 +101,6 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
 
   useDialogDismiss(onClose);
 
-  const relTime = (d: string | null) => {
-    if (!d) return '';
-    const diff = Date.now() - new Date(d).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return 'just now';
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`;
-  };
-
   const comments = data?.comments ?? [];
   const score = (post?.upvotes ?? 0) - (post?.downvotes ?? 0);
 
@@ -144,7 +135,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                 <h2 className="post-detail-title">{post.title}</h2>
                 <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
                   <span>by {post.authorName}</span>
-                  <span><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relTime(post.createdAt)}</span>
+                  <span><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relativeTime(post.createdAt)}</span>
                 </div>
                 {post.body && <p className="text-sm text-[var(--ink-muted)] leading-relaxed whitespace-pre-wrap">{post.body}</p>}
               </div>
@@ -190,7 +181,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                     <div className="flex items-center gap-2 mb-1">
                       <span className="comment-author">{c.authorName}</span>
                       <span className="text-[10px] text-[var(--ink-ghost)]">
-                        {pending ? 'sending…' : relTime(c.createdAt)}
+                        {pending ? 'sending…' : relativeTime(c.createdAt)}
                       </span>
                       {mine && !pending && (
                         <button

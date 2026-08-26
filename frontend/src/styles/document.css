@@ -53,8 +53,15 @@
      of pane), then climbs gently, reaching 18.5px only on a pane wide enough
      that 17px would read as small and far away. A steeper coefficient hit the
      ceiling at a 900px pane, which made the type jump around during an
-     ordinary divider drag. */
-  font-size: clamp(17px, 15.5px + 0.16cqi, 18.5px);
+     ordinary divider drag.
+
+     Multiplied by `--doc-font-scale` on top of that: the writer's own "Text
+     size" preference used to set only `--code-size` on the source textarea,
+     so pressing + in the view menu did nothing to the rendered half — and
+     nothing at all while reading, where there is no source pane to have
+     changed. `PreviewPane` sets the variable from the same `fontSize` option;
+     it defaults to 1 so nothing here moves for a caller that doesn't set it. */
+  font-size: calc(clamp(17px, 15.5px + 0.16cqi, 18.5px) * var(--doc-font-scale, 1));
 }
 
 /* ── …but not in split view ──
@@ -84,6 +91,24 @@
      scales with the pane (see the `cqi` clamp above), which is what keeps a
      very wide pane from also being a very small one. */
   max-width: none;
+}
+
+/* A block is clickable back to its source only where there is a source pane
+   to land in — the same `data-split` scope as above. Elsewhere (full-screen
+   preview, or reading with no editing session at all) a rendered block is
+   just a rendered block, and a pointer cursor over it would promise a jump
+   that goes nowhere. */
+.editor-preview[data-split='true'] [data-line] {
+  cursor: pointer;
+}
+.editor-preview[data-split='true'] [data-line]:hover {
+  background: var(--ink-a02);
+  /* Reaches into the sheet's own side padding, the same construction
+     `.doc-focus` uses, so the tint reads as a band under the text rather
+     than a box that stops short of the margin. */
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+  border-radius: var(--radius-sm);
 }
 /* LaTeX runs denser — more notation per line, and equations that want room. */
 .doc-sheet[data-format='latex'] { max-width: clamp(28rem, 70cqi, 43rem); }
@@ -214,17 +239,17 @@
   scroll-margin-top: 1rem;
   text-wrap: balance;
 }
-.md-body h1.md-h { font-size: 2.1rem; font-weight: 600; margin: 0 0 1rem; line-height: 1.18; }
+.md-body h1.md-h { font-size: 2.1em; font-weight: 600; margin: 0 0 1rem; line-height: 1.18; }
 .md-body h2.md-h {
-  font-size: 1.45rem; font-weight: 600;
+  font-size: 1.45em; font-weight: 600;
   margin: 2.1rem 0 0.85rem;
   line-height: 1.28;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--line);
 }
-.md-body h3.md-h { font-size: 1.18rem; font-weight: 600; margin: 1.6rem 0 0.6rem; line-height: 1.35; }
+.md-body h3.md-h { font-size: 1.18em; font-weight: 600; margin: 1.6rem 0 0.6rem; line-height: 1.35; }
 .md-body h4.md-h, .md-body h5.md-h, .md-body h6.md-h {
-  font-size: 1rem; font-weight: 600; margin: 1.3rem 0 0.5rem;
+  font-size: 1em; font-weight: 600; margin: 1.3rem 0 0.5rem;
   color: var(--ink-2);
 }
 /* Section anchors stay out of the way until the heading is hovered. */
@@ -366,13 +391,19 @@
   color: var(--ink-2);
   font-family: var(--font-serif);
   font-optical-sizing: auto;
-  font-size: 16.5px;
+  /* Scaled by the same `--doc-font-scale` the Markdown body uses — see the
+     note there. Everything below that is sized in `em` against this rather
+     than `rem` against the document root moves with it; a few fixed
+     micro-typography sizes (footnote marks, the table of contents, the
+     bibliography) are left in `rem` deliberately, on the same reasoning a
+     book's running head does not grow with its body type. */
+  font-size: calc(16.5px * var(--doc-font-scale, 1));
   line-height: 1.68;
   font-variant-numeric: lining-nums;
 }
 .lx-titleblock { text-align: center; margin-bottom: 2.4rem; }
 .lx-title {
-  font-size: 1.95rem; font-weight: 700;
+  font-size: 1.95em; font-weight: 700;
   color: var(--ink);
   line-height: 1.25;
   margin-bottom: 0.5rem;
@@ -387,14 +418,14 @@
   scroll-margin-top: 1rem;
 }
 .lx-doc .lx-h1 {
-  font-size: 1.45rem; font-weight: 650;
+  font-size: 1.45em; font-weight: 650;
   margin: 2.1rem 0 0.8rem;
   padding-bottom: 0.35rem;
   border-bottom: 1px solid var(--line);
 }
-.lx-doc .lx-h2 { font-size: 1.18rem; font-weight: 600; margin: 1.6rem 0 0.55rem; }
-.lx-doc .lx-h3 { font-size: 1.03rem; font-weight: 600; margin: 1.3rem 0 0.45rem; color: var(--ink); }
-.lx-doc .lx-h4, .lx-doc .lx-h5 { font-size: 0.95rem; font-weight: 600; margin: 1.1rem 0 0.35rem; }
+.lx-doc .lx-h2 { font-size: 1.18em; font-weight: 600; margin: 1.6rem 0 0.55rem; }
+.lx-doc .lx-h3 { font-size: 1.03em; font-weight: 600; margin: 1.3rem 0 0.45rem; color: var(--ink); }
+.lx-doc .lx-h4, .lx-doc .lx-h5 { font-size: 0.95em; font-weight: 600; margin: 1.1rem 0 0.35rem; }
 /* ── Section numbers ──
    One `min-width` for every depth cannot work: each level's number is one
    component longer than the last, so a box wide enough for `2` is overflowed

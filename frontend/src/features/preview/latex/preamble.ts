@@ -7,6 +7,7 @@
  */
 
 import { readGroup, readOptional } from './parser';
+import { MappedBuilder, removeMatches, removeSpan, type Mapped, type SourceMap } from './sourceMap';
 
 export interface Macro {
   params: number;
@@ -22,6 +23,8 @@ export interface Preamble {
   macros: Map<string, Macro>;
   /** Everything left to render, with preamble commands removed. */
   body: string;
+  /** `body`'s map back to the original source — see `sourceMap.ts`. */
+  map: SourceMap;
 }
 
 const DROP_COMMANDS = [
@@ -30,11 +33,15 @@ const DROP_COMMANDS = [
   'addbibresource', 'setcounter', 'linespread', 'graphicspath', 'hypersetup',
 ];
 
-export function extractPreamble(src: string): Preamble {
+export function extractPreamble(src: string, sourceMap: SourceMap): Preamble {
   let title = '';
   let author = '';
   let date = '';
   const macros = new Map<string, Macro>();
+  // Both mutate together throughout — every splice below removes the same
+  // span from each, so `map` keeps meaning "where did this character of
+  // `src` come from" right up to the point `renderBlocks` starts reading it.
+  let map = sourceMap;
 
   // Metadata — read with brace matching so `\title{A {B} C}` survives.
   const meta = (name: string): string => {
@@ -42,7 +49,7 @@ export function extractPreamble(src: string): Preamble {
     if (at === -1) return '';
     const group = readGroup(src, at + name.length + 1);
     if (!group) return '';
-    src = src.slice(0, at) + src.slice(group.end);
+    ({ text: src, map } = removeSpan(src, map, at, group.end));
     return group.body.trim();
   };
   title = meta('title');
@@ -96,46 +103,62 @@ export function extractPreamble(src: string): Preamble {
   }
 
   for (const [start, end] of removals.reverse()) {
-    src = src.slice(0, start) + src.slice(end);
+    ({ text: src, map } = removeSpan(src, map, start, end));
   }
 
   // Structural commands that carry no visible content.
   for (const name of DROP_COMMANDS) {
-    src = src.replace(new RegExp(`\\\\${name}(\\[[^\\]]*\\])?(\\{[^}]*\\})*`, 'g'), '');
+    ({ text: src, map } = removeMatches(src, map, new RegExp(`\\\\${name}(\\[[^\\]]*\\])?(\\{[^}]*\\})*`, 'g')));
   }
-  src = src
-    .replace(/\\begin\{document\}|\\end\{document\}/g, '')
-    .replace(/\\maketitle/g, '')
-    .replace(/\\(?:clearpage|newpage|pagebreak|noindent|centering|raggedright|small|footnotesize|normalsize|large|Large|huge|Huge)\b/g, '');
+  ({ text: src, map } = removeMatches(src, map, /\\begin\{document\}|\\end\{document\}/g));
+  ({ text: src, map } = removeMatches(src, map, /\\maketitle/g));
+  ({ text: src, map } = removeMatches(
+    src, map,
+    /\\(?:clearpage|newpage|pagebreak|noindent|centering|raggedright|small|footnotesize|normalsize|large|Large|huge|Huge)\b/g,
+  ));
 
-  return { title, author, date, macros, body: src };
+  return { title, author, date, macros, body: src, map };
 }
 
 const MAX_EXPANSIONS = 8;
 
-/** Substitute user macros, repeatedly, so macros defined in terms of macros resolve. */
-export function expandMacros(src: string, macros: Map<string, Macro>): string {
-  if (macros.size === 0) return src;
+/**
+ * Substitute user macros, repeatedly, so macros defined in terms of macros
+ * resolve.
+ *
+ * A macro's expansion is text from its *definition*, not from the line that
+ * invoked it — there is no single source character behind `\mathbb{R}` when
+ * `\R` is what the writer typed. Every character the expansion contributes is
+ * attributed to the invocation site instead: close enough for a block-level
+ * jump, and exactly what a writer means by "where is this in my document" —
+ * the call site, not a macro they may have defined once and forgotten.
+ */
+export function expandMacros(src: string, macros: Map<string, Macro>, sourceMap: SourceMap): Mapped {
+  if (macros.size === 0) return { text: src, map: sourceMap };
 
   let text = src;
+  let map = sourceMap;
   for (let pass = 0; pass < MAX_EXPANSIONS; pass++) {
     let changed = false;
-    let out = '';
+    const out = new MappedBuilder();
     let i = 0;
 
     while (i < text.length) {
       if (text[i] !== '\\') {
-        out += text[i++];
+        out.push(text[i], map[i]);
+        i++;
         continue;
       }
       const name = /^\\([a-zA-Z@]+)/.exec(text.slice(i));
       const macro = name && macros.get(name[1]);
       if (!name || !macro) {
-        out += text[i] + (text[i + 1] ?? '');
+        out.push(text[i], map[i]);
+        if (text[i + 1] !== undefined) out.push(text[i + 1], map[i + 1]);
         i += 2;
         continue;
       }
 
+      const invocationOrigin = map[i];
       let cursor = i + name[0].length;
       const args: string[] = [];
       if (macro.optionalDefault !== undefined) {
@@ -151,18 +174,19 @@ export function expandMacros(src: string, macros: Map<string, Macro>): string {
       }
       if (args.length < macro.params) {
         // Not enough arguments present — leave it alone rather than mangling.
-        out += text.slice(i, cursor);
+        for (let j = i; j < cursor; j++) out.push(text[j], map[j]);
         i = cursor;
         continue;
       }
 
-      out += macro.body.replace(/#(\d)/g, (_, n) => args[Number(n) - 1] ?? '');
+      const expansion = macro.body.replace(/#(\d)/g, (_, n) => args[Number(n) - 1] ?? '');
+      out.pushRun(expansion, invocationOrigin);
       i = cursor;
       changed = true;
     }
 
-    text = out;
+    ({ text, map } = out.result());
     if (!changed) break;
   }
-  return text;
+  return { text, map };
 }

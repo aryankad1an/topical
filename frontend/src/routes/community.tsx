@@ -1,22 +1,26 @@
 /**
  * The community screen: a published-document library and a discussion forum,
- * switched by tab. Opening a document you own goes to the editor; anything
- * else opens the read-only reader.
+ * switched by tab.
+ *
+ * Every lesson here opens at its own address, `/projects/:format/:id`, the
+ * same one the projects page and the palette use. Whether it opens for reading
+ * or for writing is settled there, by the server.
  */
 
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, X } from 'lucide-react';
+import { Search, TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, X, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, EmptyState, PageHeader } from '@/components/ui/primitives';
+import { Avatar, EmptyState, PageHeader, Refreshing } from '@/components/ui/primitives';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
 import { formatDate } from '@/lib/format';
 import { getPublicLessonPlans, userByIdQueryOptions } from '@/lib/api';
+import { documentRoute } from '@/lib/documentUrl';
 import { PostCard } from '@/components/community/PostCard';
 import { PostDetail } from '@/components/community/PostDetail';
 import { NewPostDialog } from '@/components/community/NewPostDialog';
@@ -38,7 +42,7 @@ function CommunityPage() {
   const [showNewPost, setShowNewPost] = useState(false);
 
   // ── Forum posts ──
-  const { data: postsData, isLoading: postsLoading } = useQuery({
+  const { data: postsData, isLoading: postsLoading, isFetching: postsFetching } = useQuery({
     queryKey: ['community-posts', sort],
     queryFn: () => fetchPosts(sort),
   });
@@ -86,7 +90,7 @@ function CommunityPage() {
   };
 
   // ── People ──
-  const { data: peopleData, isLoading: peopleLoading } = useQuery({
+  const { data: peopleData, isLoading: peopleLoading, isFetching: peopleFetching } = useQuery({
     queryKey: ['people', search],
     queryFn: () => fetchPeople(search),
     enabled: tab === 'people',
@@ -94,7 +98,7 @@ function CommunityPage() {
   const people = peopleData ?? [];
 
   // ── Public lessons ──
-  const { data: lessonsData, isLoading: lessonsLoading } = useQuery({
+  const { data: lessonsData, isLoading: lessonsLoading, isFetching: lessonsFetching } = useQuery({
     queryKey: ['public-lesson-plans'],
     queryFn: getPublicLessonPlans,
     enabled: tab === 'lessons',
@@ -116,10 +120,16 @@ function CommunityPage() {
     return m;
   }, {} as Record<string, string>);
 
-  // Yours opens in the editor; everyone else's opens in the reader.
-  const handleViewLesson = (id: number, ownerId: string) => {
-    if (ownerId === user?.id) navigate({ to: '/editor', search: { id } });
-    else navigate({ to: '/read', search: { id } });
+  /*
+   * Every lesson opens at the same address.
+   *
+   * This used to compare owner ids in the browser and send you to the editor
+   * or the reader accordingly — a guess the client is not entitled to make. It
+   * was also wrong for co-authors, who were sent to the read-only view of a
+   * document they may write.
+   */
+  const handleViewLesson = (id: number, mainTopic: string) => {
+    navigate(documentRoute(id, mainTopic));
   };
 
   return (
@@ -180,8 +190,11 @@ function CommunityPage() {
               </button>
             </div>
 
-            <span className="text-[11px] text-[var(--ink-ghost)]">
-              {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
+            <span className="flex items-center gap-2.5">
+              <Refreshing active={postsFetching && !postsLoading} />
+              <span className="text-[11px] text-[var(--ink-ghost)]">
+                {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
+              </span>
             </span>
           </div>
 
@@ -247,6 +260,7 @@ function CommunityPage() {
               <UsersIcon className="h-3.5 w-3.5" />
               {people.length} {people.length === 1 ? 'member' : 'members'}
             </span>
+            <Refreshing active={peopleFetching && !peopleLoading} />
           </div>
 
           {peopleLoading ? (
@@ -293,6 +307,7 @@ function CommunityPage() {
               <Globe className="h-3.5 w-3.5" />
               {filteredLessons.length} public {filteredLessons.length === 1 ? 'lesson' : 'lessons'}
             </span>
+            <Refreshing active={lessonsFetching && !lessonsLoading} />
           </div>
 
           {lessonsLoading ? (
@@ -322,25 +337,17 @@ function CommunityPage() {
                       <Layers className="h-2.5 w-2.5" />
                       {plan.topics.length} {plan.topics.length === 1 ? 'topic' : 'topics'}
                     </div>
-                    <div className="flex gap-2">
-                      <Link
-                        to="/read"
-                        search={{ id: plan.id }}
-                        target="_blank"
-                        className="glass-btn flex-1 h-8 text-xs flex items-center justify-center gap-1.5"
-                      >
-                        Read
-                      </Link>
-                      {isAuthenticated && (
-                        <button
-                          className="flex-1 h-8 text-xs rounded-lg flex items-center justify-center gap-1 font-medium transition-all"
-                          style={{ background: 'var(--accent-400)', color: 'var(--accent-ink)' }}
-                          onClick={() => handleViewLesson(plan.id, plan.userId)}
-                        >
-                          {isOwn ? 'Edit' : 'View'}
-                        </button>
-                      )}
-                    </div>
+                    {/* One button. There were two — "Read", which opened a
+                        separate read-only page in a new tab, and "Edit", which
+                        was shown to anyone signed in and failed for everyone
+                        who did not own the document. */}
+                    <button
+                      className="w-full h-8 text-xs rounded-lg flex items-center justify-center gap-1 font-medium transition-all"
+                      style={{ background: 'var(--accent-400)', color: 'var(--accent-ink)' }}
+                      onClick={() => handleViewLesson(plan.id, plan.mainTopic)}
+                    >
+                      Open <ArrowUpRight className="h-3 w-3" />
+                    </button>
                   </div>
                 );
               })}

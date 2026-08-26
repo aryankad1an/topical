@@ -175,16 +175,29 @@ def section_prompt(
     ancestors: Optional[List[str]] = None,
     section_number: str = "",
     level: int = 1,
+    instruction: str = "",
 ) -> str:
     """Ask for one section of a document, in whichever notation it is written.
 
     A section with children gets an *introduction* — its sub-sections are
     written in their own passes, and a parent that explains them puts the same
     prose in the document twice.
+
+    ``instruction`` is what the writer asked for beyond the title — a length, a
+    stance, an audience. It is placed last in the rules and marked as
+    overriding them, because a standing rule the writer has just contradicted
+    ("400-800 words" against "keep this brief") is the one they meant to break.
     """
     spec = section_format(fmt)
     ctx = f"\nUse this reference material:\n<context>\n{context}\n</context>\n" if context else ""
     heading = spec.heading(topic, level)
+    #: Stated as an override rather than merged into the list: a request that
+    #: conflicts with a default is the writer correcting the default.
+    ask = (
+        f"The writer asked for this specifically — follow it, and where it "
+        f"conflicts with a rule above, it wins: {instruction.strip()}"
+        if instruction.strip() else ""
+    )
 
     if children:
         return (
@@ -206,6 +219,7 @@ def section_prompt(
                 "nested beneath them. They are written separately, and covering them here puts the "
                 "same material in the document twice.",
                 *spec.extra_rules,
+                *([ask] if ask else []),
                 spec.closing,
             ])
         )
@@ -227,6 +241,7 @@ def section_prompt(
             *spec.extra_rules,
             "Educational, clear, well-structured",
             "400-800 words",
+            *([ask] if ask else []),
             spec.closing,
         ])
     )

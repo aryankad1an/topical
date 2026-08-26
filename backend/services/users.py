@@ -12,10 +12,9 @@ from typing import List, Optional, Sequence
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..core.errors import Conflict, NotFound
+from ..core.errors import AppError, Conflict, NotFound
 from ..core.validation import MAX_BIO_LENGTH, USERNAME_PATTERN, USERNAME_RULE
 from ..db.models import LessonPlan, User
-from ..core.errors import AppError
 
 
 async def by_id(db: AsyncSession, user_id: str) -> Optional[User]:
@@ -153,7 +152,7 @@ async def username_lookup(db: AsyncSession, ids: List[str]):
     """
     unique = list({user_id for user_id in ids if user_id})
     if not unique:
-        return lambda user_id: user_id
+        return lambda user_id: None
 
     rows = (
         (await db.execute(select(User.id, User.username).where(User.id.in_(unique))))
@@ -161,6 +160,11 @@ async def username_lookup(db: AsyncSession, ids: List[str]):
         .all()
     )
     by_id_map = {row_id: name for row_id, name in rows if name}
-    # An id with no username (or no user) stands in for itself, so a co-author
-    # shows as *something* rather than vanishing from the list.
-    return lambda user_id: by_id_map.get(user_id, user_id)
+    # None, not the id, for a user who has not set a username (or is gone).
+    # The id used to stand in for itself so a co-author showed as *something*,
+    # and while that list was only ever a tooltip it did no harm. It is a list
+    # of profile links now, and a 32-character hexadecimal string is neither a
+    # name a reader recognises nor a handle that resolves to a profile. The
+    # caller keeps the position — the person is still on the document — and
+    # decides what to call someone it has no handle for.
+    return lambda user_id: by_id_map.get(user_id)

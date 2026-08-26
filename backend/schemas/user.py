@@ -8,7 +8,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from ..core.validation import MAX_BIO_LENGTH
-from .common import ORMModel
+from .common import ORMModel, UtcDatetime
 
 
 class ProfileUpdate(BaseModel):
@@ -40,7 +40,7 @@ class PublicUser(ORMModel):
     familyName: Optional[str] = Field(default=None, validation_alias="family_name")  # noqa: N815
     bio: Optional[str] = None
     avatarUrl: Optional[str] = Field(default=None, validation_alias="avatar_url")  # noqa: N815
-    createdAt: Optional[datetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
+    createdAt: Optional[UtcDatetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -69,7 +69,7 @@ class PublishedDoc(BaseModel):
     id: int
     name: str
     mainTopic: str  # noqa: N815
-    createdAt: Optional[datetime] = None  # noqa: N815
+    createdAt: Optional[UtcDatetime] = None  # noqa: N815
     updatedAt: Optional[datetime] = None  # noqa: N815
 
 

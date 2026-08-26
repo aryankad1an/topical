@@ -127,8 +127,8 @@
 .auth-pitch-brand {
   margin-bottom: 1.5rem;
 }
-.auth-pitch-brand .brand-tile { width: 30px; height: 30px; font-size: 15px; }
-.auth-pitch-brand .brand-word { font-size: 18px; }
+/* One number, and the tile, the word and the gap follow it. */
+.auth-pitch-brand .brand-lockup { --mark: 30px; }
 
 .auth-title {
   font-family: var(--font-serif);

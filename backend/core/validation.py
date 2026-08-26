@@ -1,10 +1,14 @@
 """Validation rules the browser and the server both have to agree on.
 
 The browser enforces the same rules, in ``frontend/src/lib/validation.ts``.
-Two languages means two copies; keeping each one small, and stating the rule as
-a single sentence that both sides quote verbatim, is what stops them drifting
-into two different-sounding rejections of the same input. Change one, change
-the other — the file says so in both directions.
+Two languages means two copies, and keeping each one small is what stops them
+drifting into two different-sounding rejections of the same input. Change one,
+change the other — the file says so in both directions.
+
+The two sides do not carry identical code, only identical limits. The server
+rejects with the whole rule in one sentence (``USERNAME_RULE``); the browser
+names the one thing wrong with what has been typed so far, which is the useful
+thing to say while someone is still typing.
 """
 
 from __future__ import annotations
@@ -24,20 +28,3 @@ USERNAME_RULE = (
 
 #: The longest bio a profile will store.
 MAX_BIO_LENGTH = 280
-
-
-def username_problem(username: str) -> str | None:
-    """Why this username is unacceptable, or None if it is fine.
-
-    Returns the specific problem rather than the whole rule, so the edit form
-    can say "At least 3 characters" while the reader is still typing.
-    """
-    if not username:
-        return None
-    if len(username) < USERNAME_MIN:
-        return f"At least {USERNAME_MIN} characters"
-    if len(username) > USERNAME_MAX:
-        return f"At most {USERNAME_MAX} characters"
-    if not USERNAME_PATTERN.match(username):
-        return "Letters, numbers, hyphen and underscore only"
-    return None

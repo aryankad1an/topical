@@ -9,10 +9,11 @@
  * apart.
  */
 export function BrandMark({ size = 'sm' }: { size?: 'sm' | 'md' }) {
-  const tile = size === 'sm' ? 22 : 24;
+  // The whole lockup is derived from this one measurement — see `--mark` in
+  // pages.css. Sizing the tile alone left the gap at whatever it was.
   return (
-    <span className="brand-lockup">
-      <span className="brand-tile" style={{ width: tile, height: tile }} aria-hidden="true">T</span>
+    <span className="brand-lockup" style={{ ['--mark' as string]: size === 'sm' ? '22px' : '26px' }}>
+      <span className="brand-tile" aria-hidden="true">T</span>
       <span className="font-brand brand-word">Topical</span>
     </span>
   );

@@ -262,6 +262,12 @@ export interface SectionBody {
   ancestors?: string[];
   /** Its number in the outline — "2.3" — so the model knows where it sits. */
   section_number?: string;
+  /**
+   * What the writer asked for beyond the title. `topic` says what the section
+   * is about; this says how it should be written, and the prompt lets it
+   * override the standing rules it contradicts.
+   */
+  instruction?: string;
   /** Heading depth, so the section opens at the right level. */
   level?: number;
 }
@@ -343,13 +349,12 @@ export type LessonPlanResponse = {
   }[];
   coAuthors?: string[];
   authorUsername?: string;
-  coAuthorUsernames?: string[];
+  /** Positional against `coAuthors`; null where that person has no handle. */
+  coAuthorUsernames?: (string | null)[];
   isPublic: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
-
-export type ErrorResponse = { error: string };
 
 /** Create a new lesson plan, or update it in place when it already has an id. */
 export async function saveLessonPlan(lessonPlan: LessonPlan) {
@@ -372,16 +377,6 @@ export async function getLessonPlans() {
   });
 }
 
-export async function getLessonPlanById(id: number): Promise<LessonPlanResponse | ErrorResponse> {
-  try {
-    return await json<LessonPlanResponse>(`/lessonPlans/${id}`, {
-      failure: `Failed to get lesson plan ${id}`,
-    });
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : String(error) };
-  }
-}
-
 export async function deleteLessonPlan(id: number) {
   await request(`/lessonPlans/${id}`, {
     method: "DELETE",
@@ -396,14 +391,31 @@ export async function getPublicLessonPlans() {
   });
 }
 
-export async function getPublicLessonPlanById(id: number): Promise<LessonPlanResponse | ErrorResponse> {
-  try {
-    return await json<LessonPlanResponse>(`/lessonPlans/public/${id}`, {
-      failure: `Failed to get public lesson plan ${id}`,
-    });
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : String(error) };
-  }
+/** What the viewer holding a document's link may do with it. */
+export type DocumentAccess = "owner" | "co-author" | "reader";
+
+export interface SharedDocument {
+  plan: LessonPlanResponse;
+  access: DocumentAccess;
+}
+
+/**
+ * One document as its share link reaches it, whoever is holding the link.
+ *
+ * The single fetch behind `/projects/:format/:id`. It replaces the two-step
+ * dance the reader used — ask for it as yours, and if that 404s ask for it as
+ * published — which could not tell "not yours" from "not there", spent two
+ * round trips proving a document was private, and left the caller guessing at
+ * whether to open the editor or the reader. The server decides, once.
+ *
+ * Rejects rather than returning an error shape: the caller has three outcomes
+ * to distinguish (edit, read, nothing), and folding "no access" into the same
+ * union as the other two is what made the old call sites ambiguous.
+ */
+export async function fetchSharedDocument(id: number): Promise<SharedDocument> {
+  return json<SharedDocument>(`/lessonPlans/${id}/shared`, {
+    failure: "That document is not available",
+  });
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { ArrowUp, ArrowDown, MessageSquare, BookOpen, Clock, User, Trash2 } from
 import type { Post } from '@/lib/communityApi';
 import { votePost } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
+import { relativeTime } from '@/lib/format';
 
 interface PostCardProps {
   post: Post;
@@ -29,17 +30,6 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
     } catch { /* ignore */ }
     setVoting(false);
   }
-
-  const relTime = (d: string | null) => {
-    if (!d) return '';
-    const diff = Date.now() - new Date(d).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return 'just now';
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
-  };
 
   return (
     <div className="community-card group" onClick={() => onOpen(post.id)}>
@@ -145,7 +135,7 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
           <span className="meta-item" style={{ opacity: 0.4 }}>·</span>
           <span className="meta-item">
             <Clock className="h-3 w-3" />
-            {relTime(post.createdAt)}
+            {relativeTime(post.createdAt)}
           </span>
           <span className="meta-item" style={{ opacity: 0.4 }}>·</span>
           <span className="meta-item">

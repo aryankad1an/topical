@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
-import { Keyboard, ListTree, Slash, Upload } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, Keyboard, ListTree, Slash, Upload } from 'lucide-react';
 import type { DocFormat } from '@/lib/types';
 import { Chip } from '@/components/ui/primitives';
 import { actionById, TOOLBAR_GROUPS, type EditorAction } from '../lib/actions';
@@ -35,6 +36,37 @@ export function Toolbar({
   format, onRun, onUploadImage, outlineOpen, onToggleOutline, onShowShortcuts,
 }: Props) {
   const barRef = useRef<HTMLDivElement>(null);
+  /**
+   * Which group has its overflow open, and where to draw it.
+   *
+   * The menu is portalled to the body and positioned from the chevron's own
+   * rect, because it cannot survive being a child of the bar: `.editor-toolbar`
+   * is `overflow: auto` (so it scrolls on a narrow window), which clips it, and
+   * it carries `backdrop-filter`, which makes it a stacking context that no
+   * `z-index` can climb out of. This is the trap `.editor-menu` in the header
+   * hit before — same cause, and the same reason a popover anchored in frosted
+   * chrome has to leave it.
+   */
+  const [openGroup, setOpenGroup] = useState<{ label: string; x: number; y: number } | null>(null);
+
+  // A menu on a toolbar is dismissed by doing almost anything else.
+  useEffect(() => {
+    if (!openGroup) return;
+    const close = () => setOpenGroup(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', onKey);
+    // Scrolling the bar or the page moves the chevron out from under a menu
+    // that is fixed to the viewport, so the menu goes rather than drift.
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [openGroup]);
 
   /**
    * Arrow keys move focus; Home and End jump to the ends.
@@ -126,6 +158,59 @@ export function Toolbar({
               </button>
             );
           })}
+
+          {/* The rest of the group, one chevron away. Actions that belong
+              together but are reached once a session do not earn a permanent
+              slot on a bar that has to stay scannable. */}
+          {group.more && group.more.length > 0 && (
+            <div className="toolbar-more">
+              <button
+                className="toolbar-btn toolbar-more-btn"
+                data-active={openGroup?.label === group.label}
+                onClick={e => {
+                  e.stopPropagation();
+                  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  setOpenGroup(g => (g?.label === group.label
+                    ? null
+                    : { label: group.label, x: r.left, y: r.bottom + 6 }));
+                }}
+                title={`More ${group.label.toLowerCase()}`}
+                aria-label={`More ${group.label.toLowerCase()}`}
+                aria-haspopup="menu"
+                aria-expanded={openGroup?.label === group.label}
+                {...roving(index++)}
+              >
+                <ChevronDown className="h-3 w-3" />
+              </button>
+
+              {openGroup?.label === group.label && createPortal(
+                <div
+                  className="toolbar-menu"
+                  role="menu"
+                  style={{ left: openGroup.x, top: openGroup.y }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {group.more.map(id => {
+                    const action = actionById(format, id);
+                    if (!action) return null;
+                    const Icon = action.icon;
+                    return (
+                      <button
+                        key={action.id}
+                        role="menuitem"
+                        className="toolbar-menu-item"
+                        onClick={() => { onRun(action); setOpenGroup(null); }}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {action.label}
+                      </button>
+                    );
+                  })}
+                </div>,
+                document.body,
+              )}
+            </div>
+          )}
         </div>
       ))}
 

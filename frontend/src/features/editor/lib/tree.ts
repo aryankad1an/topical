@@ -85,13 +85,6 @@ export function indexOutline(nodes: OutlineNode[]): OutlineTree {
   return { nodes, entries, roots, byOffset };
 }
 
-/** The entry for a heading at a source offset, if it is still there. */
-export function entryAtOffset(tree: OutlineTree, offset: number | null): OutlineEntry | null {
-  if (offset === null) return null;
-  const index = tree.byOffset.get(offset);
-  return index === undefined ? null : tree.entries[index];
-}
-
 /** Titles of the rows nested *directly* under one — what its introduction must not cover. */
 export function childTitles(tree: OutlineTree, index: number): string[] {
   return (tree.entries[index]?.children ?? []).map(child => tree.nodes[child].label);

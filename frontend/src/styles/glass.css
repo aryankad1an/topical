@@ -30,7 +30,9 @@
    Written flat, this file loads after Tailwind and its `position: relative`
    silently beat `.fixed` on the nav — the floating pill became a full-width
    bar in normal flow. */
-:where(.liquid-glass, .glass-card, .auth-panel) {
+:where(.liquid-glass,
+.glass-card,
+.auth-panel) {
   position: relative;
   isolation: isolate;
 }
@@ -56,20 +58,6 @@
    up — which is precisely what the cards on the landing page looked like,
    dark down one side and bright down the other. */
 
-.liquid-glass--heavy {
-  background: var(--glass-tint-strong);
-  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
-  box-shadow: var(--shadow-pop), var(--glass-bevel);
-}
-
-.liquid-glass--light {
-  background: var(--glass-tint-weak);
-  -webkit-backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur-sm)) saturate(var(--glass-saturate));
-  box-shadow: var(--glass-bevel);
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    Application — the four kinds of floating chrome
    ═══════════════════════════════════════════════════════════════════════ */
@@ -84,8 +72,7 @@
 .new-post-dialog,
 .dialog-glass,
 .mobile-menu-overlay,
-.lesson-picker,
-.shortcuts-sheet {
+.lesson-picker {
   background: var(--glass-tint-strong);
   -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
@@ -100,8 +87,7 @@
 .post-detail-panel,
 .new-post-dialog,
 .dialog-glass,
-.lesson-picker,
-.shortcuts-sheet {
+.lesson-picker {
   border-radius: var(--radius-xl);
 }
 
@@ -143,8 +129,7 @@
    Layered on top of the blur declared above, and kept in its own
    `@supports` block on purpose: `backdrop-filter: url(...)` is not
    universal — Safari has the property but not the function — and a browser
-   that parses `url()` and ignores it would drop the whole declaration,
-   taking the blur with it and leaving a bare translucent rectangle.
+   that parses `url()` and ignores it would drop the whole declaration, taking the blur with it and leaving a bare translucent rectangle.
 
    Declaring the plain blur first and only *replacing* it where the
    reference actually resolves means the fallback is the material minus its
@@ -158,8 +143,7 @@
   .post-detail-panel,
   .new-post-dialog,
   .dialog-glass,
-  .lesson-picker,
-  .shortcuts-sheet {
+  .lesson-picker {
     -webkit-backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
     backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
   }
@@ -202,22 +186,40 @@
 /* ═══════════════════════════════════════════════════════════════════════
    No nested glass
    An element with `backdrop-filter` inside another one frosts pixels that
-   are already frosted: the result is fog, it costs a second composite pass,
-   and on a long list it is the difference between a smooth scroll and a
+   are already frosted: the result is fog, it costs a second composite pass, and on a long list it is the difference between a smooth scroll and a
    janky one.
 
    `:is()` takes the specificity of its most specific argument, so this
-   lands at (0,2,0) and beats the single-class rules above without
+   lands at (0, 2, 0) and beats the single-class rules above without
    `!important`.
    ═══════════════════════════════════════════════════════════════════════ */
 
-:is(.liquid-glass, .glass-card, .auth-panel, .cmdk-panel, .post-detail-panel,
-    .new-post-dialog, .dialog-glass, .lesson-picker, .nav-glass,
-    .shortcuts-sheet)
-:is(.surface, .chip, .btn, .btn-subtle, .doc-btn, .accent-soft, .model-option,
-    .pub-row, .doc-row, .segmented, .sort-pill, .community-tab, .nav-kbd,
-    .nav-indicator, .glass-btn, .glass-input, .glass-card, .auth-input,
-    .liquid-glass) {
+:is(.liquid-glass,
+.glass-card,
+.auth-panel,
+.cmdk-panel,
+.post-detail-panel,
+.new-post-dialog,
+.dialog-glass,
+.lesson-picker,
+.nav-glass)
+:is(.surface,
+.chip,
+.btn-subtle,
+.doc-btn,
+.model-option,
+.pub-row,
+.doc-row,
+.segmented,
+.sort-pill,
+.community-tab,
+.nav-kbd,
+.nav-indicator,
+.glass-btn,
+.glass-input,
+.glass-card,
+.auth-input,
+.liquid-glass) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -231,11 +233,9 @@
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .liquid-glass,
-  .liquid-glass--heavy,
-  .liquid-glass--light,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
   .dialog-glass, .mobile-menu-overlay, .lesson-picker,
-  .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status {
+  .editor-header, .editor-toolbar, .editor-status {
     background: var(--surface);
     border-color: var(--line);
   }
@@ -245,11 +245,9 @@
    The OS setting for it exists; honour it. */
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
-  .liquid-glass--heavy,
-  .liquid-glass--light,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
   .dialog-glass, .mobile-menu-overlay, .lesson-picker,
-  .shortcuts-sheet, .editor-header, .editor-toolbar, .editor-status,
+  .editor-header, .editor-toolbar, .editor-status,
   .outline-rail, .outline-head, .orail-prompt {
     background: var(--surface);
     -webkit-backdrop-filter: none !important;

@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, BookOpen, FileType2, FileCode2, Calendar, UserX } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, FileType2, FileCode2, Calendar, UserX, Settings2 } from "lucide-react";
 import { fetchPersonProfile, personName, type PublishedDoc } from "@/lib/api";
 import { formatOf } from "@/lib/types";
+import { documentRoute } from "@/lib/documentUrl";
 import { formatDate, formatMonthYear } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import { EmptyState, PageHeader, IdentityBanner, DocTypeIcon } from "@/components/ui/primitives";
@@ -53,8 +54,16 @@ function PublicProfile() {
   const name = personName(person);
   const joined = formatMonthYear(person.createdAt);
 
+  /*
+   * Someone else's published work, opened at its own address.
+   *
+   * This sent every document to the editor, including the ones belonging to
+   * the person whose profile you were looking at — which is to say almost all
+   * of them. The editor loads through the owner-or-co-author endpoint, so the
+   * result was a "Failed to load project" toast over an empty writing surface.
+   */
   const openDoc = (doc: PublishedDoc) => {
-    navigate({ to: "/editor", search: { id: doc.id, type: formatOf(doc.mainTopic) } });
+    navigate(documentRoute(doc.id, doc.mainTopic));
   };
 
   return (
@@ -82,10 +91,18 @@ function PublicProfile() {
           </span>
         </>}
         actions={isSelf && (
-          <Link to="/profile/edit"
-            className="btn-subtle btn-subtle--pill h-9 px-4">
-            Edit profile
-          </Link>
+          /* Your own public profile is a preview of how you look to others, so
+             the way back to changing it belongs here. "Edit profile" covers the
+             public half — name, handle, bio; "Settings" is the private half,
+             which was reachable only by navigating away entirely. */
+          <span className="flex items-center gap-2">
+            <Link to="/profile/edit" className="btn-subtle btn-subtle--pill h-9 px-4">
+              Edit profile
+            </Link>
+            <Link to="/profile" className="btn-subtle btn-subtle--pill h-9 px-4">
+              <Settings2 className="h-3.5 w-3.5" /> Settings
+            </Link>
+          </span>
         )}
       />
 

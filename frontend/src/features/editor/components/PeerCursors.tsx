@@ -19,6 +19,8 @@ interface CursorPos {
   x: number;
   y: number;
   lineH: number;
+  /** One box per visual line of the peer's selection, if they have one. */
+  rects: { x: number; y: number; w: number; h: number }[];
 }
 
 // Styles to copy from textarea to mirror div for pixel-perfect match
@@ -94,6 +96,7 @@ export function PeerCursors({ textareaRef, content, peers }: Props) {
       // Only show cursor for peers that have explicitly set one
       if (!peer.cursor || peer.cursor.index == null || peer.cursor.index < 0) continue;
       const idx = Math.min(peer.cursor.index, content.length);
+      const len = Math.max(0, Math.min(peer.cursor.length ?? 0, content.length - idx));
 
       // Build mirror content using real text nodes for accurate rendering
       // This ensures whitespace, tabs, newlines render identically to textarea
@@ -127,7 +130,36 @@ export function PeerCursors({ textareaRef, content, peers }: Props) {
       const x = markerRect.left - mirrorRect.left + ta.offsetLeft;
       const y = markerRect.top - mirrorRect.top - scrollTop + ta.offsetTop;
 
-      if (y >= -lineH && y <= visH + lineH) {
+      /* ── The peer's selection ──
+         Awareness has carried `length` since the beginning; only the caret was
+         ever drawn from it, so a collaborator highlighting a paragraph showed
+         up as a single blinking bar and you could not see what they were about
+         to change. A DOM Range over the mirror gives one rect per *visual*
+         line, which is what a wrapped selection actually is — a single box
+         from start to end would paint straight through the right-hand gutter
+         on every line but the last. */
+      const rects: CursorPos['rects'] = [];
+      if (len > 0) {
+        const range = document.createRange();
+        // The marker splits the text: everything before it is `beforeNode`,
+        // everything after is `afterNode`, so the selection starts at the
+        // marker and runs `len` characters into what follows.
+        range.setStart(marker, 0);
+        range.setEnd(afterNode, Math.min(len, afterNode.length));
+        for (const r of Array.from(range.getClientRects())) {
+          if (r.width < 0.5) continue;
+          rects.push({
+            x: r.left - mirrorRect.left + ta.offsetLeft,
+            y: r.top - mirrorRect.top - scrollTop + ta.offsetTop,
+            w: r.width,
+            h: r.height,
+          });
+        }
+        range.detach?.();
+      }
+
+      const onScreen = (v: number) => v >= -lineH && v <= visH + lineH;
+      if (onScreen(y) || rects.some(r => onScreen(r.y))) {
         results.push({
           clientId: peer.clientId,
           name: peer.user.name,
@@ -135,6 +167,7 @@ export function PeerCursors({ textareaRef, content, peers }: Props) {
           x: Math.max(0, x),
           y,
           lineH,
+          rects: rects.filter(r => onScreen(r.y)),
         });
       }
     }
@@ -163,6 +196,28 @@ export function PeerCursors({ textareaRef, content, peers }: Props) {
 
   return (
     <>
+      {/* Selections first, so a caret is never painted under a highlight. */}
+      {positions.flatMap(pos =>
+        pos.rects.map((r, i) => (
+          <div
+            key={`${pos.clientId}-sel-${i}`}
+            className="peer-selection"
+            aria-hidden="true"
+            style={{
+              left: r.x,
+              top: r.y,
+              width: r.w,
+              height: r.h,
+              /* The peer's own colour, well under the document's own selection
+                 so the two are distinguishable when they overlap. */
+              background: `${pos.color}2e`,
+              borderTop: `1px solid ${pos.color}55`,
+              borderBottom: `1px solid ${pos.color}55`,
+            }}
+          />
+        )),
+      )}
+
       {positions.map(pos => (
         <div
           key={pos.clientId}

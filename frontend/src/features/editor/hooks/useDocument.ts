@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouterState } from '@tanstack/react-router';
-import type { EditorSearch } from '@/routes/_authenticated/editor';
 import { toast } from 'sonner';
-import { getLessonPlanById, saveLessonPlan } from '@/lib/api';
+import { saveLessonPlan, type LessonPlanResponse } from '@/lib/api';
 import { documentContent } from '@/lib/documents';
 import { formatOf, LATEX_PREFIX, type DocFormat, type LessonPlan } from '@/lib/types';
 import { useYjsCollab } from '@/hooks/useYjsCollab';
@@ -19,15 +17,15 @@ export interface DocumentModel {
   content: string;
   /** Local edit — pushes to collaborators and marks the document dirty. */
   setContent: (value: string) => void;
-  isLoading: boolean;
   saveState: SaveState;
   lastSavedAt: number | null;
   save: (silent?: boolean) => Promise<void>;
   authorUsername: string | null;
-  isAuthor: boolean;
   coAuthors: string[];
-  coAuthorUsernames: string[];
-  setCoAuthors: (ids: string[], usernames: string[]) => void;
+  coAuthorUsernames: (string | null)[];
+  setCoAuthors: (ids: string[], usernames: (string | null)[]) => void;
+  /** Whether the document is on the community library. */
+  isPublic: boolean;
   /** Live collaboration. */
   peers: ReturnType<typeof useYjsCollab>['peers'];
   connected: boolean;
@@ -36,27 +34,64 @@ export interface DocumentModel {
 }
 
 /**
- * Everything about the document as a stored, shared thing: loading it,
+ * Everything about the document as a stored, shared thing: holding it,
  * saving it, autosaving it, and keeping it in sync with other editors.
  *
  * The editor screen deals with text and selection; this deals with the fact
  * that the text belongs to somebody and lives on a server.
+ *
+ * The document arrives already fetched. The route has to load it anyway — it
+ * cannot know whether to show the reader or the editor until the server has
+ * said what this viewer may do with it — so fetching again in here meant the
+ * same document over the wire twice and a second spinner after the first had
+ * cleared. It is also never null: a document is created before it is opened,
+ * so there is no "unsaved, id-less document" state for anything downstream to
+ * carry a branch for.
  */
-export function useDocument(currentUsername: string): DocumentModel {
-  const [projectId, setProjectId] = useState<number | undefined>();
-  const [name, setName] = useState('Untitled Project');
-  const [format, setFormat] = useState<DocFormat>('mdx');
-  const [content, setContentRaw] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+export function useDocument(
+  currentUsername: string,
+  plan: LessonPlanResponse,
+  /**
+   * Whether the writing surface is live.
+   *
+   * Gates the collaboration session. A reader has nothing to send — there is
+   * no textarea for them to type into — but joining the room would still put
+   * them in everyone else's peer list and stream them the writers' cursors,
+   * and on a published document that is a stranger appearing in the owner's
+   * editor. Reading is not participating.
+   */
+  editing: boolean,
+): DocumentModel {
+  const [projectId, setProjectId] = useState<number | undefined>(plan.id);
+  const [name, setName] = useState(plan.name);
+  const [format] = useState<DocFormat>(formatOf(plan.mainTopic));
+  const [content, setContentRaw] = useState(() => documentContent(plan.topics));
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
-  const [authorUsername, setAuthorUsername] = useState<string | null>(null);
-  const [coAuthors, setCoAuthorIds] = useState<string[]>([]);
-  const [coAuthorUsernames, setCoAuthorUsernames] = useState<string[]>([]);
+  const [authorUsername] = useState<string | null>(plan.authorUsername ?? null);
+  const [coAuthors, setCoAuthorIds] = useState<string[]>(plan.coAuthors ?? []);
+  const [coAuthorUsernames, setCoAuthorUsernames] = useState<(string | null)[]>(
+    plan.coAuthorUsernames ?? [],
+  );
+  /**
+   * Whether the document is published, carried so every save can say so.
+   *
+   * It was never held here at all, so the editor's payload never contained
+   * the field — and the API writes every column it is handed, defaulting a
+   * missing `isPublic` to false. Publishing a document and then typing one
+   * character silently withdrew it from the community library, as did adding
+   * a co-author. The server no longer clears an omitted flag, but the editor
+   * should still be able to state the truth rather than rely on that.
+   */
+  const [isPublic] = useState(!!plan.isPublic);
 
   const { peers, connected, initContent, applyLocalChange, updateCursor, isRemoteUpdate } =
-    useYjsCollab(projectId ? String(projectId) : undefined, currentUsername, remote => setContentRaw(remote));
+    useYjsCollab(
+      editing && projectId ? String(projectId) : undefined,
+      currentUsername,
+      remote => setContentRaw(remote),
+    );
 
   const setContent = useCallback((value: string) => {
     setContentRaw(value);
@@ -65,55 +100,27 @@ export function useDocument(currentUsername: string): DocumentModel {
     if (!isRemoteUpdate.current) applyLocalChange(value);
   }, [applyLocalChange, isRemoteUpdate]);
 
-  // ── Load ────────────────────────────────────────────────────────────────
-  // Read from the router, not from `window.location` once at mount: opening a
-  // second document from the command palette or the community list reuses this
-  // component, and a mount-only read would leave the previous document on
-  // screen under the new title.
-  const search = useRouterState({ select: state => state.location.search }) as EditorSearch;
-  const documentId = search.id ?? null;
-  const requestedFormat = search.type ?? 'mdx';
-
+  // ── Adopt ───────────────────────────────────────────────────────────────
+  /*
+   * The document arrives already fetched, so every field above is seeded from
+   * it at first render rather than being filled in by an effect afterwards.
+   * What is left for an effect is the one thing that cannot happen during
+   * render: seeding the shared Yjs document for collaborators.
+   *
+   * Keyed on the id so that opening a second document — which the router does
+   * by remounting this route — starts its own handshake, and so that a re-render
+   * for any other reason does not re-seed and clobber a peer's edits.
+   */
   useEffect(() => {
-    if (!documentId || Number.isNaN(documentId)) {
-      setFormat(requestedFormat);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await getLessonPlanById(documentId);
-        if ('error' in result) throw new Error(result.error);
-        if (cancelled) return;
-
-        const combined = documentContent(result.topics);
-
-        setProjectId(result.id);
-        setName(result.name);
-        setAuthorUsername(result.authorUsername || null);
-        setCoAuthorIds(result.coAuthors || []);
-        setCoAuthorUsernames(result.coAuthorUsernames || []);
-        setFormat(formatOf(result.mainTopic));
-        setContentRaw(combined);
-        // Freshly loaded text is by definition what the server already has.
-        setIsDirty(false);
-        // Seed the shared document; ignored if a peer already populated it.
-        setTimeout(() => initContent(combined), 500);
-      } catch {
-        if (!cancelled) toast.error('Failed to load project');
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
+    if (!editing) return;
+    const combined = documentContent(plan.topics);
+    // Ignored if a peer already populated it.
+    const timer = setTimeout(() => initContent(combined), 500);
+    return () => clearTimeout(timer);
     // `initContent` is recreated on every collaboration state change; keying
-    // the load on the document id is what actually matters here.
+    // this on the document id is what actually matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentId, requestedFormat]);
+  }, [plan.id, editing]);
 
   // ── Save ────────────────────────────────────────────────────────────────
   const planFor = useCallback((overrides: Partial<LessonPlan> = {}): LessonPlan => {
@@ -124,9 +131,10 @@ export function useDocument(currentUsername: string): DocumentModel {
       mainTopic,
       topics: [{ topic: name, mdxContent: content, isSubtopic: false, parentTopic: name, mainTopic }],
       coAuthors,
+      isPublic,
       ...overrides,
     };
-  }, [coAuthors, content, format, name, projectId]);
+  }, [coAuthors, content, format, isPublic, name, projectId]);
 
   const savingRef = useRef(false);
   const save = useCallback(async (silent = false) => {
@@ -148,26 +156,23 @@ export function useDocument(currentUsername: string): DocumentModel {
   }, [planFor]);
 
   useEffect(() => {
+    if (!editing) return;
     const timer = setInterval(() => {
       if (isDirty && !savingRef.current && projectId) save(true);
     }, AUTOSAVE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [isDirty, projectId, save]);
+  }, [editing, isDirty, projectId, save]);
 
   // ── Co-authors ──────────────────────────────────────────────────────────
-  const setCoAuthors = useCallback((ids: string[], usernames: string[]) => {
+  const setCoAuthors = useCallback((ids: string[], usernames: (string | null)[]) => {
     setCoAuthorIds(ids);
     setCoAuthorUsernames(usernames);
-    if (!projectId) {
-      setIsDirty(true);
-      return;
-    }
     // Persist immediately: waiting for autosave means a collaborator who was
     // just added can't open the document yet.
     saveLessonPlan(planFor({ coAuthors: ids }))
       .then(() => setLastSavedAt(Date.now()))
       .catch(() => toast.error('Failed to save co-author changes'));
-  }, [planFor, projectId]);
+  }, [planFor]);
 
   return {
     projectId,
@@ -176,15 +181,14 @@ export function useDocument(currentUsername: string): DocumentModel {
     format,
     content,
     setContent,
-    isLoading,
     saveState: isSaving ? 'saving' : isDirty ? 'dirty' : 'saved',
     lastSavedAt,
     save,
     authorUsername,
-    isAuthor: !authorUsername || authorUsername === currentUsername,
     coAuthors,
     coAuthorUsernames,
     setCoAuthors,
+    isPublic,
     peers,
     connected,
     updateCursor,

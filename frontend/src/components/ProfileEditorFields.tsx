@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadFile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
-
-const BIO_MAX_LENGTH = 280;
+// The same ceiling the server stores to, and the schema rejects past.
+import { MAX_BIO_LENGTH } from "@/lib/validation";
 
 interface ProfileEditorFieldsProps {
   avatarUrl: string | null;
@@ -119,13 +119,13 @@ export function ProfileEditorFields({
         <Textarea
           id="profile-bio"
           value={bio}
-          onChange={(e) => onBioChange(e.target.value.slice(0, BIO_MAX_LENGTH))}
+          onChange={(e) => onBioChange(e.target.value.slice(0, MAX_BIO_LENGTH))}
           placeholder="Tell the community a bit about yourself"
           className="bg-[var(--surface)] border-[var(--line)] resize-none"
           rows={3}
           disabled={disabled}
         />
-        <p className="text-xs text-muted-foreground mt-1 text-right">{bio.length}/{BIO_MAX_LENGTH}</p>
+        <p className="text-xs text-muted-foreground mt-1 text-right">{bio.length}/{MAX_BIO_LENGTH}</p>
       </div>
     </div>
   );

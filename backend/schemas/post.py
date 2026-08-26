@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from .common import ORMModel
+from .common import ORMModel, UtcDatetime
 
 
 class CreatePostRequest(BaseModel):
@@ -39,7 +38,7 @@ class PostOut(ORMModel):
     upvotes: int
     downvotes: int
     commentCount: int = Field(validation_alias="comment_count")  # noqa: N815
-    createdAt: Optional[datetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
+    createdAt: Optional[UtcDatetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -50,7 +49,7 @@ class CommentOut(ORMModel):
     userId: str = Field(validation_alias="user_id")  # noqa: N815
     authorName: str = Field(validation_alias="author_name")  # noqa: N815
     body: str
-    createdAt: Optional[datetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
+    createdAt: Optional[UtcDatetime] = Field(default=None, validation_alias="created_at")  # noqa: N815
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

@@ -10,6 +10,7 @@
 
 import type { DocFormat } from '@/lib/types';
 import type { Range } from './textOps';
+import { escapeHtml } from '@/lib/html';
 
 export type TokenKind =
   | 'head' | 'strong' | 'em' | 'del' | 'code' | 'math' | 'link' | 'url'
@@ -154,8 +155,4 @@ function emit(text: string, tokens: Token[]): string {
   // the textarea share their bottom padding, so heights already match, and an
   // extra element here would number a line that does not exist.
   return lines.map(line => `<div class="cl">${line || '<br/>'}</div>`).join('');
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>]/g, c => (c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'));
 }

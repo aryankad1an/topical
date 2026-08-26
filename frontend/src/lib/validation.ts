@@ -2,27 +2,26 @@
  * Validation rules the browser and the server both have to agree on.
  *
  * The server enforces the same rules, in `backend/core/validation.py`. Two
- * languages means two copies; keeping each one small, and stating the rule as
- * a single sentence that both sides quote verbatim, is what stops them
+ * languages means two copies, and keeping each one small is what stops them
  * drifting into two different-sounding rejections of the same input. Change
  * one, change the other — the file says so in both directions.
+ *
+ * The two sides share the limits, not the code. The server rejects with the
+ * whole rule in one sentence; this side names the one thing wrong with what
+ * has been typed so far, which is the useful thing to say mid-keystroke.
  */
 
 /** Usernames address a public profile at /u/<username>, so they must be URL-safe. */
-export const USERNAME_MIN = 3;
-export const USERNAME_MAX = 30;
-export const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
-
-/** One sentence stating the whole rule, for whichever side rejects the input. */
-export const USERNAME_RULE =
-  `Usernames are ${USERNAME_MIN}–${USERNAME_MAX} characters, using letters, numbers, hyphen and underscore`;
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 30;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
 
 /** The longest bio a profile will store. */
 export const MAX_BIO_LENGTH = 280;
 
 /** Passwords: the same floor `backend/auth/passwords.py` enforces. */
-export const MIN_PASSWORD_LENGTH = 8;
-export const PASSWORD_RULE = `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters`;
+const MIN_PASSWORD_LENGTH = 8;
+const PASSWORD_RULE = `Passwords must be at least ${MIN_PASSWORD_LENGTH} characters`;
 
 /**
  * Why this username is unacceptable, or null if it is fine.

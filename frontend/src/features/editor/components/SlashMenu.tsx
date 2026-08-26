@@ -6,7 +6,12 @@ interface Props {
   format: DocFormat;
   query: string;
   /** Where to draw the menu — the caret's line, in viewport coordinates. */
-  anchor: { x: number; y: number } | null;
+  /* Shares the editor's line anchor with the AI panel. The slash menu is
+     small and always follows the caret down the page, so it takes the simple
+     reading of it — below the line, clamped inside the surface. */
+  anchor: {
+    x: number; lineTop: number; lineBottom: number; boxWidth: number; boxHeight: number;
+  } | null;
   onPick: (action: EditorAction) => void;
   onClose: () => void;
 }
@@ -58,7 +63,14 @@ export function SlashMenu({ format, query, anchor, onPick, onClose }: Props) {
   let lastGroup = '';
 
   return (
-    <div className="slash-menu" style={{ left: anchor.x, top: anchor.y }} role="listbox">
+    <div
+      className="slash-menu"
+      style={{
+        left: Math.max(8, Math.min(anchor.x, anchor.boxWidth - 328)),
+        top: Math.max(8, Math.min(anchor.lineBottom + 8, anchor.boxHeight - 80)),
+      }}
+      role="listbox"
+    >
       {results.length === 0 ? (
         <div className="slash-empty">Nothing matches “{query}”</div>
       ) : (

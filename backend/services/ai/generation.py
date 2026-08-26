@@ -184,6 +184,7 @@ async def generate_section(req: GenerateSectionRequest, *, credentials: AiCreden
         ancestors=req.ancestors,
         section_number=req.section_number or "",
         level=req.level,
+        instruction=req.instruction or "",
     )
     return (await generate_content(prompt, credentials)).strip()
 

@@ -39,6 +39,8 @@ export interface SectionRequest {
    */
   digest: string;
   urls: string[];
+  /** What the writer asked for beyond the title — a length, a stance, an angle. */
+  instruction?: string;
 }
 
 /** Generate one section, cleaned of any frontmatter the model added. */
@@ -53,6 +55,7 @@ export async function generateSection(req: SectionRequest): Promise<string> {
     format: req.format,
     source: req.method,
     urls: req.urls,
+    instruction: req.instruction,
     // Sent as numbered indented text rather than JSON: the outline is
     // arbitrarily deep, and an indented list carries that depth more legibly
     // than a nested object would. The numbering and the written/empty marks

@@ -16,6 +16,8 @@
  * is rasterised, which means the text in the PDF is real selectable text.
  */
 
+import { escapeHtml } from '@/lib/html';
+
 export type PdfTheme = 'paper' | 'plain' | 'ink';
 export type PdfAccent = 'terracotta' | 'indigo' | 'forest' | 'none';
 export type PdfPage = 'a4' | 'letter';
@@ -107,12 +109,6 @@ function collectStyles(): string {
     }
   });
   return parts.join('\n');
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"]/g, ch => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch] as string
-  ));
 }
 
 function paperCss(options: PdfOptions): string {

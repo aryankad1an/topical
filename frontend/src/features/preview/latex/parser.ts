@@ -7,6 +7,8 @@
  * These helpers do the one thing regex cannot: match braces.
  */
 
+import { MappedBuilder, type Mapped, type SourceMap } from './sourceMap';
+
 export interface Group {
   /** Contents between the delimiters, exclusive. */
   body: string;
@@ -18,26 +20,32 @@ export interface Group {
  * Remove `%` comments. A comment runs to end of line and also swallows the
  * newline plus the next line's indentation, which is what TeX itself does —
  * otherwise commented-out lines leave stray blank lines that split paragraphs.
+ *
+ * Carries `map` alongside `src` (see `sourceMap.ts`) and produces the same
+ * shape back: a comment's characters simply have nothing pushed for them,
+ * which is correct — a line that renders nothing has nowhere for a click to
+ * jump to.
  */
-export function stripComments(src: string): string {
-  let out = '';
+export function stripComments(src: string, map: SourceMap): Mapped {
+  const out = new MappedBuilder();
   for (let i = 0; i < src.length; i++) {
     const ch = src[i];
     if (ch === '\\') {
-      out += ch + (src[i + 1] ?? '');
+      out.push(ch, map[i]);
+      if (src[i + 1] !== undefined) out.push(src[i + 1], map[i + 1]);
       i++;
       continue;
     }
     if (ch === '%') {
       const nl = src.indexOf('\n', i);
-      if (nl === -1) return out;
+      if (nl === -1) return out.result();
       i = nl;
       while (src[i + 1] === ' ' || src[i + 1] === '\t') i++;
       continue;
     }
-    out += ch;
+    out.push(ch, map[i]);
   }
-  return out;
+  return out.result();
 }
 
 /** Read a `{…}` group starting at `at`, honouring nesting and escapes. */
@@ -77,6 +85,8 @@ export interface Environment {
   start: number;
   /** Index just past the `\end{…}`. */
   end: number;
+  /** Index where `body` begins — just past `\begin{name}[options]`. */
+  bodyStart: number;
 }
 
 /**
@@ -102,7 +112,10 @@ export function readEnvironment(src: string, at: number): Environment | null {
   while ((match = marker.exec(src)) !== null) {
     depth += match[1] === 'begin' ? 1 : -1;
     if (depth === 0) {
-      return { name, options, body: src.slice(bodyStart, match.index), start: at, end: match.index + match[0].length };
+      return {
+        name, options, body: src.slice(bodyStart, match.index),
+        start: at, end: match.index + match[0].length, bodyStart,
+      };
     }
   }
   return null;
@@ -150,9 +163,4 @@ export function splitTopLevel(src: string, delimiter: RegExp): string[] {
   }
   parts.push(src.slice(last));
   return parts;
-}
-
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"]/g, c =>
-    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;');
 }

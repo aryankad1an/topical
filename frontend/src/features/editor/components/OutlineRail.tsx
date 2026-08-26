@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ListTree, Loader2, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
 import { IconButton } from '@/components/ui/primitives';
@@ -13,14 +13,24 @@ import { useOutlineRows } from '../hooks/useOutlineRows';
 import { useSectionWriter } from '../hooks/useSectionWriter';
 import { OutlineRow } from './OutlineRow';
 import { OutlineProposal } from './OutlineProposal';
-import { SectionSource } from './SectionSource';
+import { WritePopover, type WriteRequest } from './WritePopover';
 
-/** Openers for the instruction box, once there is a structure to change. */
-const SUGGESTIONS = [
-  'Add a section on ',
-  'Reorder so it builds logically',
-  'Split anything covering two ideas',
-  'Trim it to the essentials',
+/**
+ * Openers for the instruction box, once there is a structure to change.
+ *
+ * The chip is a short label; the text it writes is the whole instruction. As
+ * full sentences they were each about as wide as the rail, so four of them
+ * wrapped to four rows and the openers took more room than the box they were
+ * opening. `caret: 'end'` marks the ones that are a prefix to be finished
+ * rather than a complete instruction — those focus the field so the sentence
+ * can be continued straight away.
+ */
+const SUGGESTIONS: { label: string; text: string; unfinished?: boolean }[] = [
+  { label: 'Add a section', text: 'Add a section on ', unfinished: true },
+  { label: 'Reorder', text: 'Reorder so it builds logically' },
+  { label: 'Split', text: 'Split anything covering two ideas' },
+  { label: 'Trim', text: 'Trim it to the essentials' },
+  { label: 'Go deeper', text: 'Break the long sections into sub-sections' },
 ];
 
 interface Props {
@@ -32,6 +42,12 @@ interface Props {
   documentNodes: OutlineNode[];
   /** Id of the heading the caret is inside — not its title. See below. */
   activeId: string | null;
+  /**
+   * Whether the rail is a drawer over the document rather than a column beside
+   * it. Set below ~900px, where a 300px column would leave the writing surface
+   * narrower than the text in it.
+   */
+  compact?: boolean;
   width: number;
   onWidth: (width: number) => void;
   onClose: () => void;
@@ -64,7 +80,7 @@ interface Props {
  * that restructure the whole outline at once.
  */
 export function OutlineRail({
-  format, projectName, content, documentNodes, activeId, width, onWidth,
+  format, projectName, content, documentNodes, activeId, compact, width, onWidth,
   onClose, onJump, onFocusSection, onInsertSection, onDeleteSection,
   onRenameHeading, onShiftHeading, onMoveHeading, onAddHeading, onApplyOutline,
 }: Props) {
@@ -110,6 +126,16 @@ export function OutlineRail({
   const wordsOf = (node: OutlineNode) => words.own.get(node.offset) ?? 0;
   /** What deleting a row would take with it — its children included. */
   const subtreeWordsOf = (node: OutlineNode) => words.subtree.get(node.offset) ?? 0;
+
+  /**
+   * Which button opened the write popover.
+   *
+   * A node writes that section; `'missing'` and `'all'` are the two bulk
+   * scopes. Nothing is requested until the popover is submitted, so the ✨ is
+   * now "ask me how", not "go".
+   */
+  const [asking, setAsking] = useState<OutlineNode | 'missing' | 'all' | null>(null);
+  const promptRef = useRef<HTMLInputElement>(null);
 
   const rows = useOutlineRows({
     nodes,
@@ -201,13 +227,30 @@ export function OutlineRail({
    * it puts at risk. Writing only the empty ones takes nothing away and goes
    * straight through.
    */
-  const rewriteEverything = () => {
-    if (!written) { writer.writeAll('all'); return; }
+  const rewriteEverything = (instruction: string) => {
+    if (!written) { writer.writeAll('all', instruction); return; }
     toast(`Rewrite all ${nodes.length} sections?`, {
       description: `${totalWords} words across ${written} written section${written === 1 ? '' : 's'} will be replaced.`,
-      action: { label: 'Rewrite all', onClick: () => writer.writeAll('all') },
+      action: { label: 'Rewrite all', onClick: () => writer.writeAll('all', instruction) },
       cancel: { label: 'Cancel', onClick: () => {} },
     });
+  };
+
+  /** What the popover is about to act on, and the verb for it. */
+  const askTarget = asking === 'missing'
+    ? `${writer.missing} empty section${writer.missing === 1 ? '' : 's'}`
+    : asking === 'all'
+      ? `all ${nodes.length} section${nodes.length === 1 ? '' : 's'}`
+      : asking?.label ?? '';
+
+  const runAsk = ({ instruction, method, urls }: WriteRequest) => {
+    writer.setMethod(method);
+    writer.setUrls(urls);
+    const target = asking;
+    setAsking(null);
+    if (target === 'missing') writer.writeAll('missing', instruction);
+    else if (target === 'all') rewriteEverything(instruction);
+    else if (target) writer.writeSection(target, instruction);
   };
 
   /** Every row gesture points the document at the row it is acting on. */
@@ -217,7 +260,9 @@ export function OutlineRail({
   const canSubmit = !working && (nodes.length > 0 || promptValue.trim().length > 0);
 
   return (
-    <aside className="outline-rail" style={{ width }}>
+    /* As a drawer the rail sizes itself from the viewport, so the stored width
+       — a number chosen on a wide screen — is not applied. */
+    <aside className="outline-rail" data-drawer={compact || undefined} style={compact ? undefined : { width }}>
       {/* The count is the rail's one piece of status: how much of the
           structure is actually written. It says so in words — a bare "5/16"
           in a pill is a number with no unit, and the tooltip that explained
@@ -265,6 +310,7 @@ export function OutlineRail({
           onSubmit={event => { event.preventDefault(); runOutlineAi(promptValue); }}
         >
           <input
+            ref={promptRef}
             className="orail-input" autoFocus
             placeholder={nodes.length
               ? 'Add a section on…, reorder, split, trim'
@@ -279,10 +325,24 @@ export function OutlineRail({
             <div className="orail-chips">
               {SUGGESTIONS.map(suggestion => (
                 <button
-                  key={suggestion} type="button" className="orail-chip"
-                  onClick={() => setPromptValue(suggestion)}
+                  key={suggestion.label}
+                  type="button"
+                  className="orail-chip"
+                  title={suggestion.text.trim()}
+                  onClick={() => {
+                    setPromptValue(suggestion.text);
+                    // A prefix is only useful if the caret is waiting at the
+                    // end of it; a complete instruction is ready to submit.
+                    if (suggestion.unfinished) {
+                      requestAnimationFrame(() => {
+                        const el = promptRef.current;
+                        el?.focus();
+                        el?.setSelectionRange(suggestion.text.length, suggestion.text.length);
+                      });
+                    }
+                  }}
                 >
-                  {suggestion.trim().replace(/\s+on$/, ' on…')}
+                  {suggestion.label}
                 </button>
               ))}
             </div>
@@ -346,7 +406,9 @@ export function OutlineRail({
               active={node.id === activeId}
               ancestorDepth={ancestors.get(node.id)}
               busy={writer.busy}
-              canGenerate={!writer.needsUrls}
+              /* The row button opens the popover, and the popover is where a
+                 URL would be entered — so it can never be blocked on one. */
+              canGenerate
               editing={rows.editingOffset === node.offset}
               value={rows.editValue}
               onValue={rows.setEditValue}
@@ -354,7 +416,7 @@ export function OutlineRail({
               onCommit={rows.commitEdit}
               onKeyDown={rows.editKeys(node)}
               onPrimary={touching(node, () => onJump(node))}
-              onGenerate={touching(node, () => writer.writeSection(node))}
+              onGenerate={touching(node, () => setAsking(node))}
               onIndent={touching(node, () => onShiftHeading(node.offset, 1))}
               onOutdent={touching(node, () => onShiftHeading(node.offset, -1))}
               onAddAfter={touching(node, () => rows.addAfter(node))}
@@ -379,16 +441,12 @@ export function OutlineRail({
       )}
 
       <div className="outline-foot">
-        {/* Where a generated section gets its material. This sat above the
-            outline, permanently, as though it described the structure; it
-            configures the button directly beneath it and now sits with it. */}
-        <SectionSource
-          method={writer.method}
-          onMethod={writer.setMethod}
-          urls={writer.urls}
-          onUrls={writer.setUrls}
-          needsUrls={writer.needsUrls}
-        />
+        {/* The three-way source switch used to live here, permanently, above
+            the button it configured — a setting you had to get right *before*
+            knowing which section you were about to write, and the only place
+            in the product where "how should this be written" could not be
+            answered at all. Both now live in the popover that opens from the
+            button that uses them. */}
 
         {writer.progress ? (
           <div className="gen-run">
@@ -417,13 +475,11 @@ export function OutlineRail({
                 that happens by default. */}
             <button
               className="orail-primary"
-              onClick={() => (writer.missing ? writer.writeAll('missing') : rewriteEverything())}
-              disabled={writer.busy || writer.needsUrls || !nodes.length}
-              title={writer.needsUrls
-                ? 'Add a URL first'
-                : writer.missing
-                  ? 'Write the sections that have no content yet'
-                  : 'Every section has content — this rewrites them all'}
+              onClick={() => setAsking(writer.missing ? 'missing' : 'all')}
+              disabled={writer.busy || !nodes.length}
+              title={writer.missing
+                ? 'Write the sections that have no content yet'
+                : 'Every section has content — this rewrites them all'}
             >
               <Sparkles className="h-3 w-3" aria-hidden="true" />
               {writer.missing
@@ -434,8 +490,8 @@ export function OutlineRail({
             {writer.missing > 0 && written > 0 && (
               <button
                 className="orail-link orail-foot-link"
-                onClick={rewriteEverything}
-                disabled={writer.busy || writer.needsUrls}
+                onClick={() => setAsking('all')}
+                disabled={writer.busy}
                 title="Regenerate every section, replacing what is already written"
               >
                 Rewrite all {nodes.length} instead
@@ -445,7 +501,30 @@ export function OutlineRail({
         )}
       </div>
 
-      <div className="outline-resize" onMouseDown={startResize} role="separator" aria-label="Resize outline" />
+      {asking && (
+        /* Over the rail, not over the document: everything it configures lives
+           here, and covering the prose to ask about the prose is the mistake
+           the inline panel had to be rescued from. */
+        <div className="write-pop-scrim" onClick={() => setAsking(null)}>
+          <WritePopover
+            target={askTarget}
+            bulk={asking === 'missing' || asking === 'all'}
+            rewriting={asking === 'all' || (typeof asking !== 'string' && wordsOf(asking) > 0)}
+            method={writer.method}
+            onMethod={writer.setMethod}
+            urls={writer.urls}
+            onUrls={writer.setUrls}
+            onWrite={runAsk}
+            onClose={() => setAsking(null)}
+          />
+        </div>
+      )}
+
+      {/* Nothing to resize against when the rail is a drawer, and a col-resize
+          handle over the document's left edge on a touch screen is a trap. */}
+      {!compact && (
+        <div className="outline-resize" onMouseDown={startResize} role="separator" aria-label="Resize outline" />
+      )}
     </aside>
   );
 }

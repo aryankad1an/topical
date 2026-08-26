@@ -58,7 +58,7 @@ export function useSectionWriter({
   /** Sections with no prose behind them yet — what "write the rest" means. */
   const missing = tree.nodes.filter(node => node.label.trim() && wordsOf(node) === 0);
 
-  const writeSection = async (node: OutlineNode): Promise<boolean> => {
+  const writeSection = async (node: OutlineNode, instruction = ''): Promise<boolean> => {
     const index = tree.byOffset.get(node.offset);
     if (index === undefined) return false;
 
@@ -80,6 +80,7 @@ export function useSectionWriter({
         // the batch started.
         digest: outlineDigest(tree, { words: wordsOf, focus: index }),
         urls: readyUrls,
+        instruction,
       });
       // The heading is always already on the page, so this always replaces
       // what sits under it rather than adding a second copy.
@@ -107,7 +108,7 @@ export function useSectionWriter({
    * rewrote finished work whenever someone added one heading to a drafted
    * document and pressed the only button in the foot.
    */
-  const writeAll = async (scope: WriteScope = 'missing') => {
+  const writeAll = async (scope: WriteScope = 'missing', instruction = '') => {
     const pending = (scope === 'all' ? tree.nodes : missing).filter(node => node.label.trim());
     if (!pending.length) {
       toast.info(scope === 'all'
@@ -122,7 +123,10 @@ export function useSectionWriter({
     for (const node of pending) {
       if (stopRequested.current) break;
       setProgress({ done: completed, total: pending.length, title: node.label });
-      if (!(await writeSection(node))) break;
+      // The same instruction goes to every section in the run — it is a
+      // standing note about the batch ("keep each one short"), not a
+      // per-section brief.
+      if (!(await writeSection(node, instruction))) break;
       completed += 1;
     }
 

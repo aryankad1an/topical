@@ -13,10 +13,13 @@
  */
 
 import katex from 'katex';
+import { lineAt } from '@/features/editor/lib/textOps';
+import { escapeHtml } from '@/lib/html';
 import {
-  escapeHtml, readEnvironment, readGroup, readOptional, splitTopLevel, stripComments,
+  readEnvironment, readGroup, readOptional, splitTopLevel, stripComments,
 } from './parser';
 import { expandMacros, extractPreamble } from './preamble';
+import { identitySourceMap, MappedBuilder, originOf, type Mapped, type SourceMap } from './sourceMap';
 
 export interface LatexIssue {
   message: string;
@@ -67,6 +70,21 @@ class Context {
   verbatim: string[] = [];
   issues: LatexIssue[] = [];
   toc: TocEntry[] = [];
+  /**
+   * The document as the writer typed it, and the map from every character of
+   * `renderBlocks`'s input back to an offset in it. Set once in `renderLatex`
+   * before the walk starts; every block-level render attributes itself
+   * through these rather than counting characters of its own transformed
+   * input, which is not the writer's document any more.
+   */
+  originalSource = '';
+  sourceMap: SourceMap = identitySourceMap(0);
+
+  /** 1-based line for a global offset into `renderBlocks`'s input — the form
+   *  `data-line` is written in, matching `MarkdownPreview`'s convention. */
+  lineFor(globalOffset: number): number {
+    return lineAt(this.originalSource, originOf(this.sourceMap, globalOffset)).number + 1;
+  }
 
   issue(message: string, source?: string) {
     if (this.issues.length < 40) {
@@ -104,14 +122,26 @@ export function renderLatex(source: string): LatexDocument {
     return { html: '', title: '', author: '', date: '', toc: [], issues: [] };
   }
 
-  // Verbatim comes out first: inside it, `%` is not a comment and `$` is not
-  // maths, so every later stage has to be kept away from it.
-  const literal = protectVerbatim(source, ctx);
-  const preamble = extractPreamble(stripComments(literal));
-  const expanded = expandMacros(preamble.body, preamble.macros);
-  const protectedBody = protectMath(expanded, ctx);
+  /*
+   * Five passes stand between this source and the first tag `renderBlocks`
+   * emits, and each one changes what a character offset means: verbatim and
+   * maths collapse whole spans to a handful of placeholder characters, the
+   * preamble reader deletes commands outright, and a macro's expansion is
+   * characters that came from its *definition*, not from the line that
+   * invoked it. A plain string no longer carries "where did this come from",
+   * so every stage below carries a `SourceMap` alongside its text and hands
+   * the composed result to `renderBlocks` — see `sourceMap.ts`.
+   */
+  const verbatimResult = protectVerbatim(source, ctx);
+  const strippedResult = stripComments(verbatimResult.text, verbatimResult.map);
+  const preamble = extractPreamble(strippedResult.text, strippedResult.map);
+  const expandedResult = expandMacros(preamble.body, preamble.macros, preamble.map);
+  const mathResult = protectMath(expandedResult.text, ctx, expandedResult.map);
 
-  let html = renderBlocks(protectedBody, ctx);
+  ctx.originalSource = source;
+  ctx.sourceMap = mathResult.map;
+
+  let html = renderBlocks(mathResult.text, ctx, 0);
   html += renderFootnotes(ctx);
   html += renderBibliography(ctx);
   html = resolveReferences(html, ctx);
@@ -127,6 +157,22 @@ export function renderLatex(source: string): LatexDocument {
   };
 }
 
+/**
+ * Stamp `data-line` onto an already-rendered block's outermost tag, in the
+ * same 1-based-line convention `MarkdownPreview` uses — `PreviewPane`'s click
+ * handler reads whichever of the two produced the element it landed on
+ * without needing to know which renderer that was.
+ *
+ * A no-op on empty output (a `\label` or a dropped command renders to
+ * nothing) and on anything that isn't a single leading tag, so a stray
+ * mismatch here degrades to "this block doesn't jump" rather than corrupting
+ * the markup.
+ */
+function withDataLine(html: string, line: number): string {
+  if (!html) return html;
+  return html.replace(/^(<[a-zA-Z][a-zA-Z0-9]*)/, `$1 data-line="${line}"`);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Maths — pulled out first so no text rule can corrupt it
 // ═══════════════════════════════════════════════════════════════════════════
@@ -140,8 +186,17 @@ function placeholder(kind: 'm' | 'v', index: number): string {
 
 const VERBATIM_ENVIRONMENTS = ['verbatim', 'lstlisting', 'minted', 'alltt'];
 
-function protectVerbatim(src: string, ctx: Context): string {
-  let out = '';
+/**
+ * Lifts verbatim environments out first, so nothing after this point ever
+ * sees them — inside one, `%` is not a comment and `$` is not maths.
+ *
+ * The input here is the writer's actual document, so a kept character's
+ * origin is simply its own index; only the placeholder that replaces a whole
+ * verbatim block needs to point somewhere else, and it points at the
+ * `\begin` that opened it.
+ */
+function protectVerbatim(src: string, ctx: Context): Mapped {
+  const out = new MappedBuilder();
   let i = 0;
 
   while (i < src.length) {
@@ -153,17 +208,17 @@ function protectVerbatim(src: string, ctx: Context): string {
       const env = readEnvironment(src, i);
       if (env) {
         ctx.verbatim.push(env.body.replace(/^\n/, '').replace(/\s+$/, ''));
-        out += placeholder('v', ctx.verbatim.length - 1);
+        out.pushRun(placeholder('v', ctx.verbatim.length - 1), i);
         i = env.end;
         continue;
       }
       ctx.issue(`${begin[0]} is never closed`, begin[0]);
     }
 
-    out += src[i];
+    out.push(src[i], i);
     i++;
   }
-  return out;
+  return out.result();
 }
 
 function renderPlaceholder(kind: string, index: number, ctx: Context): string {
@@ -174,8 +229,14 @@ function renderPlaceholder(kind: string, index: number, ctx: Context): string {
   return renderMathChunk(index, ctx);
 }
 
-function protectMath(src: string, ctx: Context): string {
-  let out = '';
+/**
+ * Lifts maths out to a placeholder, same idea as `protectVerbatim` — and the
+ * same rule for its map: a placeholder has no single source character behind
+ * it, so it is attributed to wherever the maths *started*, resolved through
+ * `map` since by this point `src` is macro-expanded, not the original text.
+ */
+function protectMath(src: string, ctx: Context, map: SourceMap): Mapped {
+  const out = new MappedBuilder();
   let i = 0;
 
   const push = (tex: string, display: boolean, numbered: boolean): string => {
@@ -197,7 +258,7 @@ function protectMath(src: string, ctx: Context): string {
       if (next === '[') {
         const close = src.indexOf('\\]', i + 2);
         if (close !== -1) {
-          out += push(src.slice(i + 2, close), true, false);
+          out.pushRun(push(src.slice(i + 2, close), true, false), map[i]);
           i = close + 2;
           continue;
         }
@@ -205,7 +266,7 @@ function protectMath(src: string, ctx: Context): string {
       if (next === '(') {
         const close = src.indexOf('\\)', i + 2);
         if (close !== -1) {
-          out += push(src.slice(i + 2, close), false, false);
+          out.pushRun(push(src.slice(i + 2, close), false, false), map[i]);
           i = close + 2;
           continue;
         }
@@ -218,14 +279,15 @@ function protectMath(src: string, ctx: Context): string {
           const numbered = NUMBERED_MATH.includes(bare) && !env.name.endsWith('*');
           // Hand KaTeX the whole environment: it understands align, cases,
           // matrices and friends natively, and reproduces their alignment.
-          out += push(`\\begin{${env.name}}${env.body}\\end{${env.name}}`, true, numbered);
+          out.pushRun(push(`\\begin{${env.name}}${env.body}\\end{${env.name}}`, true, numbered), map[i]);
           i = env.end;
           continue;
         }
         ctx.issue(`\\begin{${begin[1]}} is never closed`, begin[0]);
       }
       // Escaped character — copy both so `\$` never opens maths.
-      out += ch + (next ?? '');
+      out.push(ch, map[i]);
+      if (next !== undefined) out.push(next, map[i + 1]);
       i += 2;
       continue;
     }
@@ -236,19 +298,19 @@ function protectMath(src: string, ctx: Context): string {
       const close = src.indexOf(delimiter, i + delimiter.length);
       if (close === -1) {
         ctx.issue(display ? 'Unclosed $$ … $$' : 'Unclosed $ … $', src.slice(i, i + 40));
-        out += src.slice(i);
+        for (let j = i; j < src.length; j++) out.push(src[j], map[j]);
         break;
       }
-      out += push(src.slice(i + delimiter.length, close), display, false);
+      out.pushRun(push(src.slice(i + delimiter.length, close), display, false), map[i]);
       i = close + delimiter.length;
       continue;
     }
 
-    out += ch;
+    out.push(ch, map[i]);
     i++;
   }
 
-  return out;
+  return out.result();
 }
 
 function renderMathChunk(index: number, ctx: Context): string {
@@ -278,42 +340,64 @@ function renderMathChunk(index: number, ctx: Context): string {
 
 const BLOCK_TOKEN = /\\begin\{[^}]+\}|\\(?:part|chapter|section|subsection|subsubsection|paragraph|subparagraph)\*?\s*\{|\\tableofcontents\b|\\bibitem\b/;
 
-function renderBlocks(src: string, ctx: Context): string {
+/**
+ * Walks the top-level structure, calling out to a heading, environment or
+ * paragraph renderer for each piece.
+ *
+ * `base` is where `src` sits in `ctx.sourceMap`'s domain — 0 for the whole
+ * document, and the body's own start offset for a nested call (a `quote`, a
+ * `proof`, anything that recurses). Every block this finds is wrapped with
+ * `data-line`, computed from `base` plus wherever in `src` it began, so a
+ * click anywhere in the rendered output — at any nesting depth — can find
+ * its way back to the line that produced it.
+ */
+function renderBlocks(src: string, ctx: Context, base: number): string {
   let out = '';
   let rest = src;
+  // The global offset of `rest[0]`. Advanced by exactly what each branch
+  // below slices off `rest`, so it always names the right place even as the
+  // window this function is looking through shrinks.
+  let cursor = base;
 
   while (rest.length) {
     const scan = new RegExp(BLOCK_TOKEN.source, 'g');
     const hit = scan.exec(rest);
     if (!hit) {
-      out += renderParagraphs(rest, ctx);
+      out += renderParagraphs(rest, ctx, cursor);
       break;
     }
 
-    out += renderParagraphs(rest.slice(0, hit.index), ctx);
+    out += renderParagraphs(rest.slice(0, hit.index), ctx, cursor);
     const token = hit[0];
+    const tokenAt = cursor + hit.index;
 
     if (token.startsWith('\\begin')) {
       const env = readEnvironment(rest, hit.index);
       if (!env) {
         ctx.issue(`${token} is never closed`, token);
-        out += renderParagraphs(rest.slice(hit.index + token.length), ctx);
+        out += renderParagraphs(rest.slice(hit.index + token.length), ctx, cursor + hit.index + token.length);
         break;
       }
-      out += renderEnvironment(env.name, env.options, env.body, ctx);
+      const bodyAt = cursor + env.bodyStart;
+      out += withDataLine(renderEnvironment(env.name, env.options, env.body, ctx, bodyAt), ctx.lineFor(tokenAt));
+      cursor += env.end;
       rest = rest.slice(env.end);
       continue;
     }
 
     if (token === '\\tableofcontents') {
-      out += '<div class="lx-toc-slot"></div>';
+      out += withDataLine('<div class="lx-toc-slot"></div>', ctx.lineFor(tokenAt));
+      cursor += hit.index + token.length;
       rest = rest.slice(hit.index + token.length);
       continue;
     }
 
     if (token === '\\bibitem') {
       // A stray \bibitem outside thebibliography — treat the rest as one.
-      out += renderEnvironment('thebibliography', '', rest.slice(hit.index), ctx);
+      // Renders to nothing here regardless (the bibliography is composed
+      // separately, at the end, from `ctx.bibliography`), so there is no
+      // block to attribute a line to.
+      out += renderEnvironment('thebibliography', '', rest.slice(hit.index), ctx, cursor + hit.index);
       break;
     }
 
@@ -323,31 +407,54 @@ function renderBlocks(src: string, ctx: Context): string {
     const group = readGroup(rest, braceAt);
     if (!group) {
       ctx.issue(`\\${name} has no title`, token);
+      cursor += braceAt + 1;
       rest = rest.slice(braceAt + 1);
       continue;
     }
-    out += renderHeading(name, token.includes('*'), group.body, ctx);
+    out += withDataLine(renderHeading(name, token.includes('*'), group.body, ctx), ctx.lineFor(tokenAt));
+    cursor += group.end;
     rest = rest.slice(group.end);
   }
 
   return out;
 }
 
-function renderParagraphs(src: string, ctx: Context): string {
+/** `base` is `src`'s own offset in `ctx.sourceMap`'s domain — see `renderBlocks`. */
+function renderParagraphs(src: string, ctx: Context, base: number): string {
   if (!src.trim()) return '';
-  return src
-    .split(/\n[ \t]*\n+/)
-    .map(part => {
-      const text = part.trim();
-      if (!text) return '';
-      // A display equation or code block stands on its own — wrapping it in
-      // <p> would inherit the paragraph's indentation and margins.
-      const lone = new RegExp(`^${PLACEHOLDER}([mv])(\\d+)${PLACEHOLDER}$`).exec(text);
-      if (lone) return renderPlaceholder(lone[1], Number(lone[2]), ctx);
-      const html = renderInline(text, ctx);
-      return html.trim() ? `<p class="lx-p">${html}</p>` : '';
-    })
-    .join('');
+
+  let out = '';
+  const boundary = /\n[ \t]*\n+/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+
+  const emit = (part: string, partAt: number) => {
+    // The trimmed text's own start, not the blank-line-delimited chunk's —
+    // a paragraph preceded by two blank lines should point at its first
+    // real character, not at the blank line before it.
+    const leading = part.length - part.trimStart().length;
+    const text = part.trim();
+    if (!text) return;
+    const line = ctx.lineFor(base + partAt + leading);
+
+    // A display equation or code block stands on its own — wrapping it in
+    // <p> would inherit the paragraph's indentation and margins.
+    const lone = new RegExp(`^${PLACEHOLDER}([mv])(\\d+)${PLACEHOLDER}$`).exec(text);
+    if (lone) {
+      out += withDataLine(renderPlaceholder(lone[1], Number(lone[2]), ctx), line);
+      return;
+    }
+    const html = renderInline(text, ctx);
+    if (html.trim()) out += withDataLine(`<p class="lx-p">${html}</p>`, line);
+  };
+
+  while ((match = boundary.exec(src)) !== null) {
+    emit(src.slice(last, match.index), last);
+    last = match.index + match[0].length;
+  }
+  emit(src.slice(last), last);
+
+  return out;
 }
 
 function renderHeading(name: string, starred: boolean, title: string, ctx: Context): string {
@@ -384,37 +491,43 @@ function renderHeading(name: string, starred: boolean, title: string, ctx: Conte
 // Environments
 // ═══════════════════════════════════════════════════════════════════════════
 
-function renderEnvironment(name: string, options: string, body: string, ctx: Context): string {
+/**
+ * `bodyBase` is where `body` sits in `ctx.sourceMap`'s domain — every branch
+ * that recurses into `renderBlocks` passes it straight through unchanged,
+ * since none of them alter `body` before recursing (the one that does,
+ * `renderTableFloat`, carries its own note on the approximation that costs).
+ */
+function renderEnvironment(name: string, options: string, body: string, ctx: Context, bodyBase: number): string {
   const bare = name.replace(/\*$/, '');
 
   switch (bare) {
     case 'itemize':
-      return `<ul class="lx-list">${listItems(body, ctx)}</ul>`;
+      return `<ul class="lx-list">${listItems(body, ctx, bodyBase)}</ul>`;
     case 'enumerate':
-      return `<ol class="lx-list">${listItems(body, ctx)}</ol>`;
+      return `<ol class="lx-list">${listItems(body, ctx, bodyBase)}</ol>`;
     case 'description':
-      return `<dl class="lx-desc">${descriptionItems(body, ctx)}</dl>`;
+      return `<dl class="lx-desc">${descriptionItems(body, ctx, bodyBase)}</dl>`;
 
     case 'quote':
     case 'quotation':
-      return `<blockquote class="lx-quote">${renderBlocks(body, ctx)}</blockquote>`;
+      return `<blockquote class="lx-quote">${renderBlocks(body, ctx, bodyBase)}</blockquote>`;
     case 'verse':
-      return `<blockquote class="lx-quote lx-verse">${renderBlocks(body, ctx)}</blockquote>`;
+      return `<blockquote class="lx-quote lx-verse">${renderBlocks(body, ctx, bodyBase)}</blockquote>`;
 
     case 'center':
-      return `<div class="lx-center">${renderBlocks(body, ctx)}</div>`;
+      return `<div class="lx-center">${renderBlocks(body, ctx, bodyBase)}</div>`;
     case 'flushright':
-      return `<div class="lx-right">${renderBlocks(body, ctx)}</div>`;
+      return `<div class="lx-right">${renderBlocks(body, ctx, bodyBase)}</div>`;
     case 'flushleft':
-      return `<div class="lx-left">${renderBlocks(body, ctx)}</div>`;
+      return `<div class="lx-left">${renderBlocks(body, ctx, bodyBase)}</div>`;
 
     case 'abstract':
-      return `<section class="lx-abstract"><h3 class="lx-abstract-title">Abstract</h3>${renderBlocks(body, ctx)}</section>`;
+      return `<section class="lx-abstract"><h3 class="lx-abstract-title">Abstract</h3>${renderBlocks(body, ctx, bodyBase)}</section>`;
 
     case 'figure':
       return renderFigure(body, ctx);
     case 'table':
-      return renderTableFloat(body, ctx);
+      return renderTableFloat(body, ctx, bodyBase);
     case 'tabular':
     case 'tabularx':
     case 'longtable':
@@ -424,23 +537,30 @@ function renderEnvironment(name: string, options: string, body: string, ctx: Con
       return collectBibliography(body, ctx);
 
     case 'proof':
-      return `<div class="lx-proof"><span class="lx-proof-title">Proof.</span> ${renderBlocks(body, ctx)}<span class="lx-qed">□</span></div>`;
+      return `<div class="lx-proof"><span class="lx-proof-title">Proof.</span> ${renderBlocks(body, ctx, bodyBase)}<span class="lx-qed">□</span></div>`;
 
     case 'document':
-      return renderBlocks(body, ctx);
+      return renderBlocks(body, ctx, bodyBase);
 
     default:
-      if (THEOREM_STYLES[bare]) return renderTheorem(bare, options, body, ctx);
+      if (THEOREM_STYLES[bare]) return renderTheorem(bare, options, body, ctx, bodyBase);
       ctx.issue(`Unsupported environment: ${bare}`, `\\begin{${name}}`);
-      return `<div class="lx-unknown-env">${renderBlocks(body, ctx)}</div>`;
+      return `<div class="lx-unknown-env">${renderBlocks(body, ctx, bodyBase)}</div>`;
   }
 }
 
+interface Item {
+  option: string;
+  content: string;
+  /** Offset within `body` where `content` starts — just past `\item[opt]`. */
+  contentStart: number;
+}
+
 /** Split a list body on top-level `\item`s, leaving nested lists intact. */
-function splitItems(body: string): { option: string; content: string }[] {
-  const items: { option: string; content: string }[] = [];
+function splitItems(body: string): Item[] {
+  const items: Item[] = [];
   let depth = 0;
-  let current: { option: string; content: string } | null = null;
+  let current: Item | null = null;
   let buffer = '';
   let i = 0;
 
@@ -461,8 +581,8 @@ function splitItems(body: string): { option: string; content: string }[] {
         buffer = '';
         const cursor = i + 5;
         const optional = readOptional(body, cursor);
-        current = { option: optional?.body ?? '', content: '' };
         i = optional ? optional.end : cursor;
+        current = { option: optional?.body ?? '', content: '', contentStart: i };
         continue;
       }
       buffer += body[i] + (body[i + 1] ?? '');
@@ -480,22 +600,30 @@ function splitItems(body: string): { option: string; content: string }[] {
   return items;
 }
 
-/** Items hold prose most of the time and whole blocks occasionally. */
-function renderItemBody(content: string, ctx: Context): string {
+/**
+ * Items hold prose most of the time and whole blocks occasionally.
+ *
+ * `contentBase` is where `content` sits in `ctx.sourceMap`'s domain — the
+ * list itself does not get a `data-line` per item (Markdown doesn't either;
+ * only the `<ul>`/`<ol>` as a whole is tracked), but a block-level jump from
+ * *inside* a multi-paragraph item still needs to land in the right place
+ * rather than defaulting to the top of the document.
+ */
+function renderItemBody(content: string, ctx: Context, contentBase: number): string {
   const needsBlocks = /\\begin\{|\n[ \t]*\n/.test(content);
-  return needsBlocks ? renderBlocks(content, ctx) : renderInline(content.trim(), ctx);
+  return needsBlocks ? renderBlocks(content, ctx, contentBase) : renderInline(content.trim(), ctx);
 }
 
-function listItems(body: string, ctx: Context): string {
+function listItems(body: string, ctx: Context, bodyBase: number): string {
   return splitItems(body)
-    .map(item => `<li>${renderItemBody(item.content, ctx)}</li>`)
+    .map(item => `<li>${renderItemBody(item.content, ctx, bodyBase + item.contentStart)}</li>`)
     .join('');
 }
 
-function descriptionItems(body: string, ctx: Context): string {
+function descriptionItems(body: string, ctx: Context, bodyBase: number): string {
   return splitItems(body)
     .map(item =>
-      `<dt>${renderInline(item.option, ctx)}</dt><dd>${renderItemBody(item.content, ctx)}</dd>`)
+      `<dt>${renderInline(item.option, ctx)}</dt><dd>${renderItemBody(item.content, ctx, bodyBase + item.contentStart)}</dd>`)
     .join('');
 }
 
@@ -519,13 +647,24 @@ function renderFigure(body: string, ctx: Context): string {
   return `<figure class="lx-figure">${img}${figcaption}</figure>`;
 }
 
-function renderTableFloat(body: string, ctx: Context): string {
+function renderTableFloat(body: string, ctx: Context, bodyBase: number): string {
   ctx.table++;
   ctx.pending = String(ctx.table);
 
   const caption = extractCaption(body);
-  const stripped = body.replace(/\\caption\{[\s\S]*?\}/, '');
-  const inner = renderBlocks(stripped, ctx);
+  const captionMatch = /\\caption\{[\s\S]*?\}/.exec(body);
+  const stripped = captionMatch
+    ? body.slice(0, captionMatch.index) + body.slice(captionMatch.index + captionMatch[0].length)
+    : body;
+  /*
+   * Removing the caption shifts every offset after it, which `renderBlocks`
+   * has no way to see if it is simply handed `bodyBase` — content past the
+   * caption would resolve a few characters short of where it really sits.
+   * Captions are essentially always one line, so that shift essentially
+   * never crosses a line boundary; a genuinely multi-line `\caption{}` is
+   * the one input this can misattribute by however many lines it spanned.
+   */
+  const inner = renderBlocks(stripped, ctx, bodyBase);
   const figcaption = caption
     ? `<figcaption class="lx-caption"><span class="lx-caption-label">Table ${ctx.table}.</span> ${renderInline(caption, ctx)}</figcaption>`
     : '';
@@ -568,7 +707,7 @@ function renderTabular(spec: string, body: string, ctx: Context): string {
   return `<div class="lx-table-wrap"><table class="lx-table">${head}<tbody>${bodyRows}</tbody></table></div>`;
 }
 
-function renderTheorem(kind: string, note: string, body: string, ctx: Context): string {
+function renderTheorem(kind: string, note: string, body: string, ctx: Context, bodyBase: number): string {
   ctx.theorem++;
   ctx.pending = String(ctx.theorem);
   const title = THEOREM_STYLES[kind];
@@ -576,7 +715,7 @@ function renderTheorem(kind: string, note: string, body: string, ctx: Context): 
   return (
     `<div class="lx-theorem" data-kind="${kind}">` +
     `<div class="lx-thm-head">${title} ${ctx.theorem}.${suffix}</div>` +
-    `<div class="lx-thm-body">${renderBlocks(body, ctx)}</div></div>`
+    `<div class="lx-thm-body">${renderBlocks(body, ctx, bodyBase)}</div></div>`
   );
 }
 

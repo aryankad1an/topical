@@ -13,11 +13,11 @@
 import { useEffect, useState } from 'react';
 
 export type Theme = 'light' | 'dark';
-export type ThemePreference = Theme | 'system';
+type ThemePreference = Theme | 'system';
 
-export const THEME_KEY = 'topical_theme';
+const THEME_KEY = 'topical_theme';
 
-export function systemTheme(): Theme {
+function systemTheme(): Theme {
   return typeof window !== 'undefined'
     && window.matchMedia?.('(prefers-color-scheme: dark)').matches
     ? 'dark'
@@ -25,7 +25,7 @@ export function systemTheme(): Theme {
 }
 
 /** What the user chose, or 'system' if they never have. */
-export function storedPreference(): ThemePreference {
+function storedPreference(): ThemePreference {
   try {
     const raw = localStorage.getItem(THEME_KEY);
     return raw === 'light' || raw === 'dark' ? raw : 'system';
@@ -35,7 +35,7 @@ export function storedPreference(): ThemePreference {
   }
 }
 
-export function currentTheme(): Theme {
+function currentTheme(): Theme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
@@ -106,7 +106,7 @@ export async function setTheme(theme: Theme, origin?: { x: number; y: number }) 
  * Follow the OS while the reader has expressed no preference of their own.
  * Returns an unsubscribe function.
  */
-export function watchSystemTheme(onChange: (theme: Theme) => void): () => void {
+function watchSystemTheme(onChange: (theme: Theme) => void): () => void {
   const query = window.matchMedia?.('(prefers-color-scheme: dark)');
   if (!query) return () => {};
   const handler = () => {

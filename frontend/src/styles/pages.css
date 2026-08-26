@@ -48,8 +48,7 @@
               box-shadow var(--dur-fast) var(--ease-out);
   white-space: nowrap;
 }
-/* Where accent *text* sits on an accent-soft fill it is always the 600 step,
-   never 500: at 500 it measures 3.5:1 against that fill, under WCAG AA for
+/* Where accent *text* sits on an accent-soft fill it is always the 600 step, never 500: at 500 it measures 3.5:1 against that fill, under WCAG AA for
    body text, and these are body-sized labels. On the page ground rather
    than on an accent fill, 500 is still the right step. */
 
@@ -431,8 +430,7 @@
   text-wrap: pretty;
 }
 
-/* The moving part of this used to be `border-t-white/40` — a literal white,
-   on a page whose ground is cream. */
+/* The moving part of this used to be `border-t-white/40` — a literal white, on a page whose ground is cream. */
 .detail-spinner {
   height: 22px;
   width: 22px;
@@ -568,14 +566,6 @@ textarea:focus-visible {
   padding: 0.5rem 1rem;
   font-size: var(--text-sm);
 }
-
-/* ── Accent chip / subtle accent surface ── */
-.accent-soft {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  color: var(--accent-600);
-}
-
 /* ── Skeleton loading ──
    Pages previously popped in with no loading affordance. */
 .skeleton {
@@ -680,8 +670,7 @@ textarea:focus-visible {
 /* ── Section heading rhythm ──
    The old scale ran 9rem for the hero and 1.75rem for every section
    heading under it, with nothing between: each section read as a caption
-   under a billboard. A section title is now genuinely a size of its own,
-   and `.section-head` gives the title/subtitle pair one margin instead of
+   under a billboard. A section title is now genuinely a size of its own, and `.section-head` gives the title/subtitle pair one margin instead of
    each caller inventing one. */
 .section-head {
   max-width: 40rem;
@@ -751,12 +740,6 @@ textarea:focus-visible {
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
 }
-.eyebrow-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--accent-400);
-  box-shadow: 0 0 8px var(--accent-glow);
-}
-
 /* ── Hero ──
    The page's whole argument, in one screen: a claim, the field the claim is
    about, and the document that field produces.
@@ -1143,13 +1126,7 @@ textarea:focus-visible {
   color: var(--accent-600);
   font-weight: 600;
   border: 1px solid var(--accent-line);
-}
-.preview-node--sub {
-  margin-left: 0.8rem;
-  font-size: 0.7rem;
-  color: var(--ink-muted);
-}
-/* Not yet written: present in the outline, dimmer than the rest, so the rail
+}/* Not yet written: present in the outline, dimmer than the rest, so the rail
    reads as a plan being worked through rather than a finished list. */
 .preview-node--queued { color: var(--ink-faint); }
 
@@ -1177,7 +1154,7 @@ textarea:focus-visible {
 .preview-pulse i:nth-child(3) { animation-delay: 0.36s; }
 @keyframes preview-pulse {
   0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
-  30%           { opacity: 1;    transform: translateY(-1.5px); }
+  30% { opacity: 1;    transform: translateY(-1.5px); }
 }
 
 /* ── The mock's document ──
@@ -1278,7 +1255,7 @@ textarea:focus-visible {
   animation: preview-caret 1.1s steps(1) infinite;
 }
 @keyframes preview-caret {
-  0%, 50%   { opacity: 1; }
+  0%, 50% { opacity: 1; }
   50.01%, 100% { opacity: 0; }
 }
 
@@ -1351,7 +1328,7 @@ textarea:focus-visible {
 }
 @keyframes preview-blink {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-soft); }
-  50%      { opacity: 0.45; box-shadow: 0 0 0 3px transparent; }
+  50% { opacity: 0.45; box-shadow: 0 0 0 3px transparent; }
 }
 @media (max-width: 720px) {
   .preview-status-item--wide { display: none; }
@@ -1504,29 +1481,40 @@ textarea:focus-visible {
 
    The lit top edge is the same one the buttons carry, so the mark and the
    controls look like they are under one light. */
+/* ── The lockup ──
+   One number drives all three parts. The tile, the wordmark and the gap were
+   each given their own size, so scaling the mark up for the auth screens grew
+   the tile and the word and left the gap at the 6px tuned for a 22px mark —
+   which at 30px reads as the two halves drifting apart. */
 .brand-lockup {
+  --mark: 22px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(var(--mark) * 0.28);
 }
 .brand-tile {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-sm);
+  width: var(--mark);
+  height: var(--mark);
+  border-radius: calc(var(--mark) * 0.3);
   background: var(--accent-400);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.20);
   font-family: var(--font-serif);
   font-weight: 600;
-  font-size: 12px;
+  font-size: calc(var(--mark) * 0.55);
   line-height: 1;
-  /* The serif's arms make the glyph read high in its box. */
-  padding-bottom: 1px;
+  /* A capital in a line box sits above the baseline with the descender's
+     space empty below it, so centring it geometrically leaves it looking
+     high. Padding at the *top* pushes it down; `padding-bottom` was here,
+     which lifts it further — the wrong direction for the problem named. */
+  padding-top: calc(var(--mark) * 0.06);
   color: var(--accent-ink);
 }
 .brand-word {
-  font-size: 14px;
+  font-size: calc(var(--mark) * 0.64);
   color: var(--ink);
 }
 /* The mark is a link home, so it answers to a press like everything else. */
@@ -1649,12 +1637,16 @@ a:active > .brand-lockup {
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-pop);
-  animation: cmdk-rise var(--dur-base) var(--ease-spring);
+  /* No entrance animation, deliberately.
+     This is opened dozens of times a day from a keyboard shortcut, and an
+     animation on a keyboard-initiated action is time the interface spends
+     not being ready — it reads as lag rather than as polish however short it
+     is. The scrim still fades, because the page behind it appearing to jump
+     is a different problem. */
 }
-/* Shared by the palette and by the editor's popovers. The popovers each set
-   a `transform-origin` matching the thing they hang off; the palette keeps
-   the default centre on purpose — a modal is not anchored to a trigger, so
-   there is no corner for it to come out of. */
+/* The editor's popovers — the slash menu, the AI panel, the toolbar overflow.
+   Each sets a `transform-origin` matching the thing it hangs off. The command
+   palette used to share this and no longer animates at all; see `.cmdk-panel`. */
 @keyframes cmdk-rise {
   from { opacity: 0; transform: translateY(-10px) scale(0.98) }
   to   { opacity: 1; transform: none }
@@ -1708,41 +1700,6 @@ a:active > .brand-lockup {
   font-family: var(--font-mono); font-size: 10px;
   color: var(--ink-faint);
 }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Projects workspace
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* ── Stat strip ── */
-.stat-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1px;
-  background: var(--line-soft);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-.stat-cell {
-  background: var(--surface);
-  padding: 1rem 1.15rem;
-}
-.stat-value {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1.1;
-}
-.stat-label {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-ghost);
-  margin-top: 0.3rem;
-}
-
 /* ── Segmented control (grid / list) ── */
 /* ── The segmented control ──
    This is the app's toggle switch — grid/list, Write/Split/Read — so it is
@@ -1802,9 +1759,7 @@ a:active > .brand-lockup {
    Workspace — the front door
    ═══════════════════════════════════════════════════════════════════════
 
-   `.workspace-head`, `.workspace-greeting`, `.workspace-title` and
-   `.workspace-section` were here. The greeting is `PageHeader`'s `kicker` and
-   the question is its `title`, at the one page-title size. */
+   `.workspace-head`, `.workspace-greeting`, at the one page-title size. */
 
 /* The same object as the landing page's hero field, at workspace scale: left
    aligned, full width of the column, and carrying a format switch. Someone
@@ -1862,16 +1817,6 @@ a:active > .brand-lockup {
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-
-.workspace-section {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  font-optical-sizing: auto;
-  color: var(--ink);
-}
-
 /* ── Document card ──
    The card leads with a miniature of the document itself, so a grid of
    projects is scannable by shape rather than by reading every title. */
@@ -2029,51 +1974,6 @@ a:active > .brand-lockup {
 .doc-row:hover {
   background: var(--ink-a04);
   border-color: var(--doc-accent-line, var(--line));
-}
-
-/* ── New-project tile ── */
-/* ── Start something ──
-   These are now the only way to create a document — the header carried a
-   "New document" button as well, which silently picked MDX. Being the entry
-   point, they get the height to look like one: at 1.1rem of padding the tile
-   was ~74px against ~576px of width, a 7.8:1 bar that read as a toolbar
-   strip rather than as something to choose between.
-
-   `min-height` rather than more padding alone, so the two tiles stay the
-   same height when one description wraps to a second line and the other
-   does not. */
-.new-tile {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  min-height: 6.5rem;
-  padding: 1.35rem 1.5rem;
-  border-radius: var(--radius-xl);
-  border: 1px dashed var(--line);
-  background: var(--ink-a02);
-  transition: border-color var(--dur-base) var(--ease-out),
-              background var(--dur-base) var(--ease-out),
-              box-shadow var(--dur-base) var(--ease-out),
-              transform var(--dur-base) var(--ease-out);
-  text-align: left;
-  width: 100%;
-}
-/* Solid on hover, and lit: the dashed border becomes real, which is the
-   standard "this will become a thing" affordance. */
-.new-tile:hover {
-  border-style: solid;
-  border-color: var(--tile-accent-line, var(--accent-line));
-  background: var(--tile-accent-soft, var(--accent-soft));
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
-}
-.new-tile-icon {
-  height: 2.9rem; width: 2.9rem;
-  border-radius: var(--radius-lg);
-  display: flex; align-items: center; justify-content: center;
-  background: var(--tile-accent-soft, var(--accent-soft));
-  border: 1px solid var(--tile-accent-line, var(--accent-line));
-  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -2288,24 +2188,6 @@ a:active > .brand-lockup {
   background: linear-gradient(90deg, var(--accent-600), var(--accent-300));
   transition: width var(--dur-slow) var(--ease-out);
 }
-
-
-
-.ai-hint {
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: var(--ink-faint);
-}
-.ai-hint kbd {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: var(--ink-a06);
-  border: 1px solid var(--line-soft);
-  color: var(--ink-muted);
-}
-
 .topic-count {
   font-size: 9.5px;
   font-weight: 700;
@@ -2317,8 +2199,7 @@ a:active > .brand-lockup {
 }
 
 /* ── Editor status bar ──
-   Save state used to be a button in the header; writers want continuous,
-   ambient feedback instead (length, reading time, sync). */
+   Save state used to be a button in the header; writers want continuous, ambient feedback instead (length, reading time, sync). */
 .editor-status {
   display: flex;
   align-items: center;
@@ -2529,4 +2410,9 @@ a:active > .brand-lockup {
   transition-timing-function: var(--ease-out);
 }
 .pub-row:hover { border-color: var(--line); background: var(--ink-a04); }
+
+/* ── The read dialog ──
+   A document being read, so its width is the reader's decision. It was pinned
+   at `sm:max-w-3xl` (48rem), which on a wide screen put the prose in a column
+   narrower than the page behind it. */
 

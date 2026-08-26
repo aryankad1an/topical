@@ -173,16 +173,26 @@ const LATEX_ACTIONS: EditorAction[] = [
  * grouping a sighted reader sees and the one a screen reader hears cannot
  * drift apart.
  */
-export const TOOLBAR_GROUPS: { label: string; ids: string[] }[] = [
-  { label: 'Text style', ids: ['bold', 'italic', 'code'] },
+/**
+ * The bar, and what each group keeps behind its own chevron.
+ *
+ * Six actions the editor already implements — strikethrough, task lists,
+ * dividers, callouts, collapsibles and footnotes — had no button at all and
+ * were reachable only by typing `/`. Putting all twenty-one on one row is the
+ * other failure: a wall of icons where nothing is findable because everything
+ * is equally prominent.
+ *
+ * So `ids` is what stays on the bar and `more` is what sits under the group's
+ * chevron. The split is by frequency, not by category — bold belongs on the
+ * bar and a footnote does not, however neatly they file.
+ */
+export const TOOLBAR_GROUPS: { label: string; ids: string[]; more?: string[] }[] = [
+  { label: 'Text style', ids: ['bold', 'italic', 'code'], more: ['strike'] },
   { label: 'Headings', ids: ['h1', 'h2', 'h3'] },
-  { label: 'Lists and quotes', ids: ['ul', 'ol', 'quote'] },
-  { label: 'Blocks', ids: ['codeblock', 'link', 'image', 'table'] },
+  { label: 'Lists and quotes', ids: ['ul', 'ol', 'quote'], more: ['task', 'hr'] },
+  { label: 'Blocks', ids: ['codeblock', 'link', 'image', 'table'], more: ['callout', 'details', 'footnote'] },
   { label: 'Maths', ids: ['math-inline', 'math-block'] },
 ];
-
-/** Flat order, for anything that just needs the ids. */
-export const TOOLBAR_IDS = TOOLBAR_GROUPS.flatMap(g => g.ids);
 
 export function actionsFor(format: DocFormat): EditorAction[] {
   return format === 'latex' ? LATEX_ACTIONS : MDX_ACTIONS;

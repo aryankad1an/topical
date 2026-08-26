@@ -1,0 +1,191 @@
+/* The small facts about a document, and the controls that change them.
+
+   The metadata row on a projects card, the collaborator list behind its count,
+   and the loading state of the document route.
+
+   This file used to describe a standalone reading page — a bar, a title, a
+   reading-width slider and a sheet of its own. That page is gone: reading is
+   the document screen with its writing surface absent (see `DocumentView`), so
+   it uses the editor's own header, preview pane and measure rules rather than
+   a second copy of them.
+
+   ── One height for the row ──
+   Everything in a card's metadata row is `--doc-chip-h` tall, and that is the
+   whole reason it reads as a row. It used to be three sizes: a 23px status
+   pill, a 24px switch, and a collaborator count that came out **40 x 40** — a
+   circle twice the height of its neighbours. Nothing asked for that. Every
+   `button` in the app has `min-height: 2.5rem; min-width: 2.5rem` from the
+   touch-target floor in tokens.css, and the count was the only real `<button>`
+   in the row; the status pill is a `<span>` and the old switch was a
+   `<div role="switch">`, so both escaped it. Every other small control in the
+   product opts out by declaring an explicit height — these now do too, which
+   is why each one below sets `height` *and* `min-width: 0`. */
+
+:root { --doc-chip-h: 24px; }
+
+/* The row itself. `align-items: center` is doing nothing useful when the
+   children disagree about their height, which is why the height is shared
+   above rather than negotiated here. */
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* While the document route is deciding what to show. Roughly where the sheet's
+   first line will land, so the spinner is not somewhere content never appears. */
+.doc-route-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rem 0;
+}
+
+/* ── Who is on a document ──
+   The count is a control, not a label: it opens the names. */
+/* ── The shared chip ──
+   A pill that states one fact about the document. `--action` marks the ones
+   that are also buttons; the rest are labels, and in this system pills
+   describe while rounded rectangles act — so an actionable pill has to earn
+   it with a hover and a pressed state. */
+.doc-chip,
+.people-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  /* Explicit, against the global 2.5rem touch-target floor on `button`. */
+  height: var(--doc-chip-h);
+  min-height: 0;
+  min-width: 0;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink-faint);
+  background: var(--ink-a04);
+  border: 1px solid var(--line-soft);
+}
+
+/* Published is a state worth seeing across a grid of cards without reading
+   it, so it takes the accent as a tint. Private is the resting state and
+   stays neutral — if both were coloured neither would carry information. */
+.doc-chip[data-public] {
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.doc-chip--action,
+.people-chip {
+  cursor: pointer;
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+.doc-chip--action:hover:not(:disabled),
+.people-chip:hover {
+  color: var(--ink-2);
+  background: var(--ink-a08);
+  border-color: var(--line);
+}
+.doc-chip--action[data-public]:hover:not(:disabled) {
+  color: var(--accent-600);
+  background: rgb(var(--accent-rgb) / 0.18);
+  border-color: var(--accent-400);
+}
+.doc-chip--action:active:not(:disabled),
+.people-chip:active { transform: scale(0.94); }
+.doc-chip--action:disabled { cursor: progress; }
+
+.people-chip[data-open] {
+  color: var(--ink-2);
+  background: var(--ink-a08);
+  border-color: var(--line);
+}
+
+.people-pop {
+  /* Fixed and portalled to the body: two of the four places this is used clip
+     an absolutely-positioned child — `.doc-card` hides its overflow, and the
+     editor header is a fixed bar. Coordinates come from the component, which
+     measures the trigger. */
+  position: fixed;
+  z-index: 200;
+  width: 216px;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  /* `transform-origin` is set inline: it depends on whether the panel ended up
+     below its trigger or was flipped above it, which only the measurement
+     knows. Per the popover rule, a centre origin would start the animation
+     somewhere the panel never occupies. */
+  animation: cmdk-rise 0.16s var(--ease-out);
+}
+
+.people-pop-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-ghost);
+  padding: 7px 9px 6px;
+}
+
+.people-list { display: flex; flex-direction: column; gap: 1px; }
+
+.people-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 9px;
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  text-decoration: none;
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+a.people-row:hover { background: var(--ink-a04); color: var(--ink); }
+.people-row--plain { cursor: default; }
+
+.people-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.people-role {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-ghost);
+}
+
+.people-manage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 9px;
+  border-top: 1px solid var(--line-soft);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-size: 12px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+.people-manage:hover { color: var(--accent-500); }

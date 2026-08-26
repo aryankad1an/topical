@@ -42,6 +42,10 @@ class GenerateSectionRequest(BaseModel):
     #: Its number in the outline — "2.3" — so the model knows where it sits.
     section_number: Optional[str] = None
     level: int = 1
+    #: What the writer asked for on top of the section's title — "keep it under
+    #: 300 words", "lead with a worked example". Distinct from ``topic``, which
+    #: says what the section is *about*: this says how it should be written.
+    instruction: Optional[str] = None
 
 
 class TransformRequest(BaseModel):

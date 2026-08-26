@@ -21,12 +21,6 @@
   overflow: hidden;
   background: var(--bg);
 }
-
-.editor-loading {
-  display: flex; align-items: center; justify-content: center;
-  height: 100vh; background: var(--bg);
-}
-
 /* ── Header ── */
 /* ── The chrome bars ──
    Both are frosted, and `backdrop-filter` creates a stacking context. That is
@@ -78,6 +72,18 @@
 .editor-title:hover { background: var(--ink-a04); }
 .editor-title:focus { background: var(--ink-a04); }
 
+/* The same name, when it is a heading rather than a field. It keeps the face
+   and the size — it is the same thing on the screen — and loses the hover
+   well and the input's own box, because there is nothing here to click. */
+h1.editor-title--static {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+h1.editor-title--static:hover { background: transparent; }
+
 .editor-byline {
   display: flex; align-items: center; gap: 7px;
   padding-left: 11px;
@@ -87,11 +93,6 @@
 }
 .editor-byline-label { color: var(--ink-ghost); }
 .editor-byline-name { color: var(--ink-2); font-weight: 500; }
-.editor-byline-co {
-  color: var(--ink-faint);
-  font-size: 11px;
-  white-space: nowrap;
-}
 
 /* Overlapping avatars: the offset is a negative margin on each, since a
    negative `gap` is not a thing. */
@@ -222,8 +223,7 @@
   flex-shrink: 0;
 }
 
-/* Groups keep their own buttons together when the bar has to wrap or scroll,
-   so a heading control never ends up orphaned on the far side of a divider
+/* Groups keep their own buttons together when the bar has to wrap or scroll, so a heading control never ends up orphaned on the far side of a divider
    from its siblings. */
 .toolbar-group {
   display: flex;
@@ -366,6 +366,32 @@
 .code-surface[data-focus='true'] .cl-active { opacity: 1; }
 .code-surface[data-focus='true'] .cl-active::before { color: var(--accent-400); }
 
+/* ── Where the caret just landed ──
+   A caret arriving from somewhere else — a click in the preview, an outline
+   row, a search hit — is one hairline in a wall of monospace, and it is not
+   blinking yet if focus was elsewhere a moment ago. The line it landed on
+   lights up once and fades, which tells the eye where to go without leaving
+   anything behind to be mistaken for a selection.
+
+   Animated on the line's own `background`, the same surface `.cl-section`
+   below paints on, rather than through a pseudo-element: `.cl` establishes no
+   stacking context, so a `z-index: -1` layer inside it is painted behind the
+   mirror's background and never seen at all. `.cl` is a block, so its
+   background already spans the full width of the row. */
+.cl-flash {
+  animation: cl-flash-out 1.2s var(--ease-out) forwards;
+  border-radius: var(--radius-xs);
+}
+@keyframes cl-flash-out {
+  from { background-color: rgb(var(--accent-rgb) / 0.30); }
+  to { background-color: transparent; }
+}
+/* Reduced motion keeps the signal and drops none of the meaning — a fade is
+   what the policy preserves; it just resolves faster. */
+@media (prefers-reduced-motion: reduce) {
+  .cl-flash { animation-duration: 0.6s; }
+}
+
 /* ── The section the outline rail is pointing at ──
    Painted on the mirror, which sits *under* the transparent textarea, so it
    reads as a highlight on the text rather than as a box drawn over it — and
@@ -384,22 +410,22 @@
 .code-surface[data-focus='true'] .cl-section { opacity: 1; }
 
 /* ── Tokens ── */
-.tok-head    { color: var(--accent-500); font-weight: 700; }
-.tok-strong  { color: var(--ink); font-weight: 700; }
-.tok-em      { color: var(--ink-2); font-style: italic; }
-.tok-del     { color: var(--ink-faint); text-decoration: line-through; }
-.tok-code    { color: var(--syn-code); }
-.tok-math    { color: var(--latex-500); }
-.tok-link    { color: var(--syn-link); }
-.tok-url     { color: rgb(var(--accent-rgb) / 0.45); }
-.tok-quote   { color: var(--ink-muted); font-style: italic; }
-.tok-marker  { color: var(--accent-500); }
-.tok-rule    { color: var(--ink-ghost); }
-.tok-tag     { color: var(--syn-tag); }
-.tok-cmd     { color: var(--syn-cmd); }
-.tok-env     { color: var(--latex-500); font-weight: 600; }
+.tok-head { color: var(--accent-500); font-weight: 700; }
+.tok-strong { color: var(--ink); font-weight: 700; }
+.tok-em { color: var(--ink-2); font-style: italic; }
+.tok-del { color: var(--ink-faint); text-decoration: line-through; }
+.tok-code { color: var(--syn-code); }
+.tok-math { color: var(--latex-500); }
+.tok-link { color: var(--syn-link); }
+.tok-url { color: rgb(var(--accent-rgb) / 0.45); }
+.tok-quote { color: var(--ink-muted); font-style: italic; }
+.tok-marker { color: var(--accent-500); }
+.tok-rule { color: var(--ink-ghost); }
+.tok-tag { color: var(--syn-tag); }
+.tok-cmd { color: var(--syn-cmd); }
+.tok-env { color: var(--latex-500); font-weight: 600; }
 .tok-comment { color: var(--ink-ghost); font-style: italic; }
-.tok-punct   { color: var(--ink-faint); }
+.tok-punct { color: var(--ink-faint); }
 .tok-find {
   background: rgb(var(--accent-rgb) / 0.18);
   border-radius: 3px;
@@ -419,8 +445,7 @@
 /* ── The rail ──
    Solid, deliberately. A sidebar is a panel the document sits beside, not
    chrome floating over it: frosting a tall column against scrolling text
-   makes the text smear the whole height of the screen every time you move,
-   which reads as noise rather than as depth.
+   makes the text smear the whole height of the screen every time you move, which reads as noise rather than as depth.
 
    The glass in here is carried by a few *controls* instead — the two AI
    buttons, the generate button, and the active row. Mostly solid, with the
@@ -637,20 +662,17 @@
   background: var(--ink-a06);
   border: 1px solid var(--line);
 }
-.orail-kind[data-kind='added']   { color: var(--status-success); background: rgb(var(--success-rgb) / 0.12); border-color: rgb(var(--success-rgb) / 0.3); }
+.orail-kind[data-kind='added'] { color: var(--status-success); background: rgb(var(--success-rgb) / 0.12); border-color: rgb(var(--success-rgb) / 0.3); }
 .orail-kind[data-kind='removed'] { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.12); border-color: rgb(var(--danger-rgb) / 0.3); }
 .orail-kind[data-kind='moved'],
-.orail-kind[data-kind='nested']  { color: var(--accent-500); background: var(--accent-soft); border-color: var(--accent-line); }
+.orail-kind[data-kind='nested'] { color: var(--accent-500); background: var(--accent-soft); border-color: var(--accent-line); }
 .orail-change-title { font-size: 11.5px; font-weight: 600; color: var(--ink); }
 .orail-change-reason { font-size: 10.5px; line-height: 1.45; color: var(--ink-muted); }
 .orail-proposal-actions {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px;
   border-top: 1px solid var(--line-soft);
-}
-
-.outline-source { padding: 0 10px 9px; flex-shrink: 0; }
-.orail-urls { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+}.orail-urls { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
 
 /* ── Rows ── */
 .outline-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 7px 8px; }
@@ -903,9 +925,6 @@
   border-top: 1px solid var(--line-soft);
 }
 
-/* Inside the foot the source switch is a setting, not a section: no padding
-   of its own, and it sits directly against the button it describes. */
-.outline-foot .outline-source { padding: 0; }
 .orail-add {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   width: 100%;
@@ -993,9 +1012,7 @@
 .outline-empty .orail-add { width: auto; margin-top: 10px; }
 
 /* ── Add, as the last row of the list ──
-   Reads as one more line of the outline rather than as a separate control,
-   which is what makes "the list continues here" obvious. Dashed while idle,
-   solid on hover — the standard "this will become real" affordance. */
+   Reads as one more line of the outline rather than as a separate control, which is what makes "the list continues here" obvious. Dashed while idle, solid on hover — the standard "this will become real" affordance. */
 .orail-add-row {
   display: flex;
   align-items: center;
@@ -1142,10 +1159,15 @@
 }
 .ai-chip:active { transform: scale(0.96); }
 
+/* ── The inline AI panel ──
+   It lands on top of the paragraph being edited, so its size is part of its
+   design rather than a consequence of its contents. 340px wide and ~300 tall
+   covered most of a line's worth of context; the menu is now a single filter
+   row over a short list and comes in at roughly half the height. */
 .ai-assist {
   position: absolute;
   z-index: 72;
-  width: 340px;
+  width: 300px;
   border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1162,25 +1184,69 @@
   color: var(--ink-muted);
   border-bottom: 1px solid var(--line-soft);
 }
-.ai-assist-list { max-height: 320px; overflow-y: auto; padding: 5px; }
+/* ── The filter row ──
+   Doubles as the panel's header: the placeholder carries the word count that
+   used to need a title bar of its own. */
+.ai-assist-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  height: 38px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ai-assist-spark { color: var(--accent-400); flex-shrink: 0; }
+.ai-assist-filter {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.ai-assist-filter::placeholder { color: var(--ink-faint); }
+
+/* Six rows and a scroll, not twelve and a wall. */
+.ai-assist-list { max-height: 218px; overflow-y: auto; padding: 4px; }
+.ai-assist-empty {
+  padding: 14px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+.ai-assist-empty kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--ink-a06);
+}
 .ai-assist-item {
   display: flex; align-items: center; gap: 9px;
   width: 100%;
-  padding: 7px 9px;
+  padding: 6px 9px;
   border-radius: var(--radius);
   text-align: left;
   transition: background var(--dur-fast) var(--ease-out);
 }
-.ai-assist-item:hover { background: var(--ink-a04); }
+/* One highlight, driven by the cursor — keyboard and mouse move the same
+   marker rather than each lighting a different row. `onMouseMove` sets the
+   cursor, so there is no separate `:hover` state to disagree with it. */
+.ai-assist-item[data-cursor='true'] { background: var(--accent-soft); }
 .ai-assist-icon { color: var(--ink-faint); flex-shrink: 0; }
-.ai-assist-item:hover .ai-assist-icon { color: var(--accent-400); }
+.ai-assist-item[data-cursor='true'] .ai-assist-icon { color: var(--accent-500); }
+.ai-assist-item[data-cursor='true'] .ai-assist-label { color: var(--ink); }
 .ai-assist-label { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+/* Only ever on the row under the cursor. Printed on all twelve it was a
+   second column of grey text, truncated to the point of saying nothing —
+   "Clearer and more precise, sa…". */
 .ai-assist-hint {
   margin-left: auto;
   font-size: 10.5px;
-  color: var(--ink-ghost);
+  color: var(--accent-600);
   text-align: right;
-  max-width: 47%;
+  max-width: 52%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .ai-assist-custom { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
@@ -1236,14 +1302,6 @@
   border-color: var(--accent-400);
 }
 .ai-btn--primary:hover:not(:disabled) { background: var(--accent-500); color: var(--accent-ink); }
-/* Why a disabled control is disabled, next to the control itself. */
-.ai-field-note {
-  font-size: 10.5px;
-  line-height: 1.45;
-  color: var(--status-warning);
-  opacity: 0.85;
-}
-
 .method-switch { display: flex; gap: 3px; padding: 3px; border-radius: var(--radius); background: var(--ink-a02); }
 .method-btn {
   flex: 1;
@@ -1295,8 +1353,6 @@
   border: 1px solid var(--line);
   background: var(--ink-a02);
 }
-
-
 
 /* ═══════════════════════════════════════════════════════════════════════
    Keyboard shortcut sheet
@@ -1476,3 +1532,279 @@
   font-size: var(--text-base);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   The write popover — asked before anything is generated
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Covers the rail, not the document. Everything it configures lives in the
+   rail, and putting it over the prose would repeat the mistake the inline AI
+   panel had to be rescued from. */
+.write-pop-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  background: rgb(var(--shadow-rgb) / 0.28);
+  animation: cmdk-fade var(--dur-fast) var(--ease-out);
+}
+
+.write-pop {
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  /* It rises from the button that opened it, at the foot of the rail. */
+  transform-origin: bottom center;
+  animation: cmdk-rise var(--dur-base) var(--ease-out);
+}
+
+.write-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 8px 9px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.write-pop-title {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.write-pop-title b { color: var(--ink); font-weight: 600; }
+
+.write-pop-body {
+  padding: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.write-pop-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+/* The word, not an asterisk — and stated, because a blank box with no note
+   reads as required. */
+.write-pop-optional { font-weight: 500; color: var(--ink-ghost); }
+
+.write-pop-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  outline: none;
+  resize: none;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.write-pop-input:focus { border-color: var(--accent-line); }
+.write-pop-input::placeholder { color: var(--ink-faint); }
+
+.write-pop-asks { display: flex; flex-wrap: wrap; gap: 4px; }
+.write-pop-ask {
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  font-size: 10.5px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .write-pop-ask:hover {
+    color: var(--accent-600);
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+  }
+}
+.write-pop-ask:active { transform: scale(0.97); }
+
+.write-pop-divider {
+  height: 1px;
+  background: var(--line-soft);
+  margin: 2px 0;
+}
+/* The chosen mode explains itself in place. The switch alone made you hover
+   three buttons to learn what the three words meant. */
+.write-pop-method-hint {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  margin-top: -2px;
+}
+.write-pop-go { margin-top: 3px; }
+
+/* ── Toolbar group overflow ── */
+.toolbar-more { position: relative; display: flex; }
+/* Narrower than a real button: it is an affordance on the group beside it, not a sixth member of it. */
+.toolbar-more-btn { width: 20px !important; min-width: 20px; padding: 0; }
+
+/* Portalled to the body, so it is positioned against the viewport rather than
+   against a bar that clips and seals it. */
+.toolbar-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 172px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  /* Hangs off the chevron, so that is where it grows from. */
+  transform-origin: top left;
+  animation: cmdk-rise var(--dur-fast) var(--ease-out);
+}
+.toolbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--ink-2);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.toolbar-menu-item svg { color: var(--ink-faint); flex-shrink: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .toolbar-menu-item:hover { background: var(--accent-soft); color: var(--accent-600); }
+  .toolbar-menu-item:hover svg { color: var(--accent-500); }
+}
+
+/* ── A collaborator's selection ──
+   Awareness always carried the length; only the caret was drawn from it, so a
+   peer highlighting a paragraph appeared as one blinking bar and you could not
+   see what they were about to replace. One box per visual line, because a
+   wrapped selection is not a rectangle. */
+.peer-selection {
+  position: absolute;
+  z-index: 19;
+  border-radius: 2px;
+  pointer-events: none;
+  /* Position is recomputed on every keystroke, scroll and resize, so it must
+     not animate — a highlight easing toward the text as somebody types reads
+     as lag in their typing, not as smoothness in yours. */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ── Narrow windows ──
+
+   Below 900px the editor is one pane, and the outline is a drawer over the
+   document rather than a column beside it. The pane count and the drawer are
+   decided in `EditorPage` (see `useCompactEditor`) — a hidden pane is still a
+   mounted pane, and the second one runs the Markdown renderer, KaTeX, the
+   highlighter and the peer-cursor overlay. What is left for CSS is everything
+   that is genuinely presentational, and it is gathered here rather than
+   scattered through the file so the compact layout can be read in one place.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 899px) {
+  /* The chrome loses a third of its padding and the title stops claiming a
+     share of the viewport it can no longer afford. */
+  .editor-header { gap: 4px; padding: 6px 8px; }
+  .editor-title {
+    font-size: 14.5px;
+    padding: 4px 6px;
+    /* `min-width: 0` matters more than the max here: as a flex item an input
+       will not shrink below its intrinsic size, which is what pushed the save
+       button off the right-hand edge. */
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: none;
+  }
+  .editor-save { padding: 0 10px; }
+
+  /* One row that scrolls, not four rows that wrap. `flex-wrap` was overriding
+     the `overflow-x: auto` this bar already asked for — a wrapping flex
+     container has nothing to overflow, so the scroll never engaged and the
+     toolbar ate a quarter of the screen instead. */
+  .editor-toolbar {
+    flex-wrap: nowrap;
+    padding: 4px 8px;
+    /* Momentum scrolling, and no scrollbar occupying 12px of a 44px bar. */
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .editor-toolbar::-webkit-scrollbar { display: none; }
+  /* The hint is a sentence explaining a key; there is no room for a sentence
+     and it is the first thing to go. `.toolbar-tail`'s `margin-left: auto`
+     also has no meaning in a scrolling row — it would strand the shortcut
+     button beyond the last icon. */
+  .toolbar-hint { display: none; }
+  .toolbar-tail { margin-left: 0; }
+  .toolbar-divider { margin: 0 4px; }
+  /* In a nowrap row every item is shrinkable by default, so the bar squeezed
+     its own controls narrower than their contents instead of scrolling —
+     "Outline" came out clipped by its own border. */
+  .toolbar-btn, .toolbar-toggle { flex-shrink: 0; }
+
+  /* ── The outline as a drawer ──
+     Pulled out of the flow entirely: as a flex child at these widths it took
+     300px of a 375px viewport and left the writing surface as a gutter. */
+  .outline-rail[data-drawer] {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    /* Never the whole screen — the document stays visible at the edge, which
+       is what says the drawer is over it rather than instead of it. */
+    width: min(320px, 86vw);
+    box-shadow: 0 0 0 1px var(--line), 12px 0 32px -12px rgb(var(--shadow-rgb) / 0.35);
+    animation: rail-in var(--dur-base) var(--ease-out);
+  }
+  @keyframes rail-in {
+    from { transform: translateX(-100%); }
+    to   { transform: none; }
+  }
+
+  .editor-rail-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 39;
+    /* `--scrim`, not a hand-mixed black: it is defined per theme, and on the
+       dark palette a 32% black veil over a near-black page is invisible — the
+       drawer read as having opened onto nothing. */
+    background: var(--scrim);
+    animation: scrim-in var(--dur-fast) var(--ease-out);
+  }
+  @keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* The panes are the positioning context the drawer is pinned inside, so it
+     cannot escape over the toolbar or the status bar. */
+  .editor-main { position: relative; }
+
+  /* The writing surface gives back the padding it was spending on a measure
+     it no longer has room for. */
+  .code-surface { --code-pad-x: 1rem; }
+
+  /* Readings the bar can do without before it starts truncating the two that
+     matter: whether the work is saved, and whether the session is live. */
+  .editor-status-item--aux { display: none; }
+  .editor-status { padding: 0 8px; gap: 10px; }
+}
+
+/* Coarse pointers get targets they can actually hit, at whatever width. A
+   29px control is inside the 44px guidance by a wide margin, and the toolbar
+   is nothing but 29px controls. */
+@media (pointer: coarse) {
+  .toolbar-btn { height: 34px; width: 34px; }
+  .toolbar-toggle { height: 34px; }
+}

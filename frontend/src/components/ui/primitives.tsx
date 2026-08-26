@@ -104,6 +104,29 @@ export function PageHeader({
   );
 }
 
+/* ─────────────────────────── Refreshing ─────────────────────────── */
+
+/**
+ * "This list is being re-fetched right now."
+ *
+ * `isLoading` is only true on the *first* fetch of a key with nothing cached.
+ * Every fetch after that — coming back to a tab, invalidating after a write —
+ * leaves `isLoading` false and the previous data on screen, so the list sat
+ * there looking settled while it was out of date. Skeletons are wrong for
+ * that case: blanking a list the reader is already looking at to redraw the
+ * same rows is worse than the staleness. This says so instead, quietly, and
+ * keeps the content in place.
+ */
+export function Refreshing({ active, label = 'Refreshing' }: { active: boolean; label?: string }) {
+  if (!active) return null;
+  return (
+    <span className="refreshing" role="status" aria-live="polite">
+      <span className="refreshing-dot" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
 /* ─────────────────────────── EmptyState ─────────────────────────── */
 
 export interface EmptyStateProps {
@@ -181,30 +204,6 @@ export function Chip({ tone = 'neutral', mono, className, children, ...rest }: C
   );
 }
 
-/* ─────────────────────────── Stats ─────────────────────────── */
-
-export interface StatItem {
-  label: string;
-  value: React.ReactNode;
-  /** Dates and other long values need a smaller face to fit. */
-  small?: boolean;
-}
-
-export function StatStrip({ items, className }: { items: StatItem[]; className?: string }) {
-  return (
-    <div className={cn('stat-strip', className)}>
-      {items.map(({ label, value, small }) => (
-        <div key={label} className="stat-cell">
-          <div className="stat-value" style={small ? { fontSize: '0.95rem', paddingTop: '0.45rem' } : undefined}>
-            {value}
-          </div>
-          <div className="stat-label">{label}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ─────────────────────────── IconButton ─────────────────────────── */
 
 export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -224,55 +223,6 @@ export function IconButton({ tone = 'neutral', revealOnHover, className, ...rest
       )}
       {...rest}
     />
-  );
-}
-
-/* ─────────────────────────── PillToggle ─────────────────────────── */
-
-export interface PillToggleProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  /** Names the setting for screen readers — the switch carries no visible text. */
-  label?: string;
-  disabled?: boolean;
-  className?: string;
-}
-
-/**
- * A switch for one on/off setting.
- *
- * A `<div role="switch">` rather than a `<button>`: the browser's default
- * button styling (its own border, background and active state) fought the
- * track on every platform, and there is nothing to submit. Keyboard support
- * is therefore supplied by hand — Enter and Space both toggle, as they would
- * on a real button.
- *
- * All of its geometry and motion live in `.pill-toggle`; the checked state is
- * carried on `aria-checked`, so the same attribute drives assistive tech and
- * the styling, and the two cannot fall out of step.
- */
-export function PillToggle({ checked, onChange, label, disabled, className }: PillToggleProps) {
-  return (
-    <div
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      /* The same string as the accessible name, as a tooltip: the switch
-         carries no visible text, so a sighted user pointing at it had
-         nothing to tell them what it turns on. */
-      title={label}
-      aria-disabled={disabled || undefined}
-      tabIndex={disabled ? -1 : 0}
-      className={cn('pill-toggle', className)}
-      onClick={() => !disabled && onChange(!checked)}
-      onKeyDown={event => {
-        if (disabled || (event.key !== 'Enter' && event.key !== ' ')) return;
-        event.preventDefault();
-        onChange(!checked);
-      }}
-    >
-      <span className="pill-toggle-thumb" />
-    </div>
   );
 }
 

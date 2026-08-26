@@ -24,8 +24,8 @@
 @import './styles/primitives.css';
 @import './styles/editor.css';
 @import './styles/document.css';
+@import './styles/doc-meta.css';
 @import './styles/auth.css';
-@import './styles/liquid-glass.css';
 /* Last: the glass layer re-skins surfaces the files above have already laid
    out, so it has to win their background, border and shadow. */
 @import './styles/glass.css';
