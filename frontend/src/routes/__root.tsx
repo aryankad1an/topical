@@ -110,7 +110,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           would beat both classes. */}
       <nav
         id="main-nav"
-        className="hidden md:flex fixed z-[100] nav-glass liquid-glass"
+        className="hidden md:flex fixed z-[var(--z-nav)] nav-glass liquid-glass"
         style={{
           top: 20,
           left: '50%',
@@ -195,7 +195,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
       </nav>
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
+      <div className="md:hidden fixed top-0 left-0 right-0 z-[var(--z-nav)] flex items-center justify-between px-4 py-3"
         style={{
           background: 'var(--surface)',
           borderBottom: '1px solid var(--line-soft)',
@@ -218,7 +218,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[200] md:hidden mobile-menu-overlay">
+        <div className="fixed inset-0 z-[var(--z-float)] md:hidden mobile-menu-overlay">
           <div className="flex flex-col h-full">
             <div className="flex justify-between items-center p-5 border-b border-[var(--line-soft)]">
               <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
@@ -289,14 +289,14 @@ function Root() {
 
   return (
     /* The editor is a fixed application shell, not a document: it sizes itself
-       to the viewport and scrolls inside its own panes. `min-h-screen` lets the
+       to the viewport and scrolls inside its own panes. `min-h-dvh` lets the
        page grow past the viewport, so any stray height from a sibling made the
        whole shell scrollable — you could drag the page and leave blank ground
        below the status bar. On the editor route the shell is pinned to the
        viewport and told not to scroll; every other route keeps growing. */
     <div className={isEditorRoute
-      ? 'h-screen overflow-hidden flex flex-col relative'
-      : 'min-h-screen flex flex-col relative'}>
+      ? 'h-dvh overflow-hidden flex flex-col relative'
+      : 'min-h-dvh flex flex-col relative'}>
       {/* Unconditional: the editor hides the nav and the page ground, but its
           own toolbars are glass and reference these by id. */}
       <GlassFilters />

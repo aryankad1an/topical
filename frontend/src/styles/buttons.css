@@ -82,7 +82,7 @@
   background-color: var(--accent-400);
   border-color: var(--accent-400);
   color: var(--accent-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+  box-shadow: var(--highlight-inset),
               var(--shadow-sm);
 }
 
@@ -96,7 +96,7 @@
   background-color: var(--accent-500);
   border-color: var(--accent-500);
   color: var(--accent-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18),
+  box-shadow: var(--highlight-inset),
               0 4px 14px -6px var(--accent-glow);
 }
 

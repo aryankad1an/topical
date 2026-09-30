@@ -587,7 +587,7 @@
   border: 1px solid rgb(var(--latex-rgb) / 0.22);
   background: rgb(var(--latex-rgb) / 0.05);
 }
-.lx-theorem[data-kind='definition'] { border-color: rgba(122,92,168,0.24); background: rgba(122,92,168,0.05); }
+.lx-theorem[data-kind='definition'] { border-color: rgb(var(--theorem-def-rgb) / 0.24); background: rgb(var(--theorem-def-rgb) / 0.05); }
 .lx-theorem[data-kind='example'] { border-color: rgb(var(--success-rgb) / 0.22); background: rgb(var(--success-rgb) / 0.05); }
 .lx-theorem[data-kind='remark'] { border-color: var(--line); background: var(--ink-a02); }
 .lx-thm-head {
@@ -695,7 +695,7 @@
 /* ── Printing ──
    Print the document, not the application around it. */
 @media print {
-  body.printing-preview { background: #fff; }
+  body.printing-preview { background: var(--print-bg); }
   body.printing-preview .editor-header,
   body.printing-preview .editor-toolbar,
   body.printing-preview .editor-status,
@@ -713,19 +713,19 @@
     height: auto !important;
     width: 100% !important;
     overflow: visible !important;
-    background: #fff !important;
+    background: var(--print-bg) !important;
   }
   body.printing-preview .doc-sheet { max-width: none; padding: 0; }
   body.printing-preview .md-body,
-  body.printing-preview .lx-doc { color: #111; font-size: 11.5pt; }
+  body.printing-preview .lx-doc { color: var(--print-ink); font-size: 11.5pt; }
   body.printing-preview .md-body .md-h,
   body.printing-preview .lx-doc .lx-h,
-  body.printing-preview .lx-title { color: #000; }
+  body.printing-preview .lx-title { color: var(--print-ink-strong); }
   body.printing-preview .md-code,
-  body.printing-preview .lx-pre { background: #f6f6f6; border-color: #ddd; color: #111; }
-  body.printing-preview .md-code pre code { color: #111; }
+  body.printing-preview .lx-pre { background: var(--print-well); border-color: var(--print-rule); color: var(--print-ink); }
+  body.printing-preview .md-code pre code { color: var(--print-ink); }
   body.printing-preview .lx-eq-num,
-  body.printing-preview .lx-caption { color: #444; }
+  body.printing-preview .lx-caption { color: var(--print-ink-muted); }
   body.printing-preview .md-anchor,
   body.printing-preview .md-copy { display: none !important; }
 }

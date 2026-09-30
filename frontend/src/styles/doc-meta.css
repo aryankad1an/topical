@@ -113,7 +113,7 @@
      editor header is a fixed bar. Coordinates come from the component, which
      measures the trigger. */
   position: fixed;
-  z-index: 200;
+  z-index: var(--z-float);
   width: 216px;
   padding: 6px;
   border-radius: var(--radius-md);
@@ -124,7 +124,7 @@
      below its trigger or was flipped above it, which only the measurement
      knows. Per the popover rule, a centre origin would start the animation
      somewhere the panel never occupies. */
-  animation: cmdk-rise 0.16s var(--ease-out);
+  animation: cmdk-rise var(--dur-enter) var(--ease-out);
 }
 
 .people-pop-title {

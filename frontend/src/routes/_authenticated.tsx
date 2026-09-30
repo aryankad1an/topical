@@ -33,7 +33,7 @@ function AuthenticatedLayout() {
 
 function VerifyingSession() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col items-center justify-center min-h-[60dvh]">
       <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
       <p className="text-muted-foreground">Verifying authentication...</p>
     </div>
@@ -48,7 +48,7 @@ function VerifyingSession() {
 function SignInPrompt() {
   const { pathname } = useLocation();
   return (
-    <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60vh]">
+    <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60dvh]">
       <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
       <p className="text-muted-foreground mb-6">Please sign in or create an account to access this content</p>
       <div className="flex gap-4">

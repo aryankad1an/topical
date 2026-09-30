@@ -25,7 +25,7 @@ function PublicProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex items-center justify-center min-h-[50dvh]">
         <Loader2 className="h-6 w-6 animate-spin text-[var(--ink-faint)]" />
       </div>
     );

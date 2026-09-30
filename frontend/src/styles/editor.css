@@ -35,7 +35,7 @@
    now sits above the toolbar, and the toolbar above the document. */
 .editor-header {
   position: relative;
-  z-index: 30;
+  z-index: var(--z-chrome);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -130,7 +130,7 @@ h1.editor-title--static:hover { background: transparent; }
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 60;
+  z-index: var(--z-menu);
   min-width: 214px;
   padding: 6px;
   border-radius: var(--radius-md);
@@ -142,7 +142,7 @@ h1.editor-title--static:hover { background: transparent; }
      puts the first frame of the animation in a place the menu never occupies
      and detaches it from the button that opened it. */
   transform-origin: top right;
-  animation: cmdk-rise 0.16s var(--ease-out);
+  animation: cmdk-rise var(--dur-enter) var(--ease-out);
 }
 .editor-menu-label {
   font-size: 10px; font-weight: 700;
@@ -174,7 +174,7 @@ h1.editor-title--static:hover { background: transparent; }
 /* ── Formatting toolbar ── */
 .editor-toolbar {
   position: relative;
-  z-index: 20;
+  z-index: var(--z-toolbar);
   display: flex;
   align-items: center;
   gap: 2px;
@@ -275,7 +275,7 @@ h1.editor-title--static:hover { background: transparent; }
   cursor: col-resize;
   background: linear-gradient(to right, transparent 40%, var(--ink-a06) 40%, var(--ink-a06) 60%, transparent 60%);
   transition: background var(--dur-fast) var(--ease-out);
-  z-index: 5;
+  z-index: var(--z-handle);
 }
 .editor-divider:hover, .editor-divider:active {
   background: linear-gradient(to right, transparent 33%, var(--accent-line) 33%, var(--accent-line) 67%, transparent 67%);
@@ -379,7 +379,7 @@ h1.editor-title--static:hover { background: transparent; }
    mirror's background and never seen at all. `.cl` is a block, so its
    background already spans the full width of the row. */
 .cl-flash {
-  animation: cl-flash-out 1.2s var(--ease-out) forwards;
+  animation: cl-flash-out var(--dur-flash) var(--ease-out) forwards;
   border-radius: var(--radius-xs);
 }
 @keyframes cl-flash-out {
@@ -389,7 +389,7 @@ h1.editor-title--static:hover { background: transparent; }
 /* Reduced motion keeps the signal and drops none of the meaning — a fade is
    what the policy preserves; it just resolves faster. */
 @media (prefers-reduced-motion: reduce) {
-  .cl-flash { animation-duration: 0.6s; }
+  .cl-flash { animation-duration: calc(var(--dur-flash) / 2); }
 }
 
 /* ── The section the outline rail is pointing at ──
@@ -501,7 +501,7 @@ h1.editor-title--static:hover { background: transparent; }
   top: 0; right: -2px; bottom: 0;
   width: 5px;
   cursor: col-resize;
-  z-index: 5;
+  z-index: var(--z-handle);
 }
 .outline-resize:hover { background: var(--accent-line); }
 
@@ -1046,7 +1046,7 @@ h1.editor-title--static:hover { background: transparent; }
   flex-wrap: wrap;
   border-bottom: 1px solid var(--line-soft);
   background: rgb(var(--accent-rgb) / 0.035);
-  animation: fadeInUp 0.16s var(--ease-out);
+  animation: fadeInUp var(--dur-enter) var(--ease-out);
 }
 .find-input {
   height: 27px;
@@ -1087,7 +1087,7 @@ h1.editor-title--static:hover { background: transparent; }
 /* ── Slash menu ── */
 .slash-menu {
   position: absolute;
-  z-index: 70;
+  z-index: var(--z-popover);
   width: 320px;
   max-height: 300px;
   overflow-y: auto;
@@ -1098,7 +1098,7 @@ h1.editor-title--static:hover { background: transparent; }
   box-shadow: var(--shadow-pop);
   /* Positioned from its top-left at the caret, so it grows from the caret. */
   transform-origin: top left;
-  animation: cmdk-rise 0.14s var(--ease-out);
+  animation: cmdk-rise var(--dur-enter) var(--ease-out);
 }
 .slash-group {
   font-size: 9.5px; font-weight: 700;
@@ -1131,7 +1131,7 @@ h1.editor-title--static:hover { background: transparent; }
 /* ── Inline AI ── */
 .ai-chip {
   position: absolute;
-  z-index: 65;
+  z-index: var(--z-popover-low);
   display: inline-flex; align-items: center; gap: 6px;
   height: 27px; padding: 0 11px;
   border-radius: var(--radius-pill);
@@ -1139,7 +1139,7 @@ h1.editor-title--static:hover { background: transparent; }
   color: var(--accent-ink);
   background: var(--accent-400);
   box-shadow: var(--shadow-lg);
-  animation: fadeInUp 0.16s var(--ease-out);
+  animation: fadeInUp var(--dur-enter) var(--ease-out);
 }
 .ai-chip kbd {
   font-family: var(--font-mono);
@@ -1166,7 +1166,7 @@ h1.editor-title--static:hover { background: transparent; }
    row over a short list and comes in at roughly half the height. */
 .ai-assist {
   position: absolute;
-  z-index: 72;
+  z-index: var(--z-popover-high);
   width: 300px;
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -1175,7 +1175,7 @@ h1.editor-title--static:hover { background: transparent; }
   overflow: hidden;
   /* Same anchor as the slash menu: top-left, at the selection. */
   transform-origin: top left;
-  animation: cmdk-rise 0.16s var(--ease-out);
+  animation: cmdk-rise var(--dur-enter) var(--ease-out);
 }
 .ai-assist-head {
   display: flex; align-items: center; gap: 7px;
@@ -1542,7 +1542,7 @@ h1.editor-title--static:hover { background: transparent; }
 .write-pop-scrim {
   position: absolute;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-drawer);
   display: flex;
   align-items: flex-end;
   padding: 10px;
@@ -1661,7 +1661,7 @@ h1.editor-title--static:hover { background: transparent; }
    against a bar that clips and seals it. */
 .toolbar-menu {
   position: fixed;
-  z-index: 80;
+  z-index: var(--z-overflow-menu);
   min-width: 172px;
   padding: 4px;
   border-radius: var(--radius-md);
@@ -1698,7 +1698,7 @@ h1.editor-title--static:hover { background: transparent; }
    wrapped selection is not a rectangle. */
 .peer-selection {
   position: absolute;
-  z-index: 19;
+  z-index: var(--z-peer);
   border-radius: 2px;
   pointer-events: none;
   /* Position is recomputed on every keystroke, scroll and resize, so it must
@@ -1763,7 +1763,7 @@ h1.editor-title--static:hover { background: transparent; }
   .outline-rail[data-drawer] {
     position: absolute;
     inset: 0 auto 0 0;
-    z-index: 40;
+    z-index: var(--z-drawer);
     /* Never the whole screen — the document stays visible at the edge, which
        is what says the drawer is over it rather than instead of it. */
     width: min(320px, 86vw);
@@ -1778,7 +1778,7 @@ h1.editor-title--static:hover { background: transparent; }
   .editor-rail-scrim {
     position: absolute;
     inset: 0;
-    z-index: 39;
+    z-index: var(--z-drawer-scrim);
     /* `--scrim`, not a hand-mixed black: it is defined per theme, and on the
        dark palette a 32% black veil over a near-black page is invisible — the
        drawer read as having opened onto nothing. */

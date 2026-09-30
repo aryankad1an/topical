@@ -52,7 +52,7 @@ function Home() {
   const startLabel = isAuthenticated ? 'Open Topical' : 'Start free';
 
   return (
-    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+    <div className="flex flex-col min-h-dvh w-full overflow-x-hidden">
       <TopicHero startHref={startHref} startLabel={startLabel} />
 
       {/* ── The three beats ── */}

@@ -39,6 +39,11 @@ function currentTheme(): Theme {
   return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 }
 
+/** A design token's computed value, as declared in tokens.css. */
+function token(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 function paint(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
@@ -95,8 +100,9 @@ export async function setTheme(theme: Theme, origin?: { x: number; y: number }) 
       ],
     },
     {
-      duration: 480,
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      // Read from the tokens, so the wipe and the CSS motion can't drift apart.
+      duration: parseFloat(token('--dur-theme-wipe')) || 480,
+      easing: token('--ease-out') || 'ease-out',
       pseudoElement: '::view-transition-new(root)',
     },
   );

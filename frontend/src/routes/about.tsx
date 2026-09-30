@@ -39,7 +39,7 @@ function About() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col min-h-dvh w-full">
 
       {/* ── Hero ──
           The decorative `green-orb glow-pulse` div that used to sit here
