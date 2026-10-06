@@ -1252,6 +1252,48 @@ a:active > .brand-lockup {
    Navigation — sliding indicator, avatar chip, command hint
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── The site nav (routes/__root.tsx) ──
+   A glass pill floating over the page; `.nav-glass`/`.liquid-glass` supply
+   the material, these the placement and rhythm. */
+.site-nav {
+  display: none;
+  position: fixed;
+  z-index: var(--z-nav);
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 2px;
+  padding: 5px 6px;
+  border-radius: var(--radius-pill);
+}
+@media (min-width: 768px) { .site-nav { display: flex; } }
+.site-nav-home {
+  display: flex;
+  align-items: center;
+  margin-right: 2px;
+  padding: 6px 10px 6px 8px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+.site-nav-home[data-active='true'] { background: var(--ink-a06); }
+/* The phone's bar and the full-screen menu it opens. */
+.mobile-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: var(--z-nav);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-soft);
+}
+@media (min-width: 768px) { .mobile-bar { display: none; } }
+.mobile-menu-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--line-soft);
+}
+
 .nav-shell {
   position: relative;
   display: flex;

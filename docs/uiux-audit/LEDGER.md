@@ -129,3 +129,13 @@ Visible in 2b:
 | LT-01 | P2 | 19 files | MISSING layout/type primitives: flex/grid/text utilities written on raw elements everywhere | `Row`, `Stack`, `Grid` (literal class tables on the 4px ladder), `Text` (size/tone/weight/leading/italic/truncate/numeric), `Heading`; 73 elements migrated by an AST codemod (`harness/codemod-layout.cjs`) that converts only elements whose classes are pure layout/type utilities — pixel-identical except two half-pixel snaps (10.5/11.5px → 11px metadata) | fix |
 | LT-02 | P2 | index.tsx, about.tsx | marketing sections hand-built ×9 (`.band`/`.band-inner`, `.section-head/-title/-sub`, `.step-card`/`.bento-item` + `.bento-icon` + `.card-title`/`.card-body`); about's hero and closing CTA restyled them with inline `style` | `Band` (default/tight/hero), `SectionHead` (hero size, eyebrow, centred, flush), `FeatureCard` (step/bento/wide/feature, footer slot) | fix |
 | LT-03 | P2 | index.tsx, about.tsx | two footers that had drifted (wordmark size, brand line on one page only, two copyright forms) | `SiteFooter` with per-page links (visible on /about: the brand line appears) | fix |
+
+### Batch 3b — app shell (P1–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| SH-01 | P2 | routes/__root.tsx:111–190 | nav pill, home link, dividers, mobile bar and mobile menu header styled with inline `style` objects (raw px, a `0.25s` literal, `borderRadius: 100`) | `.site-nav`/`.site-nav-home`/`.mobile-bar`/`.mobile-menu-head` on tokens; `Divider` (new `xs` space) | fix |
+| SH-02 | P2 | routes/_authenticated.tsx:47 | signed-out gate drawn with raw utilities | `Stack` + `Text as="h2"` | fix |
+| SH-03 | P1 | router (main.tsx) | no not-found or error UI: an unknown URL renders TanStack's bare "Not Found" text with no way back; a thrown error renders nothing designed | add `defaultNotFoundComponent`/`defaultErrorComponent` built from `EmptyState` | **ask A-12** (new behaviour) |
+| SH-04 | P1 | components/CommandPalette.tsx:205, routes/__root.tsx:178 | the palette and the mobile menu are hand-rolled fixed overlays (no focus trap; the mobile menu has no Escape) | part of A-10 | **ask A-10** |
+| SH-05 | — | routes/__root.tsx:123 `.nav-indicator` | inline `style` on the sliding indicator | measured position (dynamic value) — the documented exception | wontfix |

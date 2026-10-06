@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { userQueryOptions } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Button, LoadingState, Text, Row } from '@/components/ui';
+import { Button, LoadingState, Text, Row, Stack } from '@/components/ui';
 
 /**
  * The gate every signed-in screen sits behind.
@@ -44,8 +44,8 @@ function VerifyingSession() {
 function SignInPrompt() {
   const { pathname } = useLocation();
   return (
-    <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60dvh]">
-      <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+    <Stack gapY={2} align="center" justify="center" className="min-h-[60dvh]">
+      <Text as="h2" size="2xl" weight="bold" className="mb-4">Authentication Required</Text>
       <Text tone="muted" className="mb-6">Please sign in or create an account to access this content</Text>
       <Row gap={4}>
         <Button asChild variant="primary" size="xl">
@@ -55,6 +55,6 @@ function SignInPrompt() {
           <Link to="/register">Create account</Link>
         </Button>
       </Row>
-    </div>
+    </Stack>
   );
 }

@@ -12,7 +12,7 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
-import { Avatar, Button, IconButton, Kbd, Toaster, Row, Stack } from '@/components/ui';
+import { Avatar, Button, IconButton, Kbd, Toaster, Row, Stack, Divider } from '@/components/ui';
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
@@ -110,36 +110,14 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           would beat both classes. */}
       <nav
         id="main-nav"
-        className="hidden md:flex fixed z-[var(--z-nav)] nav-glass liquid-glass"
-        style={{
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          alignItems: 'center',
-          gap: 2,
-          borderRadius: 100,
-          padding: '5px 6px',
-        }}
+        className="site-nav nav-glass liquid-glass"
       >
         {/* Logo / brand */}
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '6px 10px 6px 8px',
-            borderRadius: 100,
-            marginRight: 2,
-            background: isActive('/') ? 'var(--ink-a06)' : 'transparent',
-            transition: 'background 0.25s',
-            textDecoration: 'none',
-          }}
-        >
+        <Link to="/" className="site-nav-home" data-active={isActive('/')}>
           <BrandMark />
         </Link>
 
-        {/* Divider */}
-        <div style={{ width: 1, height: 16, background: 'var(--ink-a06)', margin: '0 2px', flexShrink: 0 }} />
+        <Divider orientation="vertical" space="xs" />
 
         <div className="nav-shell" ref={shellRef}>
           <span
@@ -158,7 +136,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           ))}
         </div>
 
-        <div style={{ width: 1, height: 16, background: 'var(--ink-a06)', margin: '0 3px', flexShrink: 0 }} />
+        <Divider orientation="vertical" space="xs" />
 
         <IconButton size="lg" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
           <Command className="h-3 w-3" /><Kbd variant="bare">K</Kbd>
@@ -167,25 +145,19 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
         <ThemeToggle className="ml-1" />
 
         {isAuthenticated ? (
-          <Link to="/profile" style={{ marginLeft: 8, textDecoration: 'none' }} title="Profile" aria-label="Profile">
+          <Link to="/profile" className="ml-2" title="Profile" aria-label="Profile">
             <Avatar size="sm" shape="circle" tone="accent" className="nav-avatar" src={avatarSrc} name={avatarName} />
           </Link>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
-            <Button asChild variant="primary" size="md" shape="pill">
-              <Link to="/login">Sign in</Link>
-            </Button>
-          </div>
+          <Button asChild variant="primary" size="md" shape="pill" className="ml-1">
+            <Link to="/login">Sign in</Link>
+          </Button>
         )}
       </nav>
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-[var(--z-nav)] flex items-center justify-between px-4 py-3"
-        style={{
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--line-soft)',
-        }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
+      <div className="mobile-bar">
+        <Link to="/">
           <BrandMark size="md" />
         </Link>
         <Row align="center" gap={1}>
@@ -204,9 +176,9 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[var(--z-float)] md:hidden mobile-menu-overlay">
-          <Stack  className="h-full">
-            <div className="flex justify-between items-center p-5 border-b border-[var(--line-soft)]">
-              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
+          <Stack className="h-full">
+            <div className="mobile-menu-head">
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
                 <BrandMark size="md" />
               </Link>
               <IconButton size="lg" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu"><X size={20} /></IconButton>
@@ -279,9 +251,7 @@ function Root() {
        whole shell scrollable — you could drag the page and leave blank ground
        below the status bar. On the editor route the shell is pinned to the
        viewport and told not to scroll; every other route keeps growing. */
-    <div className={isEditorRoute
-      ? 'h-dvh overflow-hidden flex flex-col relative'
-      : 'min-h-dvh flex flex-col relative'}>
+    <Stack className={isEditorRoute ? 'h-dvh overflow-hidden relative' : 'min-h-dvh relative'}>
       {/* Unconditional: the editor hides the nav and the page ground, but its
           own toolbars are glass and reference these by id. */}
       <GlassFilters />
@@ -297,6 +267,6 @@ function Root() {
         <Outlet />
       </main>
       <Toaster />
-    </div>
+    </Stack>
   );
 }

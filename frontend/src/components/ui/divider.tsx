@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
  */
 export interface DividerProps {
   orientation?: "horizontal" | "vertical"
-  space?: "sm" | "md"
+  space?: "xs" | "sm" | "md"
   className?: string
 }
 

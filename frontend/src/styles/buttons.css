@@ -553,6 +553,7 @@
 .divider--vertical { width: 1px; height: 18px; background: var(--ink-a06); }
 .divider--vertical.divider--md { margin: 0 7px; }
 .divider--vertical.divider--sm { margin: 0 6px; }
+.divider--vertical.divider--xs { margin: 0 2px; height: 16px; }
 .divider--horizontal { height: 1px; width: 100%; background: var(--line-soft); }
 .divider--horizontal.divider--sm { margin: 2px 0; }
 .divider--horizontal.divider--md { margin: 4px 0; }

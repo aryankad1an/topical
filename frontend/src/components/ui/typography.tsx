@@ -24,7 +24,7 @@ const WEIGHT = { regular: "font-normal", medium: "font-medium", semibold: "font-
 const LEADING = { none: "leading-none", tight: "leading-tight", snug: "leading-snug", normal: "leading-normal", relaxed: "leading-relaxed" } as const
 
 export interface TextProps extends React.HTMLAttributes<HTMLElement> {
-  as?: "p" | "span" | "div" | "label" | "small" | "strong" | "em" | "time" | "dt" | "dd" | "li"
+  as?: "p" | "span" | "div" | "label" | "small" | "strong" | "em" | "time" | "dt" | "dd" | "li" | "h2" | "h3" | "h4"
   size?: keyof typeof SIZE
   tone?: keyof typeof TONE
   weight?: keyof typeof WEIGHT
