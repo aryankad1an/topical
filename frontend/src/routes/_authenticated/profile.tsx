@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState, Page, DetailRow, DetailEmpty } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState, Page, DetailRow, DetailEmpty, Text, Row } from '@/components/ui';
 import { User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from 'lucide-react';
 import { useState, useEffect } from "react";
 import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
@@ -28,7 +28,7 @@ function Profile() {
     return (
       <div className="text-center p-8">
         <h2 className="text-2xl font-bold mb-2">Authentication Error</h2>
-        <p className="text-muted-foreground mb-4">Unable to load user profile</p>
+        <Text tone="muted" className="mb-4">Unable to load user profile</Text>
         <Button asChild variant="primary" size="lg"><Link to="/login">Sign in again</Link></Button>
       </div>
     );
@@ -98,18 +98,18 @@ function Profile() {
 
             {user.roles && user.roles.length > 0 && (
               <DetailRow label="Roles">
-                <span className="flex flex-wrap gap-1.5">
+                <Row wrap gap={1.5} as="span">
                   {user.roles.map(role => (
                     <Chip key={role} tone="accent">
                       <Shield className="h-2.5 w-2.5" />{role}
                     </Chip>
                   ))}
-                </span>
+                </Row>
               </DetailRow>
             )}
 
             {/* Editing is its own screen — this page is for viewing. */}
-            <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+            <Row wrap align="center" gap={2.5} className="pt-1.5">
               <Button asChild variant="secondary" size="md">
                 <Link to="/profile/edit">
                   <Pencil className="h-3.5 w-3.5" /> Edit profile
@@ -122,12 +122,12 @@ function Profile() {
                   </Link>
                 </Button>
               )}
-            </div>
+            </Row>
           </CardContent>
           <CardFooter className="text-[11px] text-[var(--ink-ghost)]">
-            <span className="inline-flex items-center gap-1.5">
+            <Row inline align="center" gap={1.5} as="span">
               <User className="h-3 w-3" /> {user.id}
-            </span>
+            </Row>
           </CardFooter>
         </Card>
 
@@ -151,10 +151,10 @@ function Profile() {
                       style={{ ['--brand' as string]: preset.color }}>
                       <span className="provider-mark">{preset.name[0]}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
+                        <Row align="center" gap={1.5}>
                           <span className="text-[13px] font-semibold text-[var(--ink)]">{preset.name}</span>
                           {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
-                        </div>
+                        </Row>
                         <p className="provider-model truncate">{cred.model}</p>
                       </div>
                     </div>

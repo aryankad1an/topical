@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { UserPlus, Users, X } from 'lucide-react';
 import { searchUsername } from '@/lib/api';
-import { Avatar, IconButton, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, SearchField } from '@/components/ui';
+import { Avatar, IconButton, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, SearchField, Text, Stack } from '@/components/ui';
 
 interface Props {
   open: boolean;
@@ -84,9 +84,9 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
         <div className="mt-1">
           <h4 className="share-heading">Collaborators</h4>
           {coAuthors.length === 0 ? (
-            <p className="text-xs text-[var(--ink-ghost)]">Only you can edit this document.</p>
+            <Text size="xs" tone="ghost">Only you can edit this document.</Text>
           ) : (
-            <div className="flex flex-col gap-1.5">
+            <Stack gap={1.5}>
               {coAuthors.map((id, index) => (
                 <div key={id} className="share-row share-row--filled">
                   <Avatar seed={id} name={coAuthorUsernames[index] || id} size="xs" />
@@ -96,7 +96,7 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
                   </IconButton>
                 </div>
               ))}
-            </div>
+            </Stack>
           )}
         </div>
       </DialogContent>

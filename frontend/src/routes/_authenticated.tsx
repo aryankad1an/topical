@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { userQueryOptions } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Button, LoadingState } from '@/components/ui';
+import { Button, LoadingState, Text, Row } from '@/components/ui';
 
 /**
  * The gate every signed-in screen sits behind.
@@ -46,15 +46,15 @@ function SignInPrompt() {
   return (
     <div className="flex flex-col gap-y-2 items-center justify-center min-h-[60dvh]">
       <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-      <p className="text-muted-foreground mb-6">Please sign in or create an account to access this content</p>
-      <div className="flex gap-4">
+      <Text tone="muted" className="mb-6">Please sign in or create an account to access this content</Text>
+      <Row gap={4}>
         <Button asChild variant="primary" size="xl">
           <Link to="/login" search={{ redirect: pathname }}>Sign in</Link>
         </Button>
         <Button asChild variant="secondary" size="xl">
           <Link to="/register">Create account</Link>
         </Button>
-      </div>
+      </Row>
     </div>
   );
 }

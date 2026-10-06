@@ -5,7 +5,7 @@ import { createPost } from '@/lib/communityApi';
 import { getPublicLessonPlans } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Field, IconButton, Input, Textarea, MenuEmpty, MenuItem, MenuPanel } from '@/components/ui';
+import { Button, Field, IconButton, Input, Textarea, MenuEmpty, MenuItem, MenuPanel, Stack } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 
 interface NewPostDialogProps {
@@ -67,7 +67,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
           </IconButton>
         </div>
 
-        <div className="p-5 flex flex-col gap-4">
+        <Stack gap={4} className="p-5">
           {/* Labelled, not placeholder-only. A placeholder is gone the instant
               somebody types into it, so a half-filled form of placeholder-only
               fields no longer says what any of them are — and "Title*" put the
@@ -139,7 +139,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
           >
             {submitting ? 'Posting…' : 'Post to community'}
           </Button>
-        </div>
+        </Stack>
       </form>
     </div>
   );

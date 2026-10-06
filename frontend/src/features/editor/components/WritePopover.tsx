@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cpu, Globe, Link2, Plus, Sparkles, X } from 'lucide-react';
-import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton, Divider, TextLink } from '@/components/ui';
+import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton, Divider, TextLink, Row } from '@/components/ui';
 import type { GenerationMethod } from '../lib/generation';
 
 const METHODS: { key: GenerationMethod; icon: typeof Globe; label: string; hint: string }[] = [
@@ -146,7 +146,7 @@ export function WritePopover({
         {method === 'urls' && (
           <div className="orail-urls">
             {urls.map((url, i) => (
-              <div key={i} className="flex gap-1">
+              <Row key={i} gap={1}>
                 <Input
                   size="sm" aria-label={`Source URL ${i + 1}`} placeholder="https://…" value={url}
                   onChange={e => onUrls(urls.map((u, j) => (j === i ? e.target.value : u)))}
@@ -156,7 +156,7 @@ export function WritePopover({
                     <X className="h-3 w-3" />
                   </IconButton>
                 )}
-              </div>
+              </Row>
             ))}
             {urls.length < MAX_URLS && (
               <TextLink size="2xs" onClick={() => onUrls([...urls, ''])}>

@@ -12,7 +12,7 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
-import { Avatar, Button, IconButton, Kbd, Toaster } from '@/components/ui';
+import { Avatar, Button, IconButton, Kbd, Toaster, Row, Stack } from '@/components/ui';
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
@@ -188,7 +188,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
         <Link to="/" style={{ textDecoration: 'none' }}>
           <BrandMark size="md" />
         </Link>
-        <div className="flex items-center gap-1">
+        <Row align="center" gap={1}>
           <ThemeToggle />
           <IconButton
             size="md"
@@ -198,20 +198,20 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
           >
             {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </IconButton>
-        </div>
+        </Row>
       </div>
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[var(--z-float)] md:hidden mobile-menu-overlay">
-          <div className="flex flex-col h-full">
+          <Stack  className="h-full">
             <div className="flex justify-between items-center p-5 border-b border-[var(--line-soft)]">
               <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
                 <BrandMark size="md" />
               </Link>
               <IconButton size="lg" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu"><X size={20} /></IconButton>
             </div>
-            <div className="flex flex-col gap-1 p-6">
+            <Stack gap={1} className="p-6">
               {links.map(link => (
                 <Link key={link.to} to={link.to} className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>{link.label}</Link>
               ))}
@@ -224,8 +224,8 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
                   Sign in
                 </Link>
               )}
-            </div>
-          </div>
+            </Stack>
+          </Stack>
         </div>
       )}
     </>

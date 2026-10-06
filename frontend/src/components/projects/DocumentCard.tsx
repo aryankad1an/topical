@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { FileType2, FileCode2, ArrowUpRight, Trash2 } from 'lucide-react';
-import { Button, IconButton, docTypeVars } from '@/components/ui';
+import { Button, IconButton, docTypeVars, Row, Text } from '@/components/ui';
 import { Collaborators } from '@/components/Collaborators';
 import { formatOf } from '@/lib/types';
 
@@ -156,7 +156,7 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
       </div>
 
       <div className="doc-body">
-        <div className="flex items-start gap-2.5">
+        <Row align="start" gap={2.5}>
           <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
             style={{ background: 'var(--doc-accent-soft)', border: '1px solid var(--doc-accent-line)' }}>
             <Icon className="h-3.5 w-3.5" style={{ color: 'var(--doc-accent)' }} />
@@ -165,7 +165,7 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
             <h3 className="text-sm font-semibold text-[var(--ink)] truncate">{doc.name}</h3>
             <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--ink-faint)]">
               <span>{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</span>
-              {words > 0 && <><span className="text-[var(--ink-ghost)]">·</span><span>{words.toLocaleString()} words</span></>}
+              {words > 0 && <><Text tone="ghost" as="span">·</Text><span>{words.toLocaleString()} words</span></>}
             </div>
           </div>
           {isAuthor && doc.id != null && (
@@ -177,7 +177,7 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
               <Trash2 className="h-3.5 w-3.5" />
             </IconButton>
           )}
-        </div>
+        </Row>
 
         {/* The document's facts, all at one height — see `--doc-chip-h`. */}
         <div className="doc-meta">
@@ -216,21 +216,21 @@ export function DocumentRow({ doc, isAuthor, onOpen, onDelete, formatDate, child
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <Row align="center" gap={2}>
           <h3 className="text-sm font-medium text-[var(--ink)] truncate">{doc.name}</h3>
           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
             style={{ background: 'var(--doc-accent-soft)', color: 'var(--doc-accent)' }}>
             {isLatex ? 'TEX' : 'MDX'}
           </span>
-        </div>
+        </Row>
         <div className="flex items-center gap-1.5 text-[11px] text-[var(--ink-ghost)] mt-0.5">
           <span>{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</span>
-          {words > 0 && <><span className="text-[var(--ink-ghost)]">·</span><span>{words.toLocaleString()} words</span></>}
+          {words > 0 && <><Text tone="ghost" as="span">·</Text><span>{words.toLocaleString()} words</span></>}
         </div>
       </div>
 
       {doc.id != null && (
-        <div className="flex items-center gap-2 shrink-0">
+        <Row align="center" gap={2} className="shrink-0">
           {children}
           {doc.coAuthorUsernames && doc.coAuthorUsernames.length > 0 && (
             <Collaborators
@@ -246,7 +246,7 @@ export function DocumentRow({ doc, isAuthor, onOpen, onDelete, formatDate, child
               <Trash2 className="h-3.5 w-3.5" />
             </IconButton>
           )}
-        </div>
+        </Row>
       )}
     </div>
   );

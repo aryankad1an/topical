@@ -3,6 +3,8 @@
  * compose these; they do not style raw elements. Catalogue and usage notes:
  * .claude/skills/uiux/references/primitives.md
  */
+export * from "./layout"
+export * from "./typography"
 export * from "./button"
 export * from "./icon-button"
 export * from "./spinner"
@@ -25,3 +27,4 @@ export * from "./label"
 export * from "./textarea"
 export * from "./sonner"
 export * from "./primitives"
+export * from "./section"

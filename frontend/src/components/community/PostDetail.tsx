@@ -3,7 +3,7 @@ import { X, Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
-import { Avatar, Button, IconButton, Textarea, LoadingState, Divider } from '@/components/ui';
+import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text } from '@/components/ui';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -117,12 +117,12 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
         ) : post ? (
           <div className="post-detail-body">
             {/* Title + vote */}
-            <div className="flex gap-4 items-start mb-4">
-              <div className="flex flex-col items-center gap-1 pt-1">
+            <Row gap={4} align="start" className="mb-4">
+              <Stack align="center" gap={1} className="pt-1">
                 <IconButton size="lg" onClick={() => vote.mutate(1)} disabled={!isAuthenticated} aria-label="Upvote"><ArrowUp className="h-3.5 w-3.5" /></IconButton>
-                <span className="text-xs font-semibold" style={{ color: 'var(--ink-muted)' }}>{score}</span>
+                <Text size="xs" weight="semibold" as="span" style={{ color: 'var(--ink-muted)' }}>{score}</Text>
                 <IconButton size="lg" onClick={() => vote.mutate(-1)} disabled={!isAuthenticated} aria-label="Downvote"><ArrowDown className="h-3.5 w-3.5" /></IconButton>
-              </div>
+              </Stack>
               <div className="flex-1">
                 {/* The same string, in the same face, as the card this was
                     opened from — clicking a post should not change the
@@ -134,13 +134,13 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                 </div>
                 {post.body && <p className="text-sm text-[var(--ink-muted)] leading-relaxed whitespace-pre-wrap">{post.body}</p>}
               </div>
-            </div>
+            </Row>
 
             {/* Attached lesson */}
             {post.lessonPlanId && post.lessonPlanName && (
               <div className="attached-lesson-row">
                 <BookOpen className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--ink-muted)' }} />
-                <span className="text-xs text-[var(--ink-muted)] flex-1">{post.lessonPlanName}</span>
+                <Text size="xs" tone="muted" as="span" className="flex-1">{post.lessonPlanName}</Text>
                 {onViewLesson && (
                   <Button variant="ghost" size="md" onClick={() => onViewLesson(post.lessonPlanId!)}>
                     View lesson →
@@ -169,11 +169,11 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                       identical. */}
                   <Avatar seed={c.userId} name={c.authorName} size="xs" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <Row align="center" gap={2} className="mb-1">
                       <span className="comment-author">{c.authorName}</span>
-                      <span className="text-[10px] text-[var(--ink-ghost)]">
+                      <Text size="3xs" tone="ghost" as="span">
                         {pending ? 'sending…' : relativeTime(c.createdAt)}
-                      </span>
+                      </Text>
                       {mine && !pending && (
                         <IconButton
                           size="sm"
@@ -187,7 +187,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                           <Trash2 className="h-3 w-3" />
                         </IconButton>
                       )}
-                    </div>
+                    </Row>
                     <p className="comment-body">{c.body}</p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
             )}
           </div>
         ) : (
-          <p className="text-center text-[var(--ink-faint)] py-12">Post not found.</p>
+          <Text tone="faint" className="text-center py-12">Post not found.</Text>
         )}
       </div>
     </div>

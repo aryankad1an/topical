@@ -6,7 +6,7 @@ import { formatOf } from "@/lib/types";
 import { documentRoute } from "@/lib/documentUrl";
 import { formatDate, formatMonthYear } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import { Button, EmptyState, PageHeader, IdentityBanner, DocTypeIcon, LoadingState, BackLink, Page } from '@/components/ui';
+import { Button, EmptyState, PageHeader, IdentityBanner, DocTypeIcon, LoadingState, BackLink, Page, Row, Grid, Text } from '@/components/ui';
 
 export const Route = createFileRoute("/u/$username")({
   component: PublicProfile,
@@ -78,26 +78,26 @@ function PublicProfile() {
         avatarUrl={person.avatarUrl}
         meta={<>
           {joined && (
-            <span className="inline-flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Joined {joined}</span>
+            <Row inline align="center" gap={1.5} as="span"><Calendar className="h-3 w-3" /> Joined {joined}</Row>
           )}
-          <span className="inline-flex items-center gap-1.5">
+          <Row inline align="center" gap={1.5} as="span">
             <BookOpen className="h-3 w-3" />
             {published.length} published {published.length === 1 ? "document" : "documents"}
-          </span>
+          </Row>
         </>}
         actions={isSelf && (
           /* Your own public profile is a preview of how you look to others, so
              the way back to changing it belongs here. "Edit profile" covers the
              public half — name, handle, bio; "Settings" is the private half,
              which was reachable only by navigating away entirely. */
-          <span className="flex items-center gap-2">
+          <Row align="center" gap={2} as="span">
             <Button asChild variant="secondary" size="md">
               <Link to="/profile/edit">Edit profile</Link>
             </Button>
             <Button asChild variant="secondary" size="md">
               <Link to="/profile"><Settings2 className="h-3.5 w-3.5" /> Settings</Link>
             </Button>
-          </span>
+          </Row>
         )}
       />
 
@@ -119,7 +119,7 @@ function PublicProfile() {
             : "Check back later."}
         />
       ) : (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <Grid gap={2} cols={{ sm: 2 }}>
           {published.map(doc => {
             const format = formatOf(doc.mainTopic);
             const isLatex = format === "latex";
@@ -129,15 +129,15 @@ function PublicProfile() {
                 <DocTypeIcon type={format} icon={Icon} />
                 <span className="min-w-0 flex-1 text-left">
                   <span className="block text-[13px] font-medium text-[var(--ink)] truncate">{doc.name}</span>
-                  <span className="block text-[11px] text-[var(--ink-ghost)]">
+                  <Text size="2xs" tone="ghost" as="span" className="block">
                     {isLatex ? "LaTeX" : "MDX"}
                     {doc.updatedAt && ` · ${formatDate(doc.updatedAt)}`}
-                  </span>
+                  </Text>
                 </span>
               </button>
             );
           })}
-        </div>
+        </Grid>
       )}
     </Page>
   );

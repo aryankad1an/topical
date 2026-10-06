@@ -19,7 +19,7 @@ import type { DocFormat } from '@/lib/types';
 import { Plus, FolderOpen, LayoutGrid, List } from 'lucide-react';
 import { TopicStarter } from '@/components/projects/TopicStarter';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { EmptyState, PageHeader, Refreshing, Button, SearchField, Segmented, Skeleton, Page, ConfirmDialog } from '@/components/ui';
+import { EmptyState, PageHeader, Refreshing, Button, SearchField, Segmented, Skeleton, Page, ConfirmDialog, Row, Grid, Stack } from '@/components/ui';
 import { VisibilityChip } from '@/components/projects/VisibilityChip';
 
 export const Route = createFileRoute('/_authenticated/projects')({ component: ProjectsPage });
@@ -236,12 +236,12 @@ function ProjectsPage() {
 
         {/* ── Documents ── */}
         <div>
-          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-            <span className="flex items-center gap-3">
+          <Row align="center" justify="between" gap={3} wrap className="mb-4">
+            <Row align="center" gap={3} as="span">
               <h2 className="section-title" style={{ fontSize: 'var(--text-lg)' }}>Your documents</h2>
               <Refreshing active={isFetching && !isLoading} />
-            </span>
-            <div className="flex items-center gap-2.5">
+            </Row>
+            <Row align="center" gap={2.5}>
               {projects.length > 0 && (
                 <SearchField
                   className="w-52"
@@ -262,11 +262,11 @@ function ProjectsPage() {
                   { value: 'list', label: 'List', icon: <List className="h-3.5 w-3.5" />, title: 'List view', 'aria-label': 'List view' },
                 ]}
               />
-            </div>
-          </div>
+            </Row>
+          </Row>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Grid gap={4} cols={{ base: 1, sm: 2, lg: 3 }}>
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="doc-card">
                   <Skeleton height={132} radius="none" />
@@ -276,10 +276,10 @@ function ProjectsPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </Grid>
           ) : filtered.length > 0 ? (
             view === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Grid gap={4} cols={{ base: 1, sm: 2, lg: 3 }}>
                 {filtered.map(plan => (
                   <DocumentCard
                     key={plan.id}
@@ -298,9 +298,9 @@ function ProjectsPage() {
                     />
                   </DocumentCard>
                 ))}
-              </div>
+              </Grid>
             ) : (
-              <div className="flex flex-col gap-2">
+              <Stack gap={2}>
                 {filtered.map(plan => (
                   <DocumentRow
                     key={plan.id}
@@ -319,7 +319,7 @@ function ProjectsPage() {
                     />
                   </DocumentRow>
                 ))}
-              </div>
+              </Stack>
             )
           ) : (
             <EmptyState

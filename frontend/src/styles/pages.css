@@ -479,6 +479,11 @@ textarea:focus-visible {
   color: var(--ink);
   text-wrap: balance;
 }
+.section-head--hero { max-width: 38rem; }
+.section-head--center { margin-inline: auto; text-align: center; }
+.section-head--flush { margin-bottom: 0; }
+.section-head--center .section-sub { margin-inline: auto; max-width: 28rem; }
+.section-title--hero { font-size: clamp(2.25rem, 5vw, 3.25rem); margin-top: 1.1rem; }
 .section-sub {
   font-size: var(--text-md);
   line-height: 1.55;
@@ -496,6 +501,7 @@ textarea:focus-visible {
   padding-inline: var(--gutter);
 }
 .band--tight { padding-block: clamp(1.75rem, 3.5vw, 2.75rem); }
+.band--hero { padding-top: clamp(3.5rem, 8vw, 5.5rem); }
 /* Two stacked bands would otherwise put both their paddings in the same
    gap, which is where the landing page's dead space kept coming from. */
 .band + .band { padding-top: 0; }
@@ -1072,6 +1078,8 @@ textarea:focus-visible {
   color: var(--ink);
   margin-bottom: 0.4rem;
 }
+.card-title--lead { font-size: var(--text-lg); }
+.bento-item--feature .card-body { max-width: 32rem; }
 .card-body {
   font-size: var(--text-base);
   line-height: 1.6;

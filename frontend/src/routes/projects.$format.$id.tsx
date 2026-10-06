@@ -6,7 +6,7 @@ import { fetchSharedDocument, type SharedDocument } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatOf, type DocFormat } from '@/lib/types';
 import { DocumentView } from '@/features/editor/EditorPage';
-import { Button, EmptyState, LoadingState, Page } from '@/components/ui';
+import { Button, EmptyState, LoadingState, Page, Row } from '@/components/ui';
 
 /**
  * Read or write — which of the two the screen is showing right now.
@@ -151,7 +151,7 @@ function Unavailable({ known, isAuthenticated }: { known: boolean; isAuthenticat
             : 'You may have access to it — sign in and try the link again.'
           : 'Check the link, or browse what has been published.'}
         action={
-          <div className="flex items-center gap-2">
+          <Row align="center" gap={2}>
             {known && !isAuthenticated && (
               <Button asChild variant="primary" size="lg">
                 <Link to="/login" search={{ redirect: `${pathname}${search}` }}>Sign in</Link>
@@ -160,7 +160,7 @@ function Unavailable({ known, isAuthenticated }: { known: boolean; isAuthenticat
             <Button asChild variant="secondary" size="md">
               <Link to="/community">Browse the community</Link>
             </Button>
-          </div>
+          </Row>
         }
       />
     </Page>

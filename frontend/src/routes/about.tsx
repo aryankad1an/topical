@@ -9,7 +9,8 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Surface, Chip } from '@/components/ui';
+import { Button, Surface, Chip, Grid, Text, Band, SectionHead, FeatureCard } from '@/components/ui';
+import { SiteFooter } from '@/components/SiteFooter';
 
 export const Route = createFileRoute('/about')({
   component: About,
@@ -45,92 +46,67 @@ function About() {
           The decorative `green-orb glow-pulse` div that used to sit here
           referenced two classes that no longer exist, so it would have
           rendered as a bare 350px accent-tinted square in the top right. */}
-      <section className="band" style={{ paddingTop: 'clamp(3.5rem, 8vw, 5.5rem)' }}>
-        <div className="band-inner">
-          <div className="section-head" style={{ maxWidth: '38rem' }}>
-            <Chip size="md" caps tone="accent">About</Chip>
-            <h1 className="section-title" style={{ fontSize: 'clamp(2.25rem, 5vw, 3.25rem)', marginTop: '1.1rem' }}>
-              Structure first, then the words.
-            </h1>
-            <p className="section-sub">
+      <Band spacing="hero">
+          <SectionHead
+            level={1}
+            size="hero"
+            eyebrow={<Chip size="md" caps tone="accent">About</Chip>}
+            title="Structure first, then the words."
+            subtitle={<>
               Topical turns any topic into a structured document you can edit and share.
               It plans the outline before it writes, so what you get is organised —
               not one long undifferentiated draft.
-            </p>
-          </div>
+            </>}
+          />
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="step-card">
-              <h3 className="card-title">How it works</h3>
-              <p className="card-body">
+          <Grid gap={4} cols={{ md: 2 }}>
+            <FeatureCard title="How it works">
                 You type a topic. Topical generates a hierarchy of subtopics, then writes
                 rich content for each one using the AI provider of your choice, grounded in
                 real-time web crawling.
-              </p>
-            </div>
-            <div className="step-card">
-              <h3 className="card-title">What you control</h3>
-              <p className="card-body">
+            </FeatureCard>
+            <FeatureCard title="What you control">
                 Nothing is inserted without you. Edit inline, drag generated sections exactly
                 where you want them, rearrange topics, and publish the result — or keep it
                 private.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+            </FeatureCard>
+          </Grid>
+      </Band>
 
       {/* ── Features ── */}
-      <section className="band">
-        <div className="band-inner">
-          <div className="section-head">
-            <h2 className="section-title">Core features</h2>
-            <p className="section-sub">Everything the editor gives you.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Band>
+          <SectionHead title="Core features" subtitle="Everything the editor gives you." />
+          <Grid gap={4} cols={{ base: 1, sm: 2, lg: 3 }}>
             {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="step-card">
-                <div className="bento-icon"><Icon className="h-4 w-4" /></div>
-                <h3 className="card-title">{title}</h3>
-                <p className="card-body">{desc}</p>
-              </div>
+              <FeatureCard key={title} icon={<Icon className="h-4 w-4" />} title={title}>{desc}</FeatureCard>
             ))}
-          </div>
-        </div>
-      </section>
+          </Grid>
+      </Band>
 
       {/* ── Stack ── */}
-      <section className="band">
-        <div className="band-inner">
-          <div className="section-head">
-            <h2 className="section-title">Built with</h2>
-            <p className="section-sub">
-              A React frontend and one FastAPI backend that owns auth, documents and generation.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Band>
+          <SectionHead title="Built with" subtitle="A React frontend and one FastAPI backend that owns auth, documents and generation." />
+          <Grid gap={3} cols={{ base: 2, md: 4 }}>
             {STACK.map(({ name, desc }) => (
               <Surface key={name} size="sm" padding="none" className="px-4 py-3.5">
-                <h4 className="font-semibold text-sm text-[var(--ink)]">{name}</h4>
-                <p className="text-[11px] text-[var(--ink-faint)] mt-0.5">{desc}</p>
+                <Text as="span" size="sm" weight="semibold" tone="ink" className="block">{name}</Text>
+                <Text size="2xs" tone="faint" className="mt-0.5">{desc}</Text>
               </Surface>
             ))}
-          </div>
-        </div>
-      </section>
+          </Grid>
+      </Band>
 
       {/* ── CTA ── */}
-      <section className="band band--tight">
-        <div className="band-inner">
+      <Band spacing="tight">
           <div className="closing-cta">
-            <h2 className="section-title">
-              {isAuthenticated ? 'Continue building' : 'Try it out'}
-            </h2>
-            <p className="section-sub" style={{ marginInline: 'auto', maxWidth: '28rem' }}>
-              {isAuthenticated
+            <SectionHead
+              align="center"
+              flush
+              title={isAuthenticated ? 'Continue building' : 'Try it out'}
+              subtitle={isAuthenticated
                 ? 'Create another document or explore what the community has published.'
                 : 'Sign up, add a provider key, and make your first document in a couple of minutes.'}
-            </p>
+            />
             <Button asChild variant="primary" size="hero" className="mt-8">
             <Link to={isAuthenticated ? '/projects' : '/register'}>
               <span>{isAuthenticated ? 'Go to Projects' : 'Get started'}</span>
@@ -140,20 +116,10 @@ function About() {
             </Link>
             </Button>
           </div>
-        </div>
-      </section>
+      </Band>
 
       {/* ── Footer ── */}
-      <footer className="site-footer">
-        <div className="band-inner site-footer-inner">
-          <span className="font-brand text-base">Topical</span>
-          <div className="flex gap-6 items-center">
-            <Link to="/community" className="footer-link">Community</Link>
-            <Link to="/" className="footer-link">Home</Link>
-            <span className="text-xs text-[var(--ink-ghost)]">© {new Date().getFullYear()}</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter links={[{ to: '/community', label: 'Community' }, { to: '/', label: 'Home' }]} />
     </div>
   );
 }

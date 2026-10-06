@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
-import { Button, Input, Textarea, Avatar, Spinner, Field } from '@/components/ui';
+import { Button, Input, Textarea, Avatar, Spinner, Field, Row, Text } from '@/components/ui';
 import { uploadFile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 // The same ceiling the server stores to, and the schema rejects past.
@@ -68,7 +68,7 @@ export function ProfileEditorFields({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-4">
+      <Row align="center" gap={4}>
         <div className="relative">
           <Avatar size="lg" shape="circle" tone="muted" src={displayedAvatar} name={fallbackInitial} alt="Avatar" />
           {isUploading && (
@@ -88,9 +88,9 @@ export function ProfileEditorFields({
           <Button type="button" variant="secondary" size="md" onClick={handlePickFile} disabled={disabled || isUploading}>
             <Upload className="h-3.5 w-3.5" /> Change photo
           </Button>
-          <p className="text-xs text-muted-foreground mt-1.5">JPEG, PNG, GIF or WebP, up to 5MB.</p>
+          <Text size="xs" tone="muted" className="mt-1.5">JPEG, PNG, GIF or WebP, up to 5MB.</Text>
         </div>
-      </div>
+      </Row>
 
       <Field id="profile-username" label="Username">
         <Input

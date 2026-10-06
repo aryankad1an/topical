@@ -14,7 +14,7 @@ import { TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, A
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented, Skeleton, Page } from '@/components/ui';
+import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented, Skeleton, Page, Row, Text, Grid } from '@/components/ui';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
@@ -184,12 +184,12 @@ function CommunityPage() {
               ]}
             />
 
-            <span className="flex items-center gap-2.5">
+            <Row align="center" gap={2.5} as="span">
               <Refreshing active={postsFetching && !postsLoading} />
-              <span className="text-[11px] text-[var(--ink-ghost)]">
+              <Text size="2xs" tone="ghost" as="span">
                 {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
-              </span>
-            </span>
+              </Text>
+            </Row>
           </div>
 
           {postsLoading ? (
@@ -233,9 +233,9 @@ function CommunityPage() {
           ) : (
             <div className="community-empty">
               <TrendingUp className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <p className="text-[var(--ink-ghost)] text-sm">
+              <Text tone="ghost" size="sm">
                 {search ? `No posts matching "${search}"` : 'No posts yet — be the first!'}
-              </p>
+              </Text>
               {isAuthenticated && !search && (
                 /* Hero type in a 40px box is what this renders today: the size
                    utilities it was written with lost to `.cta-btn`. LEDGER A-07. */
@@ -260,7 +260,7 @@ function CommunityPage() {
           </div>
 
           {peopleLoading ? (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <Grid gap={2} cols={{ sm: 2 }}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="person-card">
                   <Skeleton height={44} width={44} radius="md" />
@@ -270,20 +270,20 @@ function CommunityPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </Grid>
           ) : people.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <Grid gap={2} cols={{ sm: 2 }}>
               {people.map(p => (
                 <Link key={p.id} to="/u/$username" params={{ username: p.username ?? '' }} className="person-card">
                   <Avatar seed={p.id} src={p.avatarUrl} name={personName(p)} size="md" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-[var(--ink)] truncate">{personName(p)}</span>
+                    <Text size="sm" weight="semibold" tone="ink" truncate as="span" className="block">{personName(p)}</Text>
                     <span className="person-handle block">@{p.username}</span>
-                    {p.bio && <span className="block text-[11.5px] text-[var(--ink-faint)] truncate mt-0.5">{p.bio}</span>}
+                    {p.bio && <Text size="2xs" tone="faint" truncate as="span" className="block mt-0.5">{p.bio}</Text>}
                   </span>
                 </Link>
               ))}
-            </div>
+            </Grid>
           ) : (
             <EmptyState
               icon={UsersIcon}
@@ -318,12 +318,12 @@ function CommunityPage() {
                 const isOwn = plan.userId === user?.id;
                 return (
                   <div key={plan.id} className="lesson-community-card group">
-                    <div className="flex items-start justify-between mb-2">
+                    <Row align="start" justify="between" className="mb-2">
                       <h3 className="text-sm font-semibold text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors leading-snug flex-1 mr-2">
                         {plan.name}
                       </h3>
                       {isOwn && <span className="own-badge">Yours</span>}
-                    </div>
+                    </Row>
                     <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
                       <span>{isOwn ? 'You' : userMap[plan.userId] || 'Member'}</span>
                       <span>·</span>
@@ -352,9 +352,9 @@ function CommunityPage() {
           ) : (
             <div className="community-empty">
               <BookOpen className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <p className="text-[var(--ink-ghost)] text-sm">
+              <Text tone="ghost" size="sm">
                 {search ? `No lessons matching "${search}"` : 'No public lessons yet.'}
-              </p>
+              </Text>
             </div>
           )}
         </section>

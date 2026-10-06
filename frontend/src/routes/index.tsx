@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useAuth } from '@/lib/auth-context';
 import { Globe, PenLine, Layers, BookOpen, ListTree, MousePointerClick, CheckCheck } from 'lucide-react';
 import { TopicHero } from '@/features/home/TopicHero';
 import { Reveal } from '@/features/home/Reveal';
-import { Chip } from '@/components/ui';
+import { Chip, Row, Band, SectionHead, FeatureCard } from '@/components/ui';
+import { SiteFooter } from '@/components/SiteFooter';
 
 export const Route = createFileRoute('/')({
   beforeLoad: () => ({}),
@@ -57,38 +58,24 @@ function Home() {
       <TopicHero startHref={startHref} startLabel={startLabel} />
 
       {/* ── The three beats ── */}
-      <section className="band">
-        <div className="band-inner">
+      <Band>
           <Reveal>
-            <div className="section-head">
-              <h2 className="section-title">One line in. A document out.</h2>
-              <p className="section-sub">Three steps, and you are the one who approves every one of them.</p>
-            </div>
+            <SectionHead title="One line in. A document out." subtitle="Three steps, and you are the one who approves every one of them." />
           </Reveal>
 
           <div className="step-row">
             {steps.map(({ n, icon: Icon, title, desc }, i) => (
               <Reveal key={n} delay={i * 70}>
-                <div className="step-card">
-                  <span className="step-num">{n}</span>
-                  <div className="bento-icon"><Icon className="h-4 w-4" /></div>
-                  <h3 className="card-title">{title}</h3>
-                  <p className="card-body">{desc}</p>
-                </div>
+                <FeatureCard step={n} icon={<Icon className="h-4 w-4" />} title={title}>{desc}</FeatureCard>
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
+      </Band>
 
       {/* ── Features (bento) ── */}
-      <section className="band band--tight">
-        <div className="band-inner">
+      <Band spacing="tight">
           <Reveal>
-            <div className="section-head">
-              <h2 className="section-title">Built for deep knowledge work</h2>
-              <p className="section-sub">Everything between the topic and something worth publishing.</p>
-            </div>
+            <SectionHead title="Built for deep knowledge work" subtitle="Everything between the topic and something worth publishing." />
           </Reveal>
 
           <div className="bento">
@@ -96,50 +83,34 @@ function Home() {
                 this tile is the other half of the promise — nothing lands in
                 the document until you put it there, whatever model found it. */}
             <Reveal className="bento-cell bento-cell--feature">
-              <div className="bento-item bento-item--feature">
-                <div className="bento-icon"><MousePointerClick className="h-4 w-4" /></div>
-                <h3 className="card-title" style={{ fontSize: 'var(--text-lg)' }}>You stay the editor</h3>
-                <p className="card-body max-w-lg">
-                  Research fills in what you ask for; nothing is written into the document
-                  without you placing it. Guide it, edit it, rearrange it — with whichever
-                  model you already pay for.
-                </p>
-                <div className="flex items-center gap-2 mt-4">
-                  <Chip tone="accent">Gemini</Chip>
-                  <Chip tone="accent">OpenAI</Chip>
-                  <Chip tone="accent">Anthropic</Chip>
-                </div>
-              </div>
+              <FeatureCard
+                variant="feature"
+                icon={<MousePointerClick className="h-4 w-4" />}
+                title="You stay the editor"
+                footer={
+                  <Row align="center" gap={2} className="mt-4">
+                    <Chip tone="accent">Gemini</Chip>
+                    <Chip tone="accent">OpenAI</Chip>
+                    <Chip tone="accent">Anthropic</Chip>
+                  </Row>
+                }
+              >
+                Research fills in what you ask for; nothing is written into the document
+                without you placing it. Guide it, edit it, rearrange it — with whichever
+                model you already pay for.
+              </FeatureCard>
             </Reveal>
 
             {features.map(({ icon: Icon, title, desc }, i) => (
               <Reveal key={title} delay={i * 60} className="bento-cell">
-                <div className="bento-item bento-item--wide">
-                  <div className="bento-icon"><Icon className="h-4 w-4" /></div>
-                  <h3 className="card-title">{title}</h3>
-                  <p className="card-body">{desc}</p>
-                </div>
+                <FeatureCard variant="wide" icon={<Icon className="h-4 w-4" />} title={title}>{desc}</FeatureCard>
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
+      </Band>
 
       {/* ── Footer ── */}
-      <footer className="site-footer">
-        <div className="band-inner site-footer-inner">
-          <div className="flex items-center gap-3">
-            <span className="font-brand text-lg">Topical</span>
-            <span className="text-[var(--ink-ghost)] text-xs">·</span>
-            <span className="text-xs text-[var(--ink-faint)]">All you need is a topic</span>
-          </div>
-          <div className="flex gap-6 items-center">
-            <Link to="/community" className="footer-link">Community</Link>
-            <Link to="/about" className="footer-link">About</Link>
-            <span className="text-xs text-[var(--ink-ghost)]">© {new Date().getFullYear()} Topical</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter links={[{ to: '/community', label: 'Community' }, { to: '/about', label: 'About' }]} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AtSign, Check, AlertCircle } from 'lucide-react';
-import { Button, PageHeader, Surface, LoadingState, BackLink, Page } from '@/components/ui';
+import { Button, PageHeader, Surface, LoadingState, BackLink, Page, Text, Row } from '@/components/ui';
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
@@ -89,22 +89,22 @@ function EditProfile() {
           ) : username ? (
             <>
               <Check className="h-3.5 w-3.5 shrink-0 mt-px" style={{ color: "var(--status-success)" }} />
-              <span className="text-[var(--ink-faint)]">
+              <Text tone="faint" as="span">
                 Your profile will be at <span className="person-handle">/u/{username}</span>
-              </span>
+              </Text>
             </>
           ) : (
             <>
               <AtSign className="h-3.5 w-3.5 shrink-0 mt-px text-[var(--ink-ghost)]" />
-              <span className="text-[var(--ink-faint)]">
+              <Text tone="faint" as="span">
                 A username is required before you can publish documents to the community.
-              </span>
+              </Text>
             </>
           )}
         </div>
       </Surface>
 
-      <div className="flex items-center gap-3">
+      <Row align="center" gap={3}>
         <Button variant="primary" size="lg" onClick={handleSave} loading={isSaving} disabled={!dirty || !!usernameError}>
           {isSaving ? "Saving…" : "Save changes"}
         </Button>
@@ -113,8 +113,8 @@ function EditProfile() {
           style={{ textDecoration: "none" }}>
           Cancel
         </Link>
-        {dirty && <span className="text-[11px] text-[var(--ink-ghost)] ml-auto">Unsaved changes</span>}
-      </div>
+        {dirty && <Text size="2xs" tone="ghost" as="span" className="ml-auto">Unsaved changes</Text>}
+      </Row>
     </Page>
   );
 }

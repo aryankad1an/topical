@@ -121,3 +121,11 @@ Visible in 2b:
 - The lesson picker is a solid menu panel instead of bordered rows on glass.
 - Dialog titles are 17px and descriptions `--ink-muted`.
 - Delete can no longer be dismissed mid-request.
+
+### Batch 3a — layout + typography primitives, marketing sections (P2)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| LT-01 | P2 | 19 files | MISSING layout/type primitives: flex/grid/text utilities written on raw elements everywhere | `Row`, `Stack`, `Grid` (literal class tables on the 4px ladder), `Text` (size/tone/weight/leading/italic/truncate/numeric), `Heading`; 73 elements migrated by an AST codemod (`harness/codemod-layout.cjs`) that converts only elements whose classes are pure layout/type utilities — pixel-identical except two half-pixel snaps (10.5/11.5px → 11px metadata) | fix |
+| LT-02 | P2 | index.tsx, about.tsx | marketing sections hand-built ×9 (`.band`/`.band-inner`, `.section-head/-title/-sub`, `.step-card`/`.bento-item` + `.bento-icon` + `.card-title`/`.card-body`); about's hero and closing CTA restyled them with inline `style` | `Band` (default/tight/hero), `SectionHead` (hero size, eyebrow, centred, flush), `FeatureCard` (step/bento/wide/feature, footer slot) | fix |
+| LT-03 | P2 | index.tsx, about.tsx | two footers that had drifted (wordmark size, brand line on one page only, two copyright forms) | `SiteFooter` with per-page links (visible on /about: the brand line appears) | fix |

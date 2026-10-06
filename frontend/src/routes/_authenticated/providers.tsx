@@ -5,7 +5,7 @@ import {
   Key, Plus, Star, Trash2, ExternalLink, Check,
   ShieldCheck, Sparkles,
 } from "lucide-react";
-import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page } from '@/components/ui';
+import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page, Text, Row } from '@/components/ui';
 import { errorMessage } from "@/lib/utils";
 import {
   type AiCredential, type AiProvider, PROVIDER_PRESETS,
@@ -113,9 +113,9 @@ function ProvidersPage() {
                     <span className="brand-card-mark">{p.name[0]}</span>
                     <span className="min-w-0">
                       <span className="block text-[13px] font-semibold text-[var(--ink)] truncate">{p.name}</span>
-                      <span className="block text-[10.5px] text-[var(--ink-ghost)]">
+                      <Text size="2xs" tone="ghost" as="span" className="block">
                         {p.models.length} model{p.models.length === 1 ? "" : "s"}
-                      </span>
+                      </Text>
                     </span>
                   </button>
                 ))}
@@ -190,7 +190,7 @@ function ProvidersPage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 flex-wrap">
+              <Row align="center" gap={3} wrap>
                 <Button variant="primary" size="lg" onClick={handleAdd} loading={isVerifying}>
                   {isVerifying
                     ? 'Verifying…'
@@ -200,17 +200,17 @@ function ProvidersPage() {
                   className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] flex items-center gap-1.5 transition-colors">
                   <ExternalLink className="h-3 w-3" /> Get a {preset.name} key
                 </a>
-              </div>
+              </Row>
             </div>
           </div>
         </Surface>
 
         {/* ── Connected ── */}
         <Surface size="lg" padding="md">
-          <div className="flex items-center justify-between mb-4">
+          <Row align="center" justify="between" className="mb-4">
             <h2 className="section-title" style={{ fontSize: "1rem" }}>Connected</h2>
             <span className="topic-count">{credentials.length}</span>
-          </div>
+          </Row>
 
           {credentials.length === 0 ? (
             <EmptyState icon={Key} title="Nothing connected"
@@ -225,10 +225,10 @@ function ProvidersPage() {
                       style={{ ["--brand" as string]: p.color }}>
                       <span className="provider-mark">{p.name[0]}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
+                        <Row align="center" gap={1.5}>
                           <span className="text-[13px] font-semibold text-[var(--ink)]">{p.name}</span>
                           {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
-                        </div>
+                        </Row>
                         <p className="provider-model truncate">{cred.model}</p>
                       </div>
                       {!cred.isDefault && (
@@ -248,10 +248,10 @@ function ProvidersPage() {
                 })}
               </div>
 
-              <p className="text-[11px] text-[var(--ink-ghost)] mt-3.5 leading-relaxed">
+              <Text size="2xs" tone="ghost" leading="relaxed" className="mt-3.5">
                 The <span style={{ color: "var(--accent-500)" }}>default</span> provider is used for every
                 generation. Star another to switch.
-              </p>
+              </Text>
 
               <Button asChild variant="primary" size="lg" width="full" className="mt-4">
                 <Link to="/projects">

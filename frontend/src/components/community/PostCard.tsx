@@ -4,7 +4,7 @@ import type { Post } from '@/lib/communityApi';
 import { votePost } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { relativeTime } from '@/lib/format';
-import { Button, IconButton } from '@/components/ui';
+import { Button, IconButton, Row } from '@/components/ui';
 
 interface PostCardProps {
   post: Post;
@@ -66,13 +66,13 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
       {/* ── Content ── */}
       <div className="community-card-content">
         {/* Title */}
-        <div className="flex items-start gap-2">
+        <Row align="start" gap={2}>
           <h3 className="community-card-title flex-1">{post.title}</h3>
 
           {isAuthor && (
             /* Two-step delete: the second click confirms. A modal for a single
                forum post would be heavier than the action deserves. */
-            <div onClick={e => e.stopPropagation()} className="shrink-0 flex items-center gap-1">
+            <Row onClick={e => e.stopPropagation()} align="center" gap={1} className="shrink-0">
               {confirming ? (
                 <>
                   <Button variant="secondary" tone="danger" size="xs" onClick={() => onDelete(post.id)}>
@@ -94,9 +94,9 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
                   <Trash2 className="h-3.5 w-3.5" />
                 </IconButton>
               )}
-            </div>
+            </Row>
           )}
-        </div>
+        </Row>
 
         {/* Body preview */}
         {post.body && (

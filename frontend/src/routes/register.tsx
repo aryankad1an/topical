@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { passwordProblem } from '@/lib/validation';
 import { AuthCard, AuthField, AuthPasswordField, AuthPitch, AuthSubmit } from '@/components/auth/AuthCard';
+import { Grid } from '@/components/ui';
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
@@ -72,7 +73,7 @@ function RegisterPage() {
       onSubmit={submit}
       error={error}
     >
-      <div className="grid grid-cols-2 gap-3">
+      <Grid gap={3} cols={{ base: 2 }}>
         <AuthField
           id="givenName"
           label="First name"
@@ -90,7 +91,7 @@ function RegisterPage() {
           value={familyName}
           onChange={setFamilyName}
         />
-      </div>
+      </Grid>
       <AuthField
         id="email"
         label="Email"
