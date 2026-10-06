@@ -182,17 +182,6 @@
 .doc-focus:not(.doc-focus + .doc-focus) { border-top-left-radius: var(--radius-sm); }
 .doc-focus:not(:has(+ .doc-focus)) { border-bottom-left-radius: var(--radius-sm); }
 
-.doc-empty {
-  height: 100%;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 10px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--ink-ghost);
-}
-.doc-empty svg { opacity: 0.4; }
-.doc-empty p { font-size: 13px; }
-.doc-empty-sub { font-size: 11.5px; color: var(--ink-ghost); max-width: 30ch; }
 
 /* ── Markdown ──
    The document is set in the serif, and the interface stays in the sans.

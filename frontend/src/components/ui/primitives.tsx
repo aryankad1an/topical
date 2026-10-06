@@ -160,13 +160,29 @@ export interface EmptyStateProps {
   action?: React.ReactNode;
   /** Tint the icon with the accent when the empty state invites an action. */
   tone?: 'accent' | 'muted';
+  /**
+   * `card` — a dashed card in a list or page. `pane` — no chrome, ghosted,
+   * centred in the whole of a work surface (the preview before anything is
+   * written), where a card would read as content.
+   */
+  variant?: 'card' | 'pane';
   className?: string;
 }
 
 export function EmptyState({
-  icon: Icon, title, description, action, tone = 'accent', className,
+  icon: Icon, title, description, action, tone = 'accent', variant = 'card', className,
 }: EmptyStateProps) {
   const accent = tone === 'accent';
+  if (variant === 'pane') {
+    return (
+      <div className={cn('empty-state--pane', className)}>
+        <Icon className="h-7 w-7" />
+        <p>{title}</p>
+        {description && <p className="empty-state--pane-description">{description}</p>}
+        {action}
+      </div>
+    );
+  }
   return (
     <Surface variant="dashed" padding="none" className={cn('empty-state', className)}>
       <div className={cn('empty-state-icon', accent && 'empty-state-icon--accent')}>

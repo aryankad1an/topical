@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { Eye } from 'lucide-react';
+import { EmptyState } from '@/components/ui';
 import { renderedPrefixAt } from '@/features/editor/lib/sourceAlign';
 import type { DocFormat } from '@/lib/types';
 import { MarkdownPreview } from '@/features/preview/MarkdownPreview';
@@ -86,21 +87,16 @@ export const PreviewPane = forwardRef<HTMLDivElement, Props>(function PreviewPan
             : <MarkdownPreview content={content} trackSource />}
         </div>
       ) : editing ? (
-        <div className="doc-empty">
-          <Eye className="h-7 w-7" />
-          <p>Your document appears here as you write.</p>
-          <p className="doc-empty-sub">
-            {format === 'latex'
-              ? 'Sections, equations and references are numbered live.'
-              : 'Markdown, tables, code and $maths$ all render as you type.'}
-          </p>
-        </div>
+        <EmptyState
+          variant="pane"
+          icon={Eye}
+          title="Your document appears here as you write."
+          description={format === 'latex'
+            ? 'Sections, equations and references are numbered live.'
+            : 'Markdown, tables, code and $maths$ all render as you type.'}
+        />
       ) : (
-        <div className="doc-empty">
-          <Eye className="h-7 w-7" />
-          <p>This document is empty.</p>
-          <p className="doc-empty-sub">Nothing has been written in it yet.</p>
-        </div>
+        <EmptyState variant="pane" icon={Eye} title="This document is empty." description="Nothing has been written in it yet." />
       )}
     </div>
   );

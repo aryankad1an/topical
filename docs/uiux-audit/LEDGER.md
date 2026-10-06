@@ -161,3 +161,16 @@ Verified with the harness: 0 unexpected diffs. The harness gained six editor-ove
 - The md header lost the 20px line-height that `text-sm` used to carry.
 
 Document coverage 12.0% → 52.3%.
+
+### Batch 4.2 — document area: list rows, pane empty state (P2–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| DC-06 | P2 | CoAuthorsDialog:69, :91 | MISSING list-row primitive: the share dialog built its own result and member rows (`share-row`, `share-name`) | `ListRow` plain/filled (new) — pixel-identical | fix |
+| DC-07 | P3 | PreviewPane:89, :99 | the preview's two empty states were a private `doc-empty` block. Its sub-line's `11.5px` never applied: `.doc-empty p` (0,1,1) outranked `.doc-empty-sub` (0,1,0), so it rendered at 13px | `EmptyState variant="pane"`; the sub-line now renders at its intended 11.5px | fix |
+| DC-08 | P3 | OutlineRail:437 | `orail-add-row` is an outline row's twin, not a button: it matches the row's padding and type and is mirrored by the landing hero's rail | kept as the rail's own row. Folding it into `Button variant="dashed"` would change the rail visibly | wontfix |
+| DC-09 | — | EditorPage, OutlineRail, OutlineRow, Toolbar, StatusBar, EditorHeader, PreviewPane | about 120 remaining styled host elements are the editor's own geometry: the panes, the rail and its resizer, the toolbar groups, the outline rows and their grip, the status bar and the peer cursors | domain composites with a single owner. Making each one a primitive would add exports used once | wontfix (documented) |
+
+The harness gained two `doc-blank-*` states, read and write, with an empty document. It is served by id only, so the lists are unchanged.
+
+Document coverage 52.3% → 54.3%.

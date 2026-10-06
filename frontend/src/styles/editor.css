@@ -870,14 +870,6 @@ h1.editor-title--static:hover { background: transparent; }
   background: var(--ink-a02);
   border: 1px solid var(--line);
 }
-.share-row {
-  display: flex; align-items: center; gap: 9px;
-  padding: 6px 8px;
-  border-radius: var(--radius);
-}
-.share-row:hover { background: var(--ink-a04); }
-.share-row--filled { background: var(--ink-a02); border: 1px solid var(--line-soft); }
-.share-name { flex: 1; font-size: 12.5px; color: var(--ink-2); }
 .image-preview {
   max-height: 150px;
   width: 100%;

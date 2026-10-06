@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { UserPlus, Users, X } from 'lucide-react';
 import { searchUsername } from '@/lib/api';
-import { Avatar, IconButton, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, SearchField, Text, Stack, Heading } from '@/components/ui';
+import { Avatar, IconButton, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, SearchField, Text, Stack, Heading, ListRow } from '@/components/ui';
 
 interface Props {
   open: boolean;
@@ -66,17 +66,21 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
         {results.length > 0 && (
           <div className="share-results">
             {results.map(user => (
-              <div key={user.id} className="share-row">
-                <Avatar seed={user.id} name={user.username} size="xs" />
-                <span className="share-name">{user.username}</span>
-                <IconButton
-                  onClick={() => add(user.id, user.username)}
-                  disabled={coAuthors.includes(user.id)}
-                  aria-label={`Add ${user.username}`}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </IconButton>
-              </div>
+              <ListRow
+                key={user.id}
+                leading={<Avatar seed={user.id} name={user.username} size="xs" />}
+                trailing={
+                  <IconButton
+                    onClick={() => add(user.id, user.username)}
+                    disabled={coAuthors.includes(user.id)}
+                    aria-label={`Add ${user.username}`}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </IconButton>
+                }
+              >
+                {user.username}
+              </ListRow>
             ))}
           </div>
         )}
@@ -88,13 +92,18 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
           ) : (
             <Stack gap={1.5}>
               {coAuthors.map((id, index) => (
-                <div key={id} className="share-row share-row--filled">
-                  <Avatar seed={id} name={coAuthorUsernames[index] || id} size="xs" />
-                  <span className="share-name">{coAuthorUsernames[index] || id}</span>
-                  <IconButton tone="danger" onClick={() => remove(id)} aria-label="Remove collaborator">
-                    <X className="h-3.5 w-3.5" />
-                  </IconButton>
-                </div>
+                <ListRow
+                  key={id}
+                  variant="filled"
+                  leading={<Avatar seed={id} name={coAuthorUsernames[index] || id} size="xs" />}
+                  trailing={
+                    <IconButton tone="danger" onClick={() => remove(id)} aria-label="Remove collaborator">
+                      <X className="h-3.5 w-3.5" />
+                    </IconButton>
+                  }
+                >
+                  {coAuthorUsernames[index] || id}
+                </ListRow>
               ))}
             </Stack>
           )}
