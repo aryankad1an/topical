@@ -141,19 +141,6 @@
   font-size: 11.5px;
   color: var(--ink-ghost);
 }
-.lesson-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10.5px;
-  font-weight: 500;
-  padding: 3px 9px;
-  border-radius: var(--radius-pill);
-  background: var(--ink-a06);
-  border: 1px solid var(--ink-a08);
-  color: var(--ink-muted);
-}
-
 /* ── Post Detail Overlay ── */
 .post-detail-overlay {
   position: fixed;
@@ -279,28 +266,6 @@
   background: var(--ink-a02);
   border-color: var(--line);
   transform: translateY(-2px);
-}
-.own-badge {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--ink-a06);
-  border: 1px solid var(--ink-a08);
-  color: var(--ink-muted);
-  flex-shrink: 0;
-}
-
-/* ── Empty state ──
-   A bordered panel rather than floating text, so an empty page still reads
-   as a deliberate surface instead of a failed load. */
-.community-empty {
-  text-align: center;
-  padding: 4rem 1.5rem;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-lg);
-  background: transparent;
-  color: var(--ink-faint);
 }
 
 /* ── Peer Cursor Hover ── */

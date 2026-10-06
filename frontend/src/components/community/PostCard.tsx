@@ -4,7 +4,7 @@ import type { Post } from '@/lib/communityApi';
 import { votePost } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { relativeTime } from '@/lib/format';
-import { Button, IconButton, Row } from '@/components/ui';
+import { Button, IconButton, Row, Chip } from '@/components/ui';
 
 interface PostCardProps {
   post: Post;
@@ -107,10 +107,10 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
 
         {/* Attached lesson */}
         {post.lessonPlanName && (
-          <div className="lesson-badge" style={{ marginBottom: 10, alignSelf: 'flex-start' }}>
+          <Chip tone="quiet" className="mb-2.5 self-start">
             <BookOpen className="h-3 w-3" />
             {post.lessonPlanName}
-          </div>
+          </Chip>
         )}
 
         {/* Meta row — pinned to bottom */}

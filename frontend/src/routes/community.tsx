@@ -14,7 +14,7 @@ import { TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, A
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented, Skeleton, Page, Row, Text, Grid } from '@/components/ui';
+import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented, Skeleton, Page, Row, Text, Grid, Chip } from '@/components/ui';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
@@ -231,19 +231,18 @@ function CommunityPage() {
               ))}
             </div>
           ) : (
-            <div className="community-empty">
-              <TrendingUp className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <Text tone="ghost" size="sm">
-                {search ? `No posts matching "${search}"` : 'No posts yet — be the first!'}
-              </Text>
-              {isAuthenticated && !search && (
+            <EmptyState
+              icon={TrendingUp}
+              tone="muted"
+              title={search ? `No posts matching “${search}”` : 'No posts yet — be the first!'}
+              action={isAuthenticated && !search && (
                 /* Hero type in a 40px box is what this renders today: the size
                    utilities it was written with lost to `.cta-btn`. LEDGER A-07. */
-                <Button variant="primary" size="hero" className="mt-5 h-10" onClick={() => setShowNewPost(true)}>
+                <Button variant="primary" size="hero" className="h-10" onClick={() => setShowNewPost(true)}>
                   <Plus className="h-4 w-4" /> Start a discussion
                 </Button>
               )}
-            </div>
+            />
           )}
         </section>
       )}
@@ -252,10 +251,9 @@ function CommunityPage() {
       {tab === 'people' && (
         <section className="community-section">
           <div className="community-toolbar">
-            <span className="text-xs text-[var(--ink-ghost)] flex items-center gap-1.5">
-              <UsersIcon className="h-3.5 w-3.5" />
+            <Text as="span" size="xs" tone="ghost" icon={<UsersIcon className="h-3.5 w-3.5" />}>
               {people.length} {people.length === 1 ? 'member' : 'members'}
-            </span>
+            </Text>
             <Refreshing active={peopleFetching && !peopleLoading} />
           </div>
 
@@ -299,10 +297,9 @@ function CommunityPage() {
       {tab === 'lessons' && (
         <section className="community-section">
           <div className="community-toolbar">
-            <span className="text-xs text-[var(--ink-ghost)] flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5" />
+            <Text as="span" size="xs" tone="ghost" icon={<Globe className="h-3.5 w-3.5" />}>
               {filteredLessons.length} public {filteredLessons.length === 1 ? 'lesson' : 'lessons'}
-            </span>
+            </Text>
             <Refreshing active={lessonsFetching && !lessonsLoading} />
           </div>
 
@@ -319,20 +316,19 @@ function CommunityPage() {
                 return (
                   <div key={plan.id} className="lesson-community-card group">
                     <Row align="start" justify="between" className="mb-2">
-                      <h3 className="text-sm font-semibold text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors leading-snug flex-1 mr-2">
+                      <Text as="h3" size="sm" weight="semibold" tone="ink-2" leading="snug" className="group-hover:text-[var(--ink)] transition-colors flex-1 mr-2">
                         {plan.name}
-                      </h3>
-                      {isOwn && <span className="own-badge">Yours</span>}
+                      </Text>
+                      {isOwn && <Chip size="xs" tone="quiet">Yours</Chip>}
                     </Row>
-                    <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
-                      <span>{isOwn ? 'You' : userMap[plan.userId] || 'Member'}</span>
-                      <span>·</span>
-                      <span>{formatDate(plan.createdAt)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-[var(--ink-ghost)] mb-4">
-                      <Layers className="h-2.5 w-2.5" />
+                    <Row align="center" gap={3} className="mb-3">
+                      <Text as="span" size="2xs" tone="ghost">{isOwn ? 'You' : userMap[plan.userId] || 'Member'}</Text>
+                      <Text as="span" size="2xs" tone="ghost">·</Text>
+                      <Text as="span" size="2xs" tone="ghost">{formatDate(plan.createdAt)}</Text>
+                    </Row>
+                    <Text as="div" size="3xs" tone="ghost" icon={<Layers className="h-2.5 w-2.5" />} className="mb-4">
                       {plan.topics.length} {plan.topics.length === 1 ? 'topic' : 'topics'}
-                    </div>
+                    </Text>
                     {/* One button. There were two — "Read", which opened a
                         separate read-only page in a new tab, and "Edit", which
                         was shown to anyone signed in and failed for everyone
@@ -350,12 +346,11 @@ function CommunityPage() {
               })}
             </div>
           ) : (
-            <div className="community-empty">
-              <BookOpen className="h-10 w-10 opacity-10 mx-auto mb-3" />
-              <Text tone="ghost" size="sm">
-                {search ? `No lessons matching "${search}"` : 'No public lessons yet.'}
-              </Text>
-            </div>
+            <EmptyState
+              icon={BookOpen}
+              tone="muted"
+              title={search ? `No lessons matching “${search}”` : 'No public lessons yet.'}
+            />
           )}
         </section>
       )}

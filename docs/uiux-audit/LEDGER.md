@@ -186,3 +186,17 @@ Document coverage 52.3% → 54.3%.
 | WS-05 | — | projects.tsx (`doc-card` skeleton, `workspace-facts`), DocumentCard (`doc-thumb*`, `doc-meta`, `doc-actions`), TopicStarter (`topic-bar`) | the card's miniature, the skeleton that mirrors the card's geometry, the one-line facts row and the topic bar are the workspace's own composites | domain geometry, single owner | wontfix (documented) |
 
 Workspace coverage 27.1% → 71.4%.
+
+### Batch 6 — community (P1–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| CM-02 | P1 | community.tsx:234, :353 | look-alike of `EmptyState`: the posts and lessons tabs drew a private `community-empty` box (faded 40px glyph, ghost line), while the People tab on the same screen used `EmptyState`. The three tabs had two empty states | `EmptyState tone="muted"` (the CTA moves to its `action` slot). Visible: the icon tile and title of the People tab | fix |
+| CM-03 | P2 | community.tsx:325, PostCard:110 | two private tag styles (`own-badge`, `lesson-badge`) with drifted sizes | `Chip` quiet: "Yours" is the xs badge; the attached lesson is the sm chip | fix |
+| CM-04 | P2 | community.tsx:255, :302, :332 | icon-led counts written as `flex items-center gap-1.5 text-xs text-[var(--ink-ghost)]` utility strings | `Text` gained an `icon` slot (inline-flex or flex, 6px) — pixel-identical | fix |
+| CM-05 | P2 | community.tsx:322–330, PostDetail:128–133 | titles, meta rows and the post body as raw type utilities | `Text` + `Row` — pixel-identical | fix |
+| CM-06 | P3 | PostDetail:152 | a third caps caption (12px, `tracking-widest`) | `Heading size="label"`. Visible: 10px, like every other group caption | fix |
+| CM-07 | — | community.tsx (`community-card` skeleton, `person-card`, `lessons-grid`), PostCard (vote column, meta items), PostDetail (`comment-row`, `attached-lesson-row`) | the forum's own card geometry and its skeleton mirror | domain geometry, single owner | wontfix (documented) |
+| CM-08 | P1 | NewPostDialog:52, PostDetail:108 | hand-rolled fixed overlays beside Radix `Dialog` | part of A-10 | **ask A-10** |
+
+Community coverage 5.1% → 64.8%.

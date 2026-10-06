@@ -3,7 +3,7 @@ import { Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
-import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text, PanelHeader } from '@/components/ui';
+import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text, PanelHeader, Heading } from '@/components/ui';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -126,11 +126,11 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                     opened from — clicking a post should not change the
                     typeface of its own title. */}
                 <h2 className="post-detail-title">{post.title}</h2>
-                <div className="flex items-center gap-3 text-[11px] text-[var(--ink-ghost)] mb-3">
-                  <span>by {post.authorName}</span>
-                  <span><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relativeTime(post.createdAt)}</span>
-                </div>
-                {post.body && <p className="text-sm text-[var(--ink-muted)] leading-relaxed whitespace-pre-wrap">{post.body}</p>}
+                <Row align="center" gap={3} className="mb-3">
+                  <Text as="span" size="2xs" tone="ghost">by {post.authorName}</Text>
+                  <Text as="span" size="2xs" tone="ghost"><Clock className="inline h-2.5 w-2.5 mr-0.5" />{relativeTime(post.createdAt)}</Text>
+                </Row>
+                {post.body && <Text size="sm" tone="muted" leading="relaxed" className="whitespace-pre-wrap">{post.body}</Text>}
               </div>
             </Row>
 
@@ -149,9 +149,9 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
 
             {/* Comments */}
             <Divider className="detail-divider" />
-            <h3 className="text-xs font-semibold text-[var(--ink-faint)] uppercase tracking-widest mb-3">
+            <Heading level={3} size="label" className="mb-3">
               {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
-            </h3>
+            </Heading>
 
             {comments.map(c => {
               // Negative ids belong to optimistic rows still in flight.

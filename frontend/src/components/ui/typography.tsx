@@ -35,19 +35,27 @@ export interface TextProps extends React.HTMLAttributes<HTMLElement> {
   numeric?: boolean
   /** The mono face — counts, ids, code-like values. */
   mono?: boolean
+  /**
+   * A leading glyph, 6px from the text and centred on it — a count with its
+   * icon, a meta item. Inline elements become inline-flex, blocks flex.
+   */
+  icon?: React.ReactNode
   dateTime?: string
 }
 
+const INLINE = new Set(["span", "small", "strong", "em", "time", "label"])
+
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as: Tag = "p", size, tone, weight, leading, italic, truncate, numeric, mono, className, ...rest }, ref) =>
+  ({ as: Tag = "p", size, tone, weight, leading, italic, truncate, numeric, mono, icon, className, children, ...rest }, ref) =>
     React.createElement(Tag, {
       ref,
       className: cn(
+        icon != null && (INLINE.has(Tag) ? "inline-flex" : "flex") + " items-center gap-1.5",
         size && SIZE[size], tone && TONE[tone], weight && WEIGHT[weight], leading && LEADING[leading],
         italic && "italic", truncate && "truncate", numeric && "tabular-nums", mono && "font-mono", className,
       ),
       ...rest,
-    })
+    }, icon, children)
 )
 Text.displayName = "Text"
 
