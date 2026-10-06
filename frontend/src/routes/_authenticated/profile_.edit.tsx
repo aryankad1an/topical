@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, AtSign, Check, AlertCircle } from 'lucide-react';
-import { Button, PageHeader, Surface, LoadingState } from '@/components/ui';
+import { AtSign, Check, AlertCircle } from 'lucide-react';
+import { Button, PageHeader, Surface, LoadingState, BackLink, Page } from '@/components/ui';
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
@@ -57,11 +57,8 @@ function EditProfile() {
   }
 
   return (
-    <div className="page-shell page-shell--narrow">
-      <Link to="/profile"
-        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to profile
-      </Link>
+    <Page width="narrow">
+      <BackLink><Link to="/profile">Back to profile</Link></BackLink>
 
       <PageHeader
         className="mb-8"
@@ -118,6 +115,6 @@ function EditProfile() {
         </Link>
         {dirty && <span className="text-[11px] text-[var(--ink-ghost)] ml-auto">Unsaved changes</span>}
       </div>
-    </div>
+    </Page>
   );
 }

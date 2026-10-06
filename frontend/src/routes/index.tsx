@@ -3,6 +3,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Globe, PenLine, Layers, BookOpen, ListTree, MousePointerClick, CheckCheck } from 'lucide-react';
 import { TopicHero } from '@/features/home/TopicHero';
 import { Reveal } from '@/features/home/Reveal';
+import { Chip } from '@/components/ui';
 
 export const Route = createFileRoute('/')({
   beforeLoad: () => ({}),
@@ -104,9 +105,9 @@ function Home() {
                   model you already pay for.
                 </p>
                 <div className="flex items-center gap-2 mt-4">
-                  <span className="chip chip--accent">Gemini</span>
-                  <span className="chip chip--accent">OpenAI</span>
-                  <span className="chip chip--accent">Anthropic</span>
+                  <Chip tone="accent">Gemini</Chip>
+                  <Chip tone="accent">OpenAI</Chip>
+                  <Chip tone="accent">Anthropic</Chip>
                 </div>
               </div>
             </Reveal>

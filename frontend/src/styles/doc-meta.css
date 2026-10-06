@@ -39,52 +39,9 @@
    The count is a control, not a label: it opens the names. */
 
 
-.people-pop {
-  /* Fixed and portalled to the body: two of the four places this is used clip
-     an absolutely-positioned child — `.doc-card` hides its overflow, and the
-     editor header is a fixed bar. Coordinates come from the component, which
-     measures the trigger. */
-  position: fixed;
-  z-index: var(--z-float);
-  width: 216px;
-  padding: 6px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-pop);
-  /* `transform-origin` is set inline: it depends on whether the panel ended up
-     below its trigger or was flipped above it, which only the measurement
-     knows. Per the popover rule, a centre origin would start the animation
-     somewhere the panel never occupies. */
-  animation: cmdk-rise var(--dur-enter) var(--ease-out);
-}
-
-.people-pop-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--ink-ghost);
-  padding: 7px 9px 6px;
-}
-
+/* Fixed and portalled: two of its four hosts clip overflow. The panel is a MenuPanel. */
+.people-pop { position: fixed; z-index: var(--z-float); width: 216px; }
 .people-list { display: flex; flex-direction: column; gap: 1px; }
-
-.people-row {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 6px 9px;
-  border-radius: var(--radius);
-  color: var(--ink-2);
-  text-decoration: none;
-  transition-property: var(--transition-control);
-  transition-duration: var(--dur-fast);
-  transition-timing-function: var(--ease-out);
-}
-a.people-row:hover { background: var(--ink-a04); color: var(--ink); }
-.people-row--plain { cursor: default; }
 
 .people-name {
   flex: 1;
@@ -103,21 +60,3 @@ a.people-row:hover { background: var(--ink-a04); color: var(--ink); }
   letter-spacing: 0.06em;
   color: var(--ink-ghost);
 }
-
-.people-manage {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: 4px;
-  padding: 7px 9px;
-  border-top: 1px solid var(--line-soft);
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  font-size: 12px;
-  color: var(--ink-muted);
-  cursor: pointer;
-  transition-property: var(--transition-control);
-  transition-duration: var(--dur-fast);
-  transition-timing-function: var(--ease-out);
-}
-.people-manage:hover { color: var(--accent-500); }

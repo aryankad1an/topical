@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ListTree, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
-import { Button, IconButton, Spinner, Input, ChipButton } from '@/components/ui';
+import { Button, IconButton, Spinner, Input, ChipButton, TextLink } from '@/components/ui';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import type { OutlineNode } from '../lib/outline';
@@ -354,10 +354,10 @@ export function OutlineRail({
             <Button type="submit" variant="primary" size="xs" disabled={!canSubmit}>
               {submitLabel}
             </Button>
-            <button type="button" className="orail-link" onClick={() => runOutlineAi('', true)}
+            <TextLink size="2xs" onClick={() => runOutlineAi('', true)}
               disabled={working}>
               From what I've written
-            </button>
+            </TextLink>
           </div>
           {nodes.length > 0 && (
             <p className="orail-note">Leave it blank to let the model decide what to change.</p>
@@ -492,14 +492,15 @@ export function OutlineRail({
             </Button>
 
             {writer.missing > 0 && written > 0 && (
-              <button
-                className="orail-link orail-foot-link"
+              <TextLink
+                size="2xs"
+                className="orail-foot-link"
                 onClick={() => setAsking('all')}
                 disabled={writer.busy}
                 title="Regenerate every section, replacing what is already written"
               >
                 Rewrite all {nodes.length} instead
-              </button>
+              </TextLink>
             )}
           </>
         )}

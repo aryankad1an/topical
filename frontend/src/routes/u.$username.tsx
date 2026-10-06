@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, FileType2, FileCode2, Calendar, UserX, Settings2 } from 'lucide-react';
+import { BookOpen, FileType2, FileCode2, Calendar, UserX, Settings2 } from 'lucide-react';
 import { fetchPersonProfile, personName, type PublishedDoc } from "@/lib/api";
 import { formatOf } from "@/lib/types";
 import { documentRoute } from "@/lib/documentUrl";
 import { formatDate, formatMonthYear } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import { Button, EmptyState, PageHeader, IdentityBanner, DocTypeIcon, LoadingState } from '@/components/ui';
+import { Button, EmptyState, PageHeader, IdentityBanner, DocTypeIcon, LoadingState, BackLink, Page } from '@/components/ui';
 
 export const Route = createFileRoute("/u/$username")({
   component: PublicProfile,
@@ -31,7 +31,7 @@ function PublicProfile() {
 
   if (isError || !data) {
     return (
-      <div className="page-shell page-shell--narrow">
+      <Page width="narrow">
         <EmptyState
           icon={UserX}
           tone="muted"
@@ -43,7 +43,7 @@ function PublicProfile() {
             </Link>
           }
         />
-      </div>
+      </Page>
     );
   }
 
@@ -65,11 +65,8 @@ function PublicProfile() {
   };
 
   return (
-    <div className="page-shell">
-      <Link to="/community"
-        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> Community
-      </Link>
+    <Page>
+      <BackLink><Link to="/community">Community</Link></BackLink>
 
       {/* ── Banner ── */}
       <IdentityBanner
@@ -142,6 +139,6 @@ function PublicProfile() {
           })}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

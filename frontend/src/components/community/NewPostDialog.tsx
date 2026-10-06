@@ -5,7 +5,7 @@ import { createPost } from '@/lib/communityApi';
 import { getPublicLessonPlans } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Field, IconButton, Input, Textarea } from '@/components/ui';
+import { Button, Field, IconButton, Input, Textarea, MenuEmpty, MenuItem, MenuPanel } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 
 interface NewPostDialogProps {
@@ -110,28 +110,23 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
             </Button>
 
             {showLessons && (
-              <div className="lesson-picker">
-                <button
-                  type="button"
-                  className={`lesson-pick-item ${!attachedId ? 'active' : ''}`}
-                  onClick={() => { setAttachedId(null); setAttachedName(''); setShowLessons(false); }}
-                >
+              <MenuPanel inset="sm" className="lesson-picker">
+                <MenuItem checked={!attachedId} onClick={() => { setAttachedId(null); setAttachedName(''); setShowLessons(false); }}>
                   None
-                </button>
+                </MenuItem>
                 {myPlans.map(p => (
-                  <button
+                  <MenuItem
                     key={p.id}
-                    type="button"
-                    className={`lesson-pick-item ${attachedId === p.id ? 'active' : ''}`}
+                    checked={attachedId === p.id}
                     onClick={() => { setAttachedId(p.id); setAttachedName(p.name); setShowLessons(false); }}
                   >
                     {p.name}
-                  </button>
+                  </MenuItem>
                 ))}
                 {myPlans.length === 0 && (
-                  <p className="text-xs text-[var(--ink-ghost)] p-3">No public lessons found. Make a lesson public first.</p>
+                  <MenuEmpty>No public lessons found. Make a lesson public first.</MenuEmpty>
                 )}
-              </div>
+              </MenuPanel>
             )}
           </div>
 

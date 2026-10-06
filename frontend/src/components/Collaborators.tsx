@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import { Link } from '@tanstack/react-router';
 import { Users, UserPlus } from 'lucide-react';
-import { Avatar, ChipButton } from '@/components/ui';
+import { Avatar, ChipButton, Divider, MenuItem, MenuLabel, MenuPanel } from '@/components/ui';
 
 interface Props {
   /** The owner's handle. Null for your own document, which has no byline yet. */
@@ -138,7 +138,7 @@ export function Collaborators({ authorUsername, coAuthorUsernames, onManage, cla
       </ChipButton>
 
       {open && createPortal(
-        <div
+        <MenuPanel
           ref={panelRef}
           className="people-pop"
           role="menu"
@@ -150,9 +150,9 @@ export function Collaborators({ authorUsername, coAuthorUsernames, onManage, cla
             visibility: placement ? 'visible' : 'hidden',
           }}
         >
-          <p className="people-pop-title">
+          <MenuLabel>
             {people.length === 1 ? '1 person' : `${people.length} people`} on this document
-          </p>
+          </MenuLabel>
           <ul className="people-list">
             {people.map(({ username, role }, i) => {
               /* Not everyone has a handle — a person who has not set one
@@ -175,26 +175,25 @@ export function Collaborators({ authorUsername, coAuthorUsernames, onManage, cla
               return (
                 <li key={username ?? `unnamed-${i}`}>
                   {username ? (
-                    <Link to="/u/$username" params={{ username }} className="people-row" onClick={close}>
-                      {inner}
-                    </Link>
+                    <MenuItem asChild>
+                      <Link to="/u/$username" params={{ username }} onClick={close}>{inner}</Link>
+                    </MenuItem>
                   ) : (
-                    <span className="people-row people-row--plain">{inner}</span>
+                    <span className="menu-item menu-item--static">{inner}</span>
                   )}
                 </li>
               );
             })}
           </ul>
           {onManage && (
-            <button
-              type="button"
-              className="people-manage"
-              onClick={() => { close(); onManage(); }}
-            >
-              <UserPlus className="h-3.5 w-3.5" /> Manage collaborators
-            </button>
+            <>
+              <Divider />
+              <MenuItem icon={<UserPlus className="h-3.5 w-3.5" />} onClick={() => { close(); onManage(); }}>
+                Manage collaborators
+              </MenuItem>
+            </>
           )}
-        </div>,
+        </MenuPanel>,
         document.body,
       )}
     </>

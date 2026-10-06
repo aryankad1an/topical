@@ -268,6 +268,15 @@
 .spinner--ink    { color: var(--ink); }
 
 .kbd { font-family: var(--font-mono); }
+.kbd--cap {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 5px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+  color: var(--ink-2); background: var(--surface-2);
+  border: 1px solid var(--line); box-shadow: 0 1px 0 var(--line);
+}
+.kbd--fill { font-size: 10px; padding: 0 4px; border-radius: var(--radius-xs); background: var(--ink-a06); }
 /* Inside another control: the key's own face at label size. */
 .kbd--bare { font-size: 11px; font-weight: 600; }
 .kbd--key {
@@ -476,6 +485,137 @@
   border-color: var(--accent-line);
   color: var(--accent-600);
   font-weight: 600;
+}
+
+/* ── Menu (components/ui/menu.tsx) ──
+   Solid panels — a menu hangs off frosted chrome, and glass inside glass
+   frosts the chrome's own pixels. Hover is a neutral wash; the keyboard
+   cursor is the accent's quiet form, so "under the pointer" and "where Enter
+   will land" can never be confused. */
+.menu-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+}
+.menu-panel--sm { padding: 4px; }
+.menu-panel--md { padding: 6px; }
+.menu-panel--from-top-left { transform-origin: top left; animation: cmdk-rise var(--dur-enter) var(--ease-out); }
+.menu-panel--from-top-right { transform-origin: top right; animation: cmdk-rise var(--dur-enter) var(--ease-out); }
+
+.menu-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-ghost);
+  padding: 8px 9px 5px;
+}
+.menu-label--md { padding: 10px 10px 6px; }
+
+.menu-empty { padding: 20px 12px; text-align: center; font-size: 12px; color: var(--ink-faint); }
+.menu-empty--md { padding: 2.5rem 1rem; font-size: 13px; }
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 0;
+  padding: 7px 9px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.menu-item--md { gap: 11px; padding: 10px 11px; font-size: 13.5px; }
+.menu-item-icon { display: flex; flex-shrink: 0; color: var(--ink-faint); }
+.menu-item-trailing { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+/* Where a command leads, said quietly — and dropped on a phone, where the
+   row needs the width for the command itself. */
+.menu-item-hint { font-size: 11px; color: var(--ink-ghost); }
+@media (max-width: 639px) { .menu-item-hint { display: none; } }
+@media (hover: hover) and (pointer: fine) {
+  .menu-item:not(.menu-item--static):hover:not([data-active='true']) { background: var(--ink-a04); color: var(--ink); }
+}
+.menu-item[data-checked='true'] { color: var(--accent-600); }
+.menu-item[data-active='true'] { background: var(--accent-soft); color: var(--accent-600); }
+.menu-item[data-active='true'] .menu-item-icon,
+.menu-item[data-checked='true'] .menu-item-icon { color: var(--accent-400); }
+.menu-item--static { cursor: default; }
+.menu-item:focus-visible { outline: 2px solid var(--accent-400); outline-offset: -2px; }
+
+/* ── Divider (components/ui/divider.tsx) ── */
+.divider { display: block; flex-shrink: 0; }
+.divider--vertical { width: 1px; height: 18px; background: var(--ink-a06); }
+.divider--vertical.divider--md { margin: 0 7px; }
+.divider--vertical.divider--sm { margin: 0 6px; }
+.divider--horizontal { height: 1px; width: 100%; background: var(--line-soft); }
+.divider--horizontal.divider--sm { margin: 2px 0; }
+.divider--horizontal.divider--md { margin: 4px 0; }
+@media (max-width: 899px) {
+  /* The compact editor bar has no width to spend on air around its rules. */
+  .editor-toolbar .divider--vertical { margin: 0 4px; }
+}
+
+/* ── TextLink / Notice ── */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 0;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.link--quiet { color: var(--ink-faint); }
+.link--quiet:hover:not(:disabled) { color: var(--ink-2); }
+.link--underline { color: var(--ink-muted); border-bottom: 1px solid var(--line); }
+.link--underline:hover { color: var(--accent-600); border-color: var(--accent-line); }
+.link:disabled { opacity: 0.4; cursor: not-allowed; }
+.link--2xs { font-size: 10.5px; gap: 4px; }
+.link--xs { font-size: var(--text-xs); gap: 0.375rem; }
+.link:focus-visible { outline: 2px solid var(--accent-400); outline-offset: 2px; }
+.back-link { margin-bottom: var(--space-6); }
+
+.notice { font-size: 0.8125rem; line-height: 1.5; }
+.notice--well {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius);
+}
+.notice--inline { font-size: var(--text-xs); }
+.notice-icon { display: flex; flex-shrink: 0; margin-top: 0.1rem; }
+.notice--danger { color: var(--status-danger); }
+.notice--warning { color: var(--status-warning); }
+.notice--success { color: var(--status-success); }
+.notice--info { color: var(--status-info); }
+.notice--well.notice--danger { background: rgb(var(--danger-rgb) / 0.09); border: 1px solid rgb(var(--danger-rgb) / 0.28); }
+.notice--well.notice--warning { background: rgb(var(--warning-rgb) / 0.09); border: 1px solid rgb(var(--warning-rgb) / 0.28); }
+.notice--well.notice--success { background: rgb(var(--success-rgb) / 0.09); border: 1px solid rgb(var(--success-rgb) / 0.28); }
+.notice--well.notice--info { background: rgb(var(--info-rgb) / 0.09); border: 1px solid rgb(var(--info-rgb) / 0.28); }
+
+/* ── Dialog (components/ui/dialog.tsx) ── */
+.dialog-solid {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+}
+.dialog-title { font-size: var(--text-md); font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; color: var(--ink); }
+.dialog-description { font-size: var(--text-sm); line-height: 1.5; color: var(--ink-muted); }
+
+/* ── Toast (components/ui/sonner.tsx) ── */
+.toaster [data-sonner-toast].toast {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: var(--radius-lg);
 }
 
 /* ── Keyboard focus ──

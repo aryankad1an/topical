@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Key, Plus, Star, Trash2, ExternalLink, Check,
-  ArrowLeft, ShieldCheck, Sparkles,
+  ShieldCheck, Sparkles,
 } from "lucide-react";
-import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip } from '@/components/ui';
+import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page } from '@/components/ui';
 import { errorMessage } from "@/lib/utils";
 import {
   type AiCredential, type AiProvider, PROVIDER_PRESETS,
@@ -75,11 +75,8 @@ function ProvidersPage() {
   };
 
   return (
-    <div className="page-shell">
-      <Link to="/profile"
-        className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to profile
-      </Link>
+    <Page>
+      <BackLink><Link to="/profile">Back to profile</Link></BackLink>
 
       <PageHeader
         className="mb-8"
@@ -265,6 +262,6 @@ function ProvidersPage() {
           )}
         </Surface>
       </div>
-    </div>
+    </Page>
   );
 }

@@ -96,3 +96,28 @@ Every row here is a merge: the look-alikes were migrated at **every** call site 
 - Pressable chips are weight 500. The hero suggestions were 400 and static chips are 600. The neutral chip hover is one look everywhere.
 - Spinners are one family. The post-detail ring is now the standard spinner. The document route's loader went 28 → 48px, centred like every page loader.
 - Profile cards no longer lift on hover. Their shadow is `--shadow-xs` like every other card.
+
+### Batch 2b — primitives layer, P2 (missing categories, quality bar)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| PR-23 | P2 | community.tsx, projects.tsx | skeletons hand-built from `.skeleton` divs with inline geometry; lessons loading was `glass-card animate-pulse` (a pulse, not the product's sweep) | `Skeleton` (`width`/`height` as data, `radius`); 13 call sites | fix |
+| PR-24 | P2 | EditorHeader, Toolbar, SlashMenu, CommandPalette, AiAssist, NewPostDialog, Collaborators | MISSING menu: seven panels drew their own rows, four caption styles, three "no results" lines; hover styles disagreed (accent on one, neutral on another) | `MenuPanel` (origin, inset) · `MenuLabel` · `MenuItem` (icon, trailing, `active` keyboard cursor, `checked`, `asChild`) · `MenuEmpty`; panels keep only their placement rules | fix |
+| PR-25 | P2 | Toolbar ×4, FindBar, WritePopover, PostDetail, Collaborators | four hand-drawn rules | `Divider` vertical/horizontal | fix |
+| PR-26 | P2 | profile_.edit, providers, u.$username; OutlineRail/OutlineProposal/WritePopover; TopicHero | MISSING link: three identical "← Back" links in Tailwind; `.orail-link` ×4; `.hero-aside-link` | `TextLink` quiet/underline · `BackLink` | fix |
+| PR-27 | P2 | AuthCard, ChangePasswordCard, ExportPdfDialog | MISSING error: three error presentations | `Notice` well/inline × danger/warning/success/info, `role=alert` | fix |
+| PR-28 | P2 | projects.tsx | publish and delete confirms assembled by hand with an inline-styled dialog; delete could be closed mid-request | `ConfirmDialog` (tone, busy label, locked while busy) | fix |
+| PR-29 | P2 | CoAuthorsDialog, ImageDialog, ShortcutsSheet | `.dialog-dark` `!important` overrides and per-call title/description sizes | `DialogContent material="solid"`/`size`; `.dialog-title`/`.dialog-description` | fix |
+| PR-30 | P2 | 6 routes | `.page-shell` written by hand per route | `Page` (`width="narrow"`) | fix |
+| PR-31 | P2 | profile.tsx | `.detail-row` markup by hand | `DetailRow`, `DetailEmpty` | fix |
+| PR-32 | P1 | profile.tsx:110, index.tsx:107 | raw `chip chip--accent` spans — after 2a moved chip sizing onto `Chip`, these rendered cramped (regression caught by the harness) | `Chip` | fix |
+| PR-33 | P2 | ShortcutsSheet, Toolbar, EditorPage, CommandPalette, SlashMenu, AiAssist | five `kbd` styles | `Kbd` key/cap/fill/bare | fix |
+| PR-34 | P2 | primitives.tsx EmptyState, DocTypeIcon, IdentityBanner; __root Toaster | primitives below the quality bar: inline styles, `text-[11.5px]`-style raw values, a toast styled inline at its mount | moved to tokenised classes; the Toaster owns its surface | fix |
+| PR-35 | P2 | link.tsx (caught in review) | `cn()` (tailwind-merge) silently dropped `text-link*` classes as conflicting Tailwind `text-*` utilities | renamed to `.link*`; every primitive class list checked against twMerge | fix |
+| PR-36 | P3 | — | Tailwind's `text-sm` (14px) and the `--text-sm` token (13px) are two type scales in use at once | unify the scales | **ask A-11** |
+
+Visible in 2b:
+- Menus use one hover (neutral) and one keyboard cursor (accent quiet). The slash menu's cursor was a neutral wash; ⌘K's lost its inset outline.
+- The lesson picker is a solid menu panel instead of bordered rows on glass.
+- Dialog titles are 17px and descriptions `--ink-muted`.
+- Delete can no longer be dismissed mid-request.

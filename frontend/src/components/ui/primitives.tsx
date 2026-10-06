@@ -47,6 +47,33 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   );
 });
 
+/* ─────────────────────────── Page ─────────────────────────── */
+
+/**
+ * The width and padding of an app screen. `narrow` is the one permitted
+ * exception, for single-column forms. Marketing pages use bands, not this.
+ */
+export function Page({ width = 'default', className, ...rest }: Div & { width?: 'default' | 'narrow' }) {
+  return <div className={cn('page-shell', width === 'narrow' && 'page-shell--narrow', className)} {...rest} />;
+}
+
+/* ─────────────────────────── DetailRow ─────────────────────────── */
+
+/** A labelled fact: the label and the value on one baseline. */
+export function DetailRow({ label, children, className }: { label: React.ReactNode; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn('detail-row', className)}>
+      <span className="detail-label">{label}</span>
+      <span className="detail-value">{children}</span>
+    </div>
+  );
+}
+
+/** What a fact says when it has no value yet — and, where it helps, how to give it one. */
+export function DetailEmpty({ children }: { children: React.ReactNode }) {
+  return <span className="detail-empty">{children}</span>;
+}
+
 /* ─────────────────────────── PageHeader ─────────────────────────── */
 
 export interface PageHeaderProps {
@@ -141,20 +168,13 @@ export function EmptyState({
 }: EmptyStateProps) {
   const accent = tone === 'accent';
   return (
-    <Surface variant="dashed" padding="none" className={cn('text-center px-6 py-12', className)}>
-      <div
-        className="h-11 w-11 rounded-2xl mx-auto mb-3.5 flex items-center justify-center"
-        style={accent
-          ? { background: 'var(--accent-soft)', border: '1px solid var(--accent-line)' }
-          : { background: 'var(--ink-a04)', border: '1px solid var(--line)' }}
-      >
-        <Icon className="h-5 w-5" style={{ color: accent ? 'var(--accent-400)' : 'var(--ink-a12)' }} />
+    <Surface variant="dashed" padding="none" className={cn('empty-state', className)}>
+      <div className={cn('empty-state-icon', accent && 'empty-state-icon--accent')}>
+        <Icon className="h-5 w-5" />
       </div>
-      <p className="text-[13px] font-medium text-[var(--ink-muted)]">{title}</p>
-      {description && (
-        <p className="text-[11.5px] text-[var(--ink-ghost)] mt-1.5 max-w-xs mx-auto leading-relaxed">{description}</p>
-      )}
-      {action && <div className="mt-5 flex justify-center">{action}</div>}
+      <p className="empty-state-title">{title}</p>
+      {description && <p className="empty-state-description">{description}</p>}
+      {action && <div className="empty-state-action">{action}</div>}
     </Surface>
   );
 }
@@ -297,14 +317,14 @@ export function IdentityBanner({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap mb-1">
-            <h1 className="font-brand text-2xl md:text-3xl tracking-tight text-[var(--ink)] leading-none">{name}</h1>
+            <h1 className="identity-name">{name}</h1>
             {handle && <Chip tone="accent" mono>@{handle}</Chip>}
           </div>
           {bio
-            ? <p className="text-sm text-[var(--ink-muted)] leading-relaxed max-w-lg">{bio}</p>
-            : <p className="text-sm text-[var(--ink-ghost)] italic">{bioFallback}</p>}
+            ? <p className="identity-bio">{bio}</p>
+            : <p className="identity-bio identity-bio--empty">{bioFallback}</p>}
           {meta && (
-            <div className="flex items-center gap-3 mt-2.5 flex-wrap text-[11.5px] text-[var(--ink-faint)]">{meta}</div>
+            <div className="identity-meta">{meta}</div>
           )}
         </div>
 
@@ -337,8 +357,6 @@ export function docTypeVars(type: DocType): React.CSSProperties {
       } as React.CSSProperties);
 }
 
-const DOC_SIZE = { sm: 'h-8 w-8 rounded-lg', md: 'h-9 w-9 rounded-lg', lg: 'h-11 w-11 rounded-xl' };
-
 export function DocTypeIcon({
   type, size = 'md', icon: Icon, className,
 }: {
@@ -348,11 +366,8 @@ export function DocTypeIcon({
   className?: string;
 }) {
   return (
-    <span
-      className={cn('flex items-center justify-center shrink-0', DOC_SIZE[size], className)}
-      style={{ ...docTypeVars(type), background: 'var(--doc-accent-soft)', border: '1px solid var(--doc-accent-line)' }}
-    >
-      <Icon className={size === 'lg' ? 'h-5 w-5' : 'h-4 w-4'} style={{ color: 'var(--doc-accent)' }} />
+    <span className={cn('doc-type-icon', `doc-type-icon--${size}`, className)} style={docTypeVars(type)}>
+      <Icon className={size === 'lg' ? 'h-5 w-5' : 'h-4 w-4'} />
     </span>
   );
 }

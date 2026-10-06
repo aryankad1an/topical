@@ -71,8 +71,7 @@
 .post-detail-panel,
 .new-post-dialog,
 .dialog-glass,
-.mobile-menu-overlay,
-.lesson-picker {
+.mobile-menu-overlay {
   background: var(--glass-tint-strong);
   -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
@@ -86,8 +85,7 @@
 .cmdk-panel,
 .post-detail-panel,
 .new-post-dialog,
-.dialog-glass,
-.lesson-picker {
+.dialog-glass {
   border-radius: var(--radius-xl);
 }
 
@@ -142,8 +140,7 @@
   .cmdk-panel,
   .post-detail-panel,
   .new-post-dialog,
-  .dialog-glass,
-  .lesson-picker {
+  .dialog-glass {
     -webkit-backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
     backdrop-filter: url("#lg-panel") saturate(var(--glass-saturate));
   }
@@ -201,7 +198,6 @@
 .post-detail-panel,
 .new-post-dialog,
 .dialog-glass,
-.lesson-picker,
 .nav-glass)
 :is(.surface,
 .chip,
@@ -229,7 +225,7 @@
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .liquid-glass,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
-  .dialog-glass, .mobile-menu-overlay, .lesson-picker,
+  .dialog-glass, .mobile-menu-overlay,
   .editor-header, .editor-toolbar, .editor-status {
     background: var(--surface);
     border-color: var(--line);
@@ -241,7 +237,7 @@
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass,
   .nav-glass, .cmdk-panel, .post-detail-panel, .new-post-dialog,
-  .dialog-glass, .mobile-menu-overlay, .lesson-picker,
+  .dialog-glass, .mobile-menu-overlay,
   .editor-header, .editor-toolbar, .editor-status,
   .outline-rail, .outline-head, .orail-prompt {
     background: var(--surface);

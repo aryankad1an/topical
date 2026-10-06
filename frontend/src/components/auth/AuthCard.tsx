@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { Button, Field, IconButton, Input } from '@/components/ui';
+import { Button, Field, IconButton, Input, Notice } from '@/components/ui';
 import { BrandMark } from '@/components/BrandMark';
 
 import { passwordStrength } from '@/lib/validation';
@@ -52,10 +52,7 @@ export function AuthCard({
             {children}
 
             {error && (
-              <p role="alert" className="auth-error">
-                <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                <span>{error}</span>
-              </p>
+              <Notice icon={<AlertCircle className="h-4 w-4" />}>{error}</Notice>
             )}
           </form>
 

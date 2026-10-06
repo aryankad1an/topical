@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState, Page, DetailRow, DetailEmpty } from '@/components/ui';
 import { User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from 'lucide-react';
 import { useState, useEffect } from "react";
 import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
@@ -35,7 +35,7 @@ function Profile() {
   }
 
   return (
-    <div className="page-shell">
+    <Page>
       {/* ── The header ──
           This page opened with a full-bleed `IdentityBanner`: a tinted slab
           with an 88px avatar in it, where every other screen in the product
@@ -83,36 +83,29 @@ function Profile() {
                   {[user.given_name, user.family_name].filter(Boolean).join(' ') || 'Unnamed'}
                 </div>
                 <p className="account-identity-bio">
-                  {user.bio || <span className="detail-empty">No bio yet — add one from Edit profile.</span>}
+                  {user.bio || <DetailEmpty>No bio yet — add one from Edit profile.</DetailEmpty>}
                 </p>
               </div>
             </div>
 
-            <div className="detail-row">
-              <span className="detail-label">Email</span>
-              <span className="detail-value">{user.email || <span className="detail-empty">Not set</span>}</span>
-            </div>
+            <DetailRow label="Email">{user.email || <DetailEmpty>Not set</DetailEmpty>}</DetailRow>
 
-            <div className="detail-row">
-              <span className="detail-label">Username</span>
-              <span className="detail-value">
-                {user.username
-                  ? <span className="person-handle">@{user.username}</span>
-                  : <span className="detail-empty">Not set — required to publish</span>}
-              </span>
-            </div>
+            <DetailRow label="Username">
+              {user.username
+                ? <span className="person-handle">@{user.username}</span>
+                : <DetailEmpty>Not set — required to publish</DetailEmpty>}
+            </DetailRow>
 
             {user.roles && user.roles.length > 0 && (
-              <div className="detail-row">
-                <span className="detail-label">Roles</span>
-                <span className="detail-value flex flex-wrap gap-1.5">
+              <DetailRow label="Roles">
+                <span className="flex flex-wrap gap-1.5">
                   {user.roles.map(role => (
-                    <span key={role} className="chip chip--accent">
+                    <Chip key={role} tone="accent">
                       <Shield className="h-2.5 w-2.5" />{role}
-                    </span>
+                    </Chip>
                   ))}
                 </span>
-              </div>
+              </DetailRow>
             )}
 
             {/* Editing is its own screen — this page is for viewing. */}
@@ -183,6 +176,6 @@ function Profile() {
           <ChangePasswordCard />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

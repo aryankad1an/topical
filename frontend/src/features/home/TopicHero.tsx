@@ -3,7 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Globe } from 'lucide-react';
 import { DEMO_TOPICS } from './topics';
 import { useTopicDemo } from './useTopicDemo';
-import { Button, Input, ChipButton } from '@/components/ui';
+import { Button, Input, ChipButton, TextLink } from '@/components/ui';
 import { LiveDocument } from './LiveDocument';
 
 /** The OS setting, watched rather than read once — it can change mid-session. */
@@ -130,10 +130,12 @@ export function TopicHero({ startHref, startLabel }: { startHref: string; startL
 
         <p className="hero-aside animate-fade-in-delay-3">
           Free to start · bring your own model key ·{' '}
-          <Link to="/community" className="hero-aside-link">
-            <Globe className="h-3 w-3" />
-            read what others published
-          </Link>
+          <TextLink asChild variant="underline">
+            <Link to="/community">
+              <Globe className="h-3 w-3" />
+              read what others published
+            </Link>
+          </TextLink>
         </p>
       </div>
     </section>

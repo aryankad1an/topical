@@ -4,7 +4,7 @@ import { Sparkles, X, RotateCcw, Check, CornerDownLeft, Copy, ArrowLeft } from '
 import { transformSelection } from '@/lib/api';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
-import { IconButton, Spinner, MenuSearch, Input } from '@/components/ui';
+import { IconButton, Spinner, MenuSearch, Input, Kbd, MenuEmpty, MenuItem } from '@/components/ui';
 import { AI_ACTIONS, CONTEXT_CHARS, MIN_PASSAGE_WORDS, type AiAction } from '../lib/aiActions';
 import { countWords } from '../lib/stats';
 import { copyText } from '../lib/exporters';
@@ -211,25 +211,24 @@ export function AiAssist({
             {results.map((item, i) => {
               const Icon = item.icon;
               return (
-                <button
+                <MenuItem
                   key={item.id}
                   role="option"
                   aria-selected={i === cursor}
-                  data-cursor={i === cursor}
-                  className="ai-assist-item"
+                  active={i === cursor}
                   onMouseMove={() => setCursor(i)}
                   onClick={() => choose(item)}
+                  icon={<Icon className="h-3.5 w-3.5" />}
+                  trailing={i === cursor ? <span className="ai-assist-hint">{item.hint}</span> : undefined}
                 >
-                  <Icon className="h-3.5 w-3.5 ai-assist-icon" />
-                  <span className="ai-assist-label">{item.label}</span>
-                  {i === cursor && <span className="ai-assist-hint">{item.hint}</span>}
-                </button>
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </MenuItem>
               );
             })}
             {!results.length && (
-              <p className="ai-assist-empty">
-                Press <kbd>↵</kbd> to run “{query.trim()}” as an instruction
-              </p>
+              <MenuEmpty>
+                Press <Kbd>↵</Kbd> to run “{query.trim()}” as an instruction
+              </MenuEmpty>
             )}
           </div>
         </>

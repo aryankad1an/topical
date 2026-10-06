@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Keyboard, ListTree, Slash, Upload } from 'lucide-react';
 import type { DocFormat } from '@/lib/types';
-import { Button, Chip, IconButton } from '@/components/ui';
+import { Button, Chip, IconButton, MenuItem, MenuPanel, Divider, Kbd } from '@/components/ui';
 import { actionById, TOOLBAR_GROUPS, type EditorAction } from '../lib/actions';
 
 interface Props {
@@ -116,7 +116,7 @@ export function Toolbar({
         {format === 'latex' ? 'LaTeX' : 'MDX'}
       </Chip>
 
-      <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
+      <Divider orientation="vertical" />
 
       {/* The outline is the spine of the document here, so its toggle belongs
           on the bar rather than three clicks deep in the view menu. */}
@@ -133,12 +133,12 @@ export function Toolbar({
         Outline
       </Button>
 
-      <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
+      <Divider orientation="vertical" />
 
       {TOOLBAR_GROUPS.map((group, groupIndex) => (
         <div className="toolbar-group" role="group" aria-label={group.label} key={group.label}>
           {groupIndex > 0 && (
-            <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
+            <Divider orientation="vertical" />
           )}
           {group.ids.map(id => {
             const action = actionById(format, id);
@@ -186,7 +186,9 @@ export function Toolbar({
               </IconButton>
 
               {openGroup?.label === group.label && createPortal(
-                <div
+                <MenuPanel
+                  inset="sm"
+                  origin="top-left"
                   className="toolbar-menu"
                   role="menu"
                   style={{ left: openGroup.x, top: openGroup.y }}
@@ -197,18 +199,17 @@ export function Toolbar({
                     if (!action) return null;
                     const Icon = action.icon;
                     return (
-                      <button
+                      <MenuItem
                         key={action.id}
                         role="menuitem"
-                        className="toolbar-menu-item"
+                        icon={<Icon className="h-3.5 w-3.5" />}
                         onClick={() => { onRun(action); setOpenGroup(null); }}
                       >
-                        <Icon className="h-3.5 w-3.5" />
                         {action.label}
-                      </button>
+                      </MenuItem>
                     );
                   })}
-                </div>,
+                </MenuPanel>,
                 document.body,
               )}
             </div>
@@ -216,7 +217,7 @@ export function Toolbar({
         </div>
       ))}
 
-      <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
+      <Divider orientation="vertical" />
 
       <IconButton
         size="lg"
@@ -231,7 +232,7 @@ export function Toolbar({
       <div className="toolbar-tail">
         <span className="toolbar-hint">
           <Slash className="h-3 w-3" aria-hidden="true" />
-          type <kbd>/</kbd> for everything else
+          type <Kbd>/</Kbd> for everything else
         </span>
         <IconButton
           size="lg"

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, CaseSensitive, X, Replace } from 'lucide-react';
-import { Button, IconButton, Input } from '@/components/ui';
+import { Button, IconButton, Input, Divider } from '@/components/ui';
 import type { FindReplace } from '../hooks/useFindReplace';
 
 /** Find and replace, opened with ⌘F and closed with Escape. */
@@ -46,7 +46,7 @@ export function FindBar({ find }: { find: FindReplace }) {
         <CaseSensitive className="h-3.5 w-3.5" />
       </IconButton>
 
-      <div className="find-divider" />
+      <Divider orientation="vertical" space="sm" />
 
       <Input
         size="sm"

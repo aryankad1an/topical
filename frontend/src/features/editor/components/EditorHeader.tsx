@@ -3,7 +3,7 @@ import {
   ArrowLeft, Copy, Download, Eye, FileCode, FileDown, Printer, Redo2, Save,
   Settings2, SplitSquareHorizontal, Undo2, ListTree, Check, Sun, Moon, Pencil, Link2,
 } from 'lucide-react';
-import { Button, IconButton, Spinner, Input, Segmented } from '@/components/ui';
+import { Button, IconButton, Spinner, Input, Segmented, MenuItem, MenuLabel, MenuPanel } from '@/components/ui';
 import { Collaborators } from '@/components/Collaborators';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { setTheme, useTheme } from '@/lib/theme';
@@ -78,21 +78,21 @@ export function EditorHeader(props: Props) {
           wants from this menu — and because the reading page this shell
           absorbed had it as a button of its own, which was the only control
           the two implementations did not share. */}
-      <button className="editor-menu-item" onClick={() => { onExport('link'); setMenu('none'); }}>
-        <Link2 className="h-3.5 w-3.5" /> Copy link
-      </button>
-      <button className="editor-menu-item" onClick={() => { onExport('source'); setMenu('none'); }}>
-        <Download className="h-3.5 w-3.5" /> Download source
-      </button>
-      <button className="editor-menu-item" onClick={() => { onExport('copy'); setMenu('none'); }}>
-        <Copy className="h-3.5 w-3.5" /> Copy to clipboard
-      </button>
-      <button className="editor-menu-item" onClick={() => { onExport('pdf'); setMenu('none'); }}>
-        <FileDown className="h-3.5 w-3.5" /> Export PDF…
-      </button>
-      <button className="editor-menu-item" onClick={() => { onExport('print'); setMenu('none'); }}>
-        <Printer className="h-3.5 w-3.5" /> Print
-      </button>
+      <MenuItem icon={<Link2 className="h-3.5 w-3.5" />} onClick={() => { onExport('link'); setMenu('none'); }}>
+        Copy link
+      </MenuItem>
+      <MenuItem icon={<Download className="h-3.5 w-3.5" />} onClick={() => { onExport('source'); setMenu('none'); }}>
+        Download source
+      </MenuItem>
+      <MenuItem icon={<Copy className="h-3.5 w-3.5" />} onClick={() => { onExport('copy'); setMenu('none'); }}>
+        Copy to clipboard
+      </MenuItem>
+      <MenuItem icon={<FileDown className="h-3.5 w-3.5" />} onClick={() => { onExport('pdf'); setMenu('none'); }}>
+        Export PDF…
+      </MenuItem>
+      <MenuItem icon={<Printer className="h-3.5 w-3.5" />} onClick={() => { onExport('print'); setMenu('none'); }}>
+        Print
+      </MenuItem>
     </>
   );
 
@@ -221,14 +221,14 @@ export function EditorHeader(props: Props) {
           </IconButton>
 
           {menu === 'view' && (
-            <div className="editor-menu">
+            <MenuPanel origin="top-right" className="editor-menu">
               {/* Every one of these is about the writing surface — a rail you
                   edit structure in, numbers on source lines, a focus band
                   around the caret, and scroll sync between two panes. None of
                   them has anything to act on while reading. */}
               {editing && (
                 <>
-                  <div className="editor-menu-label">Layout</div>
+                  <MenuLabel>Layout</MenuLabel>
                   <MenuToggle label="Outline rail" icon={ListTree} on={options.outline} onClick={() => onOptions({ outline: !options.outline })} />
                   <MenuToggle label="Line numbers" on={options.lineNumbers} onClick={() => onOptions({ lineNumbers: !options.lineNumbers })} />
                   <MenuToggle label="Focus mode" on={options.focusMode} onClick={() => onOptions({ focusMode: !options.focusMode })} />
@@ -236,7 +236,7 @@ export function EditorHeader(props: Props) {
                 </>
               )}
 
-              <div className="editor-menu-label">Text size</div>
+              <MenuLabel>Text size</MenuLabel>
               <div className="editor-menu-row">
                 <Button variant="secondary" size="md" aria-label="Smaller text" onClick={() => onOptions({ fontSize: Math.max(12, options.fontSize - 1) })}>−</Button>
                 <span className="editor-menu-value">{options.fontSize}px</span>
@@ -245,8 +245,8 @@ export function EditorHeader(props: Props) {
 
               {compact && (
                 <>
-                  <button
-                    className="editor-menu-item"
+                  <MenuItem
+                    icon={theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
                     onClick={event => {
                       // The theme wipe grows from whatever was pressed, so it
                       // needs this row's position, not the switch's.
@@ -258,15 +258,14 @@ export function EditorHeader(props: Props) {
                       setMenu('none');
                     }}
                   >
-                    {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
                     {theme === 'dark' ? 'Light theme' : 'Dark theme'}
-                  </button>
+                  </MenuItem>
 
-                  <div className="editor-menu-label">Export</div>
+                  <MenuLabel>Export</MenuLabel>
                   {exportItems}
                 </>
               )}
-            </div>
+            </MenuPanel>
           )}
         </div>
 
@@ -282,7 +281,7 @@ export function EditorHeader(props: Props) {
               <Download className="h-4 w-4" />
             </IconButton>
 
-            {menu === 'export' && <div className="editor-menu">{exportItems}</div>}
+            {menu === 'export' && <MenuPanel origin="top-right" className="editor-menu">{exportItems}</MenuPanel>}
           </div>
         )}
       </div>
@@ -323,10 +322,15 @@ function MenuToggle({ label, icon: Icon, on, onClick }: {
   onClick: () => void;
 }) {
   return (
-    <button className="editor-menu-item" data-on={on} onClick={onClick} role="menuitemcheckbox" aria-checked={on}>
-      {Icon ? <Icon className="h-3.5 w-3.5" /> : <span className="editor-menu-spacer" />}
+    <MenuItem
+      checked={on}
+      onClick={onClick}
+      role="menuitemcheckbox"
+      aria-checked={on}
+      icon={Icon ? <Icon className="h-3.5 w-3.5" /> : <span className="editor-menu-spacer" />}
+      trailing={on ? <Check className="h-3.5 w-3.5" /> : undefined}
+    >
       {label}
-      {on && <Check className="h-3.5 w-3.5 ml-auto" />}
-    </button>
+    </MenuItem>
   );
 }

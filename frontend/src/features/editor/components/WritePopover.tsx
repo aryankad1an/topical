@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cpu, Globe, Link2, Plus, Sparkles, X } from 'lucide-react';
-import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton } from '@/components/ui';
+import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton, Divider, TextLink } from '@/components/ui';
 import type { GenerationMethod } from '../lib/generation';
 
 const METHODS: { key: GenerationMethod; icon: typeof Globe; label: string; hint: string }[] = [
@@ -130,7 +130,7 @@ export function WritePopover({
           ))}
         </div>
 
-        <div className="write-pop-divider" />
+        <Divider space="sm" />
 
         <Label asChild size="sm"><span>Where the material comes from</span></Label>
         <Segmented
@@ -159,9 +159,9 @@ export function WritePopover({
               </div>
             ))}
             {urls.length < MAX_URLS && (
-              <button type="button" className="orail-link" onClick={() => onUrls([...urls, ''])}>
+              <TextLink size="2xs" onClick={() => onUrls([...urls, ''])}>
                 <Plus className="h-2.5 w-2.5" /> Add URL
-              </button>
+              </TextLink>
             )}
           </div>
         )}

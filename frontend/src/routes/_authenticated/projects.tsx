@@ -19,7 +19,7 @@ import type { DocFormat } from '@/lib/types';
 import { Plus, FolderOpen, LayoutGrid, List } from 'lucide-react';
 import { TopicStarter } from '@/components/projects/TopicStarter';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { EmptyState, PageHeader, Refreshing, Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, SearchField, Segmented } from '@/components/ui';
+import { EmptyState, PageHeader, Refreshing, Button, SearchField, Segmented, Skeleton, Page, ConfirmDialog } from '@/components/ui';
 import { VisibilityChip } from '@/components/projects/VisibilityChip';
 
 export const Route = createFileRoute('/_authenticated/projects')({ component: ProjectsPage });
@@ -206,10 +206,8 @@ function ProjectsPage() {
     }
   };
 
-  const dialogStyle = { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px' };
-
   return (
-    <div className="page-shell relative z-10">
+    <Page className="relative z-10">
       <div>
 
         {/* The greeting is the small thing and the question is the large one.
@@ -271,10 +269,10 @@ function ProjectsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="doc-card">
-                  <div className="skeleton" style={{ height: 132, borderRadius: 0 }} />
+                  <Skeleton height={132} radius="none" />
                   <div className="doc-body">
-                    <div className="skeleton h-4 w-3/4 mb-2.5" />
-                    <div className="skeleton h-3 w-1/2" />
+                    <Skeleton height={16} width="75%" className="mb-2.5" />
+                    <Skeleton height={12} width="50%" />
                   </div>
                 </div>
               ))}
@@ -346,59 +344,33 @@ function ProjectsPage() {
           unpublishing breaks links people may already be holding. */}
       {/* Not dismissable mid-request: the write is already on its way, and
           closing would leave the card showing a state nothing had confirmed. */}
-      <Dialog open={!!publishAsk} onOpenChange={open => { if (!open && publishingId === null) setPublishAsk(null); }}>
-        <DialogContent className="sm:max-w-md" style={dialogStyle}>
-          <DialogHeader>
-            <DialogTitle className="text-[var(--ink)]">
-              {publishAsk?.next ? 'Publish to the community?' : 'Remove from the community?'}
-            </DialogTitle>
-            <DialogDescription className="text-[var(--ink-faint)]">
-              {publishAsk?.next
-                ? <>“{publishAsk.plan.name}” will be listed in the community library, and anyone — signed in or not — will be able to open and read it. You can undo this at any time.</>
-                : <>“{publishAsk?.plan.name}” will be delisted, and anyone holding a link to it will stop being able to open it. Your collaborators keep their access.</>}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => setPublishAsk(null)}
-              disabled={publishingId !== null}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="lg"
-              loading={publishingId !== null}
-              onClick={() => publishAsk && togglePublic(publishAsk.plan, publishAsk.next)}
-            >
-              {publishingId !== null
-                ? (publishAsk?.next ? 'Publishing…' : 'Unpublishing…')
-                : publishAsk?.next ? 'Publish' : 'Unpublish'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!publishAsk}
+        onOpenChange={open => { if (!open) setPublishAsk(null); }}
+        title={publishAsk?.next ? 'Publish to the community?' : 'Remove from the community?'}
+        description={publishAsk?.next
+          ? <>“{publishAsk.plan.name}” will be listed in the community library, and anyone — signed in or not — will be able to open and read it. You can undo this at any time.</>
+          : <>“{publishAsk?.plan.name}” will be delisted, and anyone holding a link to it will stop being able to open it. Your collaborators keep their access.</>}
+        confirmLabel={publishAsk?.next ? 'Publish' : 'Unpublish'}
+        busyLabel={publishAsk?.next ? 'Publishing…' : 'Unpublishing…'}
+        busy={publishingId !== null}
+        onConfirm={() => publishAsk && togglePublic(publishAsk.plan, publishAsk.next)}
+      />
 
-      {/* Delete Confirmation */}
-      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md" style={dialogStyle}>
-          <DialogHeader>
-            <DialogTitle className="text-[var(--ink)]">Delete project?</DialogTitle>
-            <DialogDescription className="text-[var(--ink-faint)]">This action cannot be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="secondary" size="lg" onClick={() => setDeleteId(null)} disabled={isDeleting}>Cancel</Button>
-            <Button variant="danger" size="lg" onClick={handleDelete} loading={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={open => { if (!open) setDeleteId(null); }}
+        title="Delete project?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        busyLabel="Deleting..."
+        tone="danger"
+        busy={isDeleting}
+        onConfirm={handleDelete}
+      />
 
 
 
-    </div>
+    </Page>
   );
 }

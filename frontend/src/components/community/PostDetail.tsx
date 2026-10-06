@@ -3,7 +3,7 @@ import { X, Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
-import { Avatar, Button, IconButton, Textarea, LoadingState } from '@/components/ui';
+import { Avatar, Button, IconButton, Textarea, LoadingState, Divider } from '@/components/ui';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -150,7 +150,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
             )}
 
             {/* Comments */}
-            <div className="detail-divider" />
+            <Divider className="detail-divider" />
             <h3 className="text-xs font-semibold text-[var(--ink-faint)] uppercase tracking-widest mb-3">
               {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
             </h3>

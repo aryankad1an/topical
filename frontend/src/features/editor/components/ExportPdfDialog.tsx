@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileDown, X } from 'lucide-react';
-import { Button, Checkbox, FieldGroup, IconButton, ChipButton } from '@/components/ui';
+import { Button, Checkbox, FieldGroup, IconButton, ChipButton, Notice } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 import {
   PDF_DEFAULTS, exportPdf,
@@ -160,7 +160,7 @@ export function ExportPdfDialog({
             </div>
           </FieldGroup>
 
-          {error && <p className="pdf-error">{error}</p>}
+          {error && <Notice variant="inline">{error}</Notice>}
 
           {/* Said plainly rather than discovered: the browser owns the last
               step, and a person who expected a file to land in Downloads

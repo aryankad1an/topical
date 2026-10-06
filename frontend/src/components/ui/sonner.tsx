@@ -11,7 +11,14 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
  * anyone who had used the switch to disagree with their OS.
  */
 const Toaster = (props: ToasterProps) => (
-  <Sonner theme={useTheme()} className="toaster group" {...props} />
+  <Sonner
+    theme={useTheme()}
+    className="toaster group"
+    // The surface comes from the tokens (see `.toast` in buttons.css): this
+    // was a fixed dark rgba at the mount site, a smudge on the cream page.
+    toastOptions={{ className: "toast" }}
+    {...props}
+  />
 );
 
 export { Toaster };

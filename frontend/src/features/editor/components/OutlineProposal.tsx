@@ -1,5 +1,5 @@
 import { Wand2, X } from 'lucide-react';
-import { Button, IconButton, Chip, type ChipTone } from '@/components/ui';
+import { Button, IconButton, Chip, type ChipTone, TextLink } from '@/components/ui';
 import type { RefinedPlan } from '../lib/generation';
 
 const KIND_LABEL: Record<string, string> = {
@@ -65,7 +65,7 @@ export function OutlineProposal({ proposal, onApply, onDiscard }: Props) {
 
       <div className="orail-proposal-actions">
         <Button variant="primary" size="xs" onClick={onApply}>Apply</Button>
-        <button className="orail-link" onClick={onDiscard}>Discard</button>
+        <TextLink size="2xs" onClick={onDiscard}>Discard</TextLink>
       </div>
     </div>
   );

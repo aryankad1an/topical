@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Kbd } from '@/components/ui';
 import type { DocFormat } from '@/lib/types';
 
 /**
@@ -75,7 +75,7 @@ export function ShortcutsSheet({
 
   return (
     <Dialog open={open} onOpenChange={next => { if (!next) onClose(); }}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription>
@@ -94,7 +94,7 @@ export function ShortcutsSheet({
                   <div className="shortcut-row" key={row.label}>
                     <dt className="shortcut-label">{row.label}</dt>
                     <dd className="shortcut-keys">
-                      {row.keys.map(key => <kbd key={key}>{key}</kbd>)}
+                      {row.keys.map(key => <Kbd key={key} variant="cap">{key}</Kbd>)}
                     </dd>
                   </div>
                 ))}

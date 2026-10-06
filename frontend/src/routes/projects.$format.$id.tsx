@@ -6,7 +6,7 @@ import { fetchSharedDocument, type SharedDocument } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatOf, type DocFormat } from '@/lib/types';
 import { DocumentView } from '@/features/editor/EditorPage';
-import { Button, EmptyState, LoadingState } from '@/components/ui';
+import { Button, EmptyState, LoadingState, Page } from '@/components/ui';
 
 /**
  * Read or write — which of the two the screen is showing right now.
@@ -141,7 +141,7 @@ function DocumentPage() {
 function Unavailable({ known, isAuthenticated }: { known: boolean; isAuthenticated: boolean }) {
   const { pathname, search } = window.location;
   return (
-    <div className="page-shell page-shell--narrow">
+    <Page width="narrow">
       <EmptyState
         icon={Lock}
         title={known ? 'This project is private' : 'That link does not name a project'}
@@ -163,6 +163,6 @@ function Unavailable({ known, isAuthenticated }: { known: boolean; isAuthenticat
           </div>
         }
       />
-    </div>
+    </Page>
   );
 }

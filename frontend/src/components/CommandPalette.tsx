@@ -11,7 +11,7 @@ import {
   FilePlus2, FileCode2, BookOpen, CornerDownLeft, Info, KeyRound,
   LogIn, LogOut, UserPlus, FileText, Settings2, Moon, Keyboard,
 } from 'lucide-react';
-import { MenuSearch } from '@/components/ui';
+import { MenuSearch, Kbd, MenuEmpty, MenuItem, MenuLabel } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 export interface Command {
@@ -211,12 +211,12 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           aria-label="Search commands"
-          trailing={<span className="cmdk-key">ESC</span>}
+          trailing={<Kbd>ESC</Kbd>}
         />
 
         <div className="cmdk-list" ref={listRef}>
           {results.length === 0 ? (
-            <div className="cmdk-empty">No results for “{query}”</div>
+            <MenuEmpty size="md">No results for “{query}”</MenuEmpty>
           ) : (
             results.map((cmd, i) => {
               const header = cmd.group !== lastGroup ? cmd.group : null;
@@ -224,19 +224,23 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
               const Icon = cmd.icon;
               return (
                 <div key={cmd.id}>
-                  {header && <div className="cmdk-group-label">{header}</div>}
-                  <button
-                    className="cmdk-item"
+                  {header && <MenuLabel size="md">{header}</MenuLabel>}
+                  <MenuItem
+                    size="md"
                     data-index={i}
-                    data-active={i === cursor}
+                    active={i === cursor}
                     onMouseEnter={() => setCursor(i)}
                     onClick={cmd.run}
+                    icon={<Icon className="h-4 w-4" />}
+                    trailing={(cmd.hint || i === cursor) ? (
+                      <>
+                        {cmd.hint && <span className="menu-item-hint">{cmd.hint}</span>}
+                        {i === cursor && <CornerDownLeft className="h-3 w-3 opacity-50" />}
+                      </>
+                    ) : undefined}
                   >
-                    <Icon className="cmdk-item-icon h-4 w-4" />
                     <span className="flex-1">{cmd.label}</span>
-                    {cmd.hint && <span className="text-[11px] text-[var(--ink-ghost)] hidden sm:inline">{cmd.hint}</span>}
-                    {i === cursor && <CornerDownLeft className="h-3 w-3 opacity-50" />}
-                  </button>
+                  </MenuItem>
                 </div>
               );
             })
@@ -244,8 +248,8 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
         </div>
 
         <div className="cmdk-foot">
-          <span><span className="cmdk-key">↑</span> <span className="cmdk-key">↓</span> navigate</span>
-          <span><span className="cmdk-key">↵</span> open</span>
+          <span><Kbd>↑</Kbd> <Kbd>↓</Kbd> navigate</span>
+          <span><Kbd>↵</Kbd> open</span>
         </div>
       </div>
     </div>

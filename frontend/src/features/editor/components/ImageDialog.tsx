@@ -28,10 +28,10 @@ export function ImageDialog({ open, onOpenChange, onInsert }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={next => { onOpenChange(next); if (!next) setUrl(''); }}>
-      <DialogContent className="sm:max-w-md dialog-dark">
+      <DialogContent material="solid" size="sm">
         <DialogHeader>
-          <DialogTitle className="text-[var(--ink)] text-sm">Insert an image</DialogTitle>
-          <DialogDescription className="text-[var(--ink-faint)] text-xs">
+          <DialogTitle>Insert an image</DialogTitle>
+          <DialogDescription>
             Upload from this device, or paste a link.
           </DialogDescription>
         </DialogHeader>

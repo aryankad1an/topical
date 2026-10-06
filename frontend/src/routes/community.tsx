@@ -14,7 +14,7 @@ import { TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, A
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented } from '@/components/ui';
+import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented, Skeleton, Page } from '@/components/ui';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
@@ -133,7 +133,7 @@ function CommunityPage() {
   };
 
   return (
-    <div className="page-shell">
+    <Page>
       {/* ── Header ── */}
       <PageHeader
         title="Community"
@@ -204,15 +204,15 @@ function CommunityPage() {
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="community-card">
                   <div className="community-vote-col">
-                    <div className="skeleton" style={{ height: 12, width: 20 }} />
+                    <Skeleton height={12} width={20} />
                   </div>
                   <div className="community-card-content">
-                    <div className="skeleton" style={{ height: 15, width: `${72 - i * 9}%`, marginBottom: 10 }} />
-                    <div className="skeleton" style={{ height: 10, width: '92%', marginBottom: 6 }} />
-                    <div className="skeleton" style={{ height: 10, width: '48%' }} />
+                    <Skeleton height={15} width={`${72 - i * 9}%`} className="mb-2.5" />
+                    <Skeleton height={10} width="92%" className="mb-1.5" />
+                    <Skeleton height={10} width="48%" />
                     <div className="community-card-meta">
-                      <div className="skeleton" style={{ height: 9, width: 64 }} />
-                      <div className="skeleton" style={{ height: 9, width: 44 }} />
+                      <Skeleton height={9} width={64} />
+                      <Skeleton height={9} width={44} />
                     </div>
                   </div>
                 </div>
@@ -263,10 +263,10 @@ function CommunityPage() {
             <div className="grid gap-2 sm:grid-cols-2">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="person-card">
-                  <div className="skeleton" style={{ height: 44, width: 44, borderRadius: 13 }} />
+                  <Skeleton height={44} width={44} radius="md" />
                   <div className="flex-1">
-                    <div className="skeleton h-3.5 w-1/2 mb-2" />
-                    <div className="skeleton h-2.5 w-1/3" />
+                    <Skeleton height={14} width="50%" className="mb-2" />
+                    <Skeleton height={10} width="33%" />
                   </div>
                 </div>
               ))}
@@ -309,7 +309,7 @@ function CommunityPage() {
           {lessonsLoading ? (
             <div className="lessons-grid">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="glass-card animate-pulse" style={{ height: 120 }} />
+                <Skeleton key={i} height={120} radius="lg" />
               ))}
             </div>
           ) : filteredLessons.length > 0 ? (
@@ -372,6 +372,6 @@ function CommunityPage() {
       {showNewPost && (
         <NewPostDialog onClose={() => setShowNewPost(false)} onCreated={handleNewPost} />
       )}
-    </div>
+    </Page>
   );
 }

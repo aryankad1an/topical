@@ -204,26 +204,4 @@
 .auth-strength-label { font-weight: 600; color: var(--strength-colour); }
 .auth-strength-advice { color: var(--ink-faint); text-align: right; }
 
-/* ── Error ──
-   A tinted well rather than a red line: the sentence the server sent is the
-   only content on this screen the reader did not write, and it has to be
-   findable without being alarming. */
-.auth-error {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  padding: 0.65rem 0.8rem;
-  border-radius: var(--radius);
-  /* Tokens, not literals. This was a hard-coded terracotta left over from an
-     older palette, so the error well stayed the same colour through every
-     retheme — and after the last one it was the *accent* hue, which made a
-     failed sign-in look like a call to action. */
-  background: rgb(var(--danger-rgb) / 0.09);
-  border: 1px solid rgb(var(--danger-rgb) / 0.28);
-  color: var(--status-danger);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-
-.auth-error svg { flex-shrink: 0; margin-top: 0.1rem; }
 

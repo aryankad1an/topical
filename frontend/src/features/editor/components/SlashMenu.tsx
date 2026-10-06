@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DocFormat } from '@/lib/types';
 import { actionsFor, type EditorAction } from '../lib/actions';
+import { Kbd, MenuEmpty, MenuItem, MenuLabel, MenuPanel } from '@/components/ui';
 
 interface Props {
   format: DocFormat;
@@ -63,7 +64,8 @@ export function SlashMenu({ format, query, anchor, onPick, onClose }: Props) {
   let lastGroup = '';
 
   return (
-    <div
+    <MenuPanel
+      origin="top-left"
       className="slash-menu"
       style={{
         left: Math.max(8, Math.min(anchor.x, anchor.boxWidth - 328)),
@@ -72,7 +74,7 @@ export function SlashMenu({ format, query, anchor, onPick, onClose }: Props) {
       role="listbox"
     >
       {results.length === 0 ? (
-        <div className="slash-empty">Nothing matches “{query}”</div>
+        <MenuEmpty>Nothing matches “{query}”</MenuEmpty>
       ) : (
         results.map((action, index) => {
           const header = action.group !== lastGroup ? action.group : null;
@@ -80,23 +82,22 @@ export function SlashMenu({ format, query, anchor, onPick, onClose }: Props) {
           const Icon = action.icon;
           return (
             <div key={action.id}>
-              {header && <div className="slash-group">{header}</div>}
-              <button
-                className="slash-item"
-                data-active={index === cursor}
+              {header && <MenuLabel>{header}</MenuLabel>}
+              <MenuItem
+                active={index === cursor}
                 onMouseEnter={() => setCursor(index)}
                 onMouseDown={event => { event.preventDefault(); onPick(action); }}
                 role="option"
                 aria-selected={index === cursor}
+                icon={<Icon className="h-3.5 w-3.5" />}
+                trailing={action.key ? <Kbd>⌘{action.key.toUpperCase()}</Kbd> : undefined}
               >
-                <Icon className="h-3.5 w-3.5 slash-icon" />
                 <span>{action.label}</span>
-                {action.key && <kbd className="slash-kbd">⌘{action.key.toUpperCase()}</kbd>}
-              </button>
+              </MenuItem>
             </div>
           );
         })
       )}
-    </div>
+    </MenuPanel>
   );
 }

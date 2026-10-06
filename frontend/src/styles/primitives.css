@@ -310,6 +310,43 @@
   font-weight: 600;
 }
 
+/* ── EmptyState ── says what the thing is and how to fill it. */
+.empty-state { text-align: center; padding: var(--space-12) var(--space-6); }
+.empty-state-icon {
+  height: 44px; width: 44px;
+  margin: 0 auto 0.875rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-lg);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  color: var(--ink-a12);
+}
+.empty-state-icon--accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-400); }
+.empty-state-title { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
+.empty-state-description { margin: var(--space-1-5) auto 0; max-width: 20rem; font-size: 11.5px; line-height: 1.625; color: var(--ink-ghost); }
+.empty-state-action { margin-top: var(--space-5); display: flex; justify-content: center; }
+
+/* ── DocTypeIcon ── the format's own hue, set by docTypeVars(). */
+.doc-type-icon {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: var(--doc-accent-soft);
+  border: 1px solid var(--doc-accent-line);
+  color: var(--doc-accent);
+}
+.doc-type-icon--sm { height: 2rem; width: 2rem; border-radius: var(--radius); }
+.doc-type-icon--md { height: 2.25rem; width: 2.25rem; border-radius: var(--radius); }
+.doc-type-icon--lg { height: 2.75rem; width: 2.75rem; border-radius: var(--radius-md); }
+
+/* ── IdentityBanner text ── */
+.identity-name {
+  font-family: var(--font-serif); font-weight: 600; font-optical-sizing: auto;
+  font-size: 1.5rem; line-height: 1; letter-spacing: -0.01em; color: var(--ink);
+}
+@media (min-width: 768px) { .identity-name { font-size: 1.875rem; } }
+.identity-bio { max-width: 32rem; font-size: 0.875rem; line-height: 1.625; color: var(--ink-muted); }
+.identity-bio--empty { color: var(--ink-ghost); font-style: italic; }
+.identity-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.625rem; font-size: 11.5px; color: var(--ink-faint); }
+
 /* ── Refreshing ──
    Deliberately not a spinner: a spinner reads as "wait", and nothing here is
    blocked — the list stays usable while it updates. A pulsing dot says

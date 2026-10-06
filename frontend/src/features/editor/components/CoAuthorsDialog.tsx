@@ -43,12 +43,12 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md dialog-dark">
+      <DialogContent material="solid" size="sm">
         <DialogHeader>
-          <DialogTitle className="text-[var(--ink)] text-base flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2">
             <Users className="h-4 w-4" /> Share this document
           </DialogTitle>
-          <DialogDescription className="text-[var(--ink-faint)]">
+          <DialogDescription>
             Collaborators see your cursor and edits as they happen.
           </DialogDescription>
         </DialogHeader>

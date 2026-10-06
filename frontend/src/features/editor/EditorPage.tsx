@@ -37,7 +37,7 @@ import type { EditorAction } from './lib/actions';
 import { copyText, downloadSource, printPreview, wrapLatexDocument } from './lib/exporters';
 import { ExportPdfDialog } from './components/ExportPdfDialog';
 import { DEFAULT_OPTIONS, loadOptions, saveOptions, type ViewMode, type ViewOptions } from './lib/viewOptions';
-import { Button } from '@/components/ui';
+import { Button, Kbd } from '@/components/ui';
 
 /**
  * The box a single character occupies inside one of the mirror's line
@@ -797,7 +797,7 @@ export function DocumentView({ plan, isOwner, editing, onEdit, onBack }: Documen
                   style={anchorForOffset(selection.end) ?? undefined}
                   onClick={() => setAssistOpen(true)}
                 >
-                  <Sparkles className="h-3 w-3" /> Edit with AI <kbd>⌘J</kbd>
+                  <Sparkles className="h-3 w-3" /> Edit with AI <Kbd variant="fill">⌘J</Kbd>
                 </Button>
               )}
 

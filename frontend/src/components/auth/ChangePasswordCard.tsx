@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 import { changePassword } from '@/lib/api';
 import { passwordProblem } from '@/lib/validation';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Notice } from '@/components/ui';
 
 /**
  * Change your password.
@@ -74,9 +74,7 @@ export function ChangePasswordCard() {
           </Field>
 
           {error && (
-            <p role="alert" className="text-sm text-[var(--status-danger)]">
-              {error}
-            </p>
+            <Notice variant="inline">{error}</Notice>
           )}
 
           <Button type="submit" variant="secondary" size="lg" width="full" loading={pending}>

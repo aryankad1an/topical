@@ -296,18 +296,7 @@ function Root() {
       <main className={`flex-1 w-full mx-auto relative z-10 ${isEditorRoute ? 'min-h-0' : 'px-4 py-6 mt-20 md:mt-24'}`}>
         <Outlet />
       </main>
-      <Toaster
-        toastOptions={{
-          style: {
-            // Tokens, not literals: this was a fixed dark rgba, which read as
-            // a smudge on the light theme's cream page.
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            color: 'var(--ink)',
-            borderRadius: 'var(--radius-lg)',
-          },
-        }}
-      />
+      <Toaster />
     </div>
   );
 }

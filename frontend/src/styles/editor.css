@@ -123,43 +123,8 @@ h1.editor-title--static:hover { background: transparent; }
    That is the same rule glass.css states as "no nested glass"; this is one
    more place it applies. A menu is a surface you read, not chrome floating
    over moving content. */
-.editor-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: var(--z-menu);
-  min-width: 214px;
-  padding: 6px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-pop);
-  /* Anchored under the right edge of its trigger, so that is where it grows
-     from. The default `center` scales a menu out of its own middle, which
-     puts the first frame of the animation in a place the menu never occupies
-     and detaches it from the button that opened it. */
-  transform-origin: top right;
-  animation: cmdk-rise var(--dur-enter) var(--ease-out);
-}
-.editor-menu-label {
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.09em;
-  color: var(--ink-ghost);
-  padding: 8px 9px 5px;
-}
-.editor-menu-item {
-  display: flex; align-items: center; gap: 9px;
-  width: 100%;
-  padding: 7px 9px;
-  border-radius: var(--radius);
-  font-size: 12.5px;
-  color: var(--ink-2);
-  text-align: left;
-  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
-}
-.editor-menu-item:hover { background: var(--ink-a04); color: var(--ink); }
-.editor-menu-item[data-on='true'] { color: var(--accent-500); }
-.editor-menu-item svg { opacity: 0.75; }
+/* Placement under the trigger; the panel is a MenuPanel. */
+.editor-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--z-menu); min-width: 214px; }
 .editor-menu-spacer { width: 14px; }
 .editor-menu-row { display: flex; align-items: center; gap: 8px; padding: 4px 9px 8px; }
 .editor-menu-value {
@@ -186,12 +151,6 @@ h1.editor-title--static:hover { background: transparent; }
   overflow-x: auto;
   scrollbar-width: thin;
 }
-.toolbar-divider {
-  width: 1px; height: 18px; margin: 0 7px;
-  background: var(--ink-a06);
-  flex-shrink: 0;
-}
-
 /* Groups keep their own buttons together when the bar has to wrap or scroll, so a heading control never ends up orphaned on the far side of a divider
    from its siblings. */
 .toolbar-group {
@@ -215,14 +174,6 @@ h1.editor-title--static:hover { background: transparent; }
   margin-left: auto; padding-right: 4px;
   font-size: 11px; color: var(--ink-ghost);
 }
-.toolbar-hint kbd {
-  font-family: var(--font-mono);
-  padding: 1px 5px; border-radius: var(--radius-xs);
-  background: var(--ink-a04);
-  border: 1px solid var(--line);
-  color: var(--ink-muted);
-}
-
 /* ── Panes ── */
 .editor-main { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 .editor-pane { position: relative; height: 100%; display: flex; flex-direction: column; min-width: 0; }
@@ -494,14 +445,6 @@ h1.editor-title--static:hover { background: transparent; }
   flex-shrink: 0;
 }
 .orail-prompt-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.orail-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  min-height: 0;
-  font-size: 10.5px;
-  color: var(--ink-faint);
-}
-.orail-link:hover:not(:disabled) { color: var(--accent-500); }
-.orail-link:disabled { opacity: 0.4; }
 .orail-foot-link { align-self: center; }
 
 /* Openers, not presets: clicking one fills the box and leaves it editable, so
@@ -880,50 +823,9 @@ h1.editor-title--static:hover { background: transparent; }
   font-size: 11px;
   color: var(--ink-faint);
 }
-.find-divider { width: 1px; height: 18px; margin: 0 6px; background: var(--ink-a06); }
 /* ── Slash menu ── */
-.slash-menu {
-  position: absolute;
-  z-index: var(--z-popover);
-  width: 320px;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 6px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-pop);
-  /* Positioned from its top-left at the caret, so it grows from the caret. */
-  transform-origin: top left;
-  animation: cmdk-rise var(--dur-enter) var(--ease-out);
-}
-.slash-group {
-  font-size: 9.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--ink-ghost);
-  padding: 8px 9px 4px;
-}
-.slash-item {
-  display: flex; align-items: center; gap: 9px;
-  width: 100%;
-  padding: 7px 9px;
-  border-radius: var(--radius);
-  font-size: 12.5px;
-  color: var(--ink-2);
-  text-align: left;
-}
-.slash-item[data-active='true'] { background: var(--ink-a06); color: var(--ink); }
-.slash-item[data-active='true'] .slash-icon { color: var(--accent-400); }
-.slash-icon { color: var(--ink-faint); flex-shrink: 0; }
-.slash-kbd {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 1px 5px; border-radius: var(--radius-xs);
-  background: var(--ink-a04);
-  color: var(--ink-faint);
-}
-.slash-empty { padding: 20px 12px; text-align: center; font-size: 12px; color: var(--ink-faint); }
+/* Placement at the caret; the panel is a MenuPanel. */
+.slash-menu { position: absolute; z-index: var(--z-popover); width: 320px; max-height: 300px; overflow-y: auto; }
 
 /* ── Inline AI ── */
 /* Placement only; the chip itself is a floating pill Button. */
@@ -932,13 +834,6 @@ h1.editor-title--static:hover { background: transparent; }
   z-index: var(--z-popover-low);
   animation: fadeInUp var(--dur-enter) var(--ease-out);
 }
-.ai-chip kbd {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 0 4px; border-radius: 4px;
-  background: var(--ink-a06);
-}
-
 /* ── The inline AI panel ──
    It lands on top of the paragraph being edited, so its size is part of its
    design rather than a consequence of its contents. 340px wide and ~300 tall
@@ -967,35 +862,6 @@ h1.editor-title--static:hover { background: transparent; }
 
 /* Six rows and a scroll, not twelve and a wall. */
 .ai-assist-list { max-height: 218px; overflow-y: auto; padding: 4px; }
-.ai-assist-empty {
-  padding: 14px 12px;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--ink-faint);
-}
-.ai-assist-empty kbd {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: var(--ink-a06);
-}
-.ai-assist-item {
-  display: flex; align-items: center; gap: 9px;
-  width: 100%;
-  padding: 6px 9px;
-  border-radius: var(--radius);
-  text-align: left;
-  transition: background var(--dur-fast) var(--ease-out);
-}
-/* One highlight, driven by the cursor — keyboard and mouse move the same
-   marker rather than each lighting a different row. `onMouseMove` sets the
-   cursor, so there is no separate `:hover` state to disagree with it. */
-.ai-assist-item[data-cursor='true'] { background: var(--accent-soft); }
-.ai-assist-icon { color: var(--ink-faint); flex-shrink: 0; }
-.ai-assist-item[data-cursor='true'] .ai-assist-icon { color: var(--accent-500); }
-.ai-assist-item[data-cursor='true'] .ai-assist-label { color: var(--ink); }
-.ai-assist-label { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
 /* Only ever on the row under the cursor. Printed on all twelve it was a
    second column of grey text, truncated to the point of saying nothing —
    "Clearer and more precise, sa…". */
@@ -1049,12 +915,6 @@ h1.editor-title--static:hover { background: transparent; }
 }
 .ai-btn--primary:hover:not(:disabled) { background: var(--accent-500); color: var(--accent-ink); }
 
-/* ── Share dialog bits ── */
-.dialog-dark {
-  background: var(--surface) !important;
-  border: 1px solid var(--line) !important;
-  border-radius: var(--radius-lg) !important;
-}
 .share-results {
   display: flex; flex-direction: column; gap: 2px;
   padding: 4px;
@@ -1130,24 +990,6 @@ h1.editor-title--static:hover { background: transparent; }
 .shortcut-label { font-size: 12.5px; color: var(--ink-2); }
 
 .shortcut-keys { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
-
-.shortcut-keys kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: var(--radius-xs);
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink-2);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  box-shadow: 0 1px 0 var(--line);
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    Export PDF — the options asked before the file is made
    ═══════════════════════════════════════════════════════════════════════ */
@@ -1195,12 +1037,6 @@ h1.editor-title--static:hover { background: transparent; }
   border: 1px solid var(--line-soft);
 }
 .pdf-note b { color: var(--ink-2); font-weight: 600; }
-
-.pdf-error {
-  font-size: var(--text-xs);
-  color: var(--status-danger);
-}
-
 .pdf-submit {
   width: 100%;
   height: 40px;
@@ -1263,11 +1099,6 @@ h1.editor-title--static:hover { background: transparent; }
 }
 
 .write-pop-asks { display: flex; flex-wrap: wrap; gap: 4px; }
-.write-pop-divider {
-  height: 1px;
-  background: var(--line-soft);
-  margin: 2px 0;
-}
 /* The chosen mode explains itself in place. The switch alone made you hover
    three buttons to learn what the three words meant. */
 .write-pop-method-hint {
@@ -1283,37 +1114,8 @@ h1.editor-title--static:hover { background: transparent; }
 
 /* Portalled to the body, so it is positioned against the viewport rather than
    against a bar that clips and seals it. */
-.toolbar-menu {
-  position: fixed;
-  z-index: var(--z-overflow-menu);
-  min-width: 172px;
-  padding: 4px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-pop);
-  /* Hangs off the chevron, so that is where it grows from. */
-  transform-origin: top left;
-  animation: cmdk-rise var(--dur-fast) var(--ease-out);
-}
-.toolbar-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  font-size: 12px;
-  color: var(--ink-2);
-  text-align: left;
-  transition: background-color var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out);
-}
-.toolbar-menu-item svg { color: var(--ink-faint); flex-shrink: 0; }
-@media (hover: hover) and (pointer: fine) {
-  .toolbar-menu-item:hover { background: var(--accent-soft); color: var(--accent-600); }
-  .toolbar-menu-item:hover svg { color: var(--accent-500); }
-}
+/* Placement at the chevron; the panel is a MenuPanel. */
+.toolbar-menu { position: fixed; z-index: var(--z-overflow-menu); min-width: 172px; }
 
 /* ── A collaborator's selection ──
    Awareness always carried the length; only the caret was drawn from it, so a
@@ -1373,8 +1175,6 @@ h1.editor-title--static:hover { background: transparent; }
      button beyond the last icon. */
   .toolbar-hint { display: none; }
   .toolbar-tail { margin-left: 0; }
-  .toolbar-divider { margin: 0 4px; }
-
   /* ── The outline as a drawer ──
      Pulled out of the flow entirely: as a flex child at these widths it took
      300px of a 375px viewport and left the writing surface as a gutter. */
