@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, X, RotateCcw, Check, CornerDownLeft, Copy, ArrowLeft } from 'lucide-react';
+import { Sparkles, X, RotateCcw, Check, CornerDownLeft, Copy, ArrowLeft } from 'lucide-react';
 import { transformSelection } from '@/lib/api';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
-import { IconButton } from '@/components/ui/primitives';
+import { IconButton, Spinner, MenuSearch, Input } from '@/components/ui';
 import { AI_ACTIONS, CONTEXT_CHARS, MIN_PASSAGE_WORDS, type AiAction } from '../lib/aiActions';
 import { countWords } from '../lib/stats';
 import { copyText } from '../lib/exporters';
@@ -181,31 +181,31 @@ export function AiAssist({
           only row it can be read on anyway. */}
       {phase === 'menu' && (
         <>
-          <div className="ai-assist-search">
-            <Sparkles className="h-3.5 w-3.5 ai-assist-spark" />
-            <input
-              ref={filterRef}
-              className="ai-assist-filter"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder={hasSelection
-                ? `${words} ${words === 1 ? 'word' : 'words'} — what should happen?`
-                : 'At the cursor — what should happen?'}
-              onKeyDown={e => {
-                if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(c + 1, results.length - 1)); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); setCursor(c => Math.max(c - 1, 0)); }
-                else if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const item = results[cursor];
-                  // Typing something no action matches is itself an
-                  // instruction — Enter runs it as one rather than doing
-                  // nothing, which is the only useful reading of that state.
-                  if (item) choose(item);
-                  else if (query.trim()) { setInstruction(query.trim()); run(AI_ACTIONS.find(a => a.id === 'custom')!, query.trim()); }
-                }
-              }}
+          <MenuSearch
+            size="sm"
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            accentIcon
+            aria-label="What should happen to the text"
+            ref={filterRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={hasSelection
+              ? `${words} ${words === 1 ? 'word' : 'words'} — what should happen?`
+              : 'At the cursor — what should happen?'}
+            onKeyDown={e => {
+              if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(c + 1, results.length - 1)); }
+              else if (e.key === 'ArrowUp') { e.preventDefault(); setCursor(c => Math.max(c - 1, 0)); }
+              else if (e.key === 'Enter') {
+                e.preventDefault();
+                const item = results[cursor];
+                // Typing something no action matches is itself an
+                // instruction — Enter runs it as one rather than doing
+                // nothing, which is the only useful reading of that state.
+                if (item) choose(item);
+                else if (query.trim()) { setInstruction(query.trim()); run(AI_ACTIONS.find(a => a.id === 'custom')!, query.trim()); }
+              }
+            }}
             />
-          </div>
 
           <div className="ai-assist-list" ref={listRef} role="listbox">
             {results.map((item, i) => {
@@ -252,9 +252,10 @@ export function AiAssist({
             run(AI_ACTIONS.find(a => a.id === 'custom')!, instruction);
           }}
         >
-          <input
+          <Input
             ref={instructionRef}
-            className="ai-assist-input"
+            size="sm"
+            aria-label="Instruction"
             placeholder="e.g. rewrite this as a worked example with numbers"
             value={instruction}
             onChange={event => setInstruction(event.target.value)}
@@ -272,7 +273,7 @@ export function AiAssist({
 
       {phase === 'running' && (
         <div className="ai-assist-running">
-          <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--accent-400)' }} />
+          <Spinner size="md" tone="accent" />
           <span>{action?.label}…</span>
         </div>
       )}

@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { uploadFile } from '@/lib/api';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Field, Input, Button, Spinner, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui';
 
 interface Props {
   open: boolean;
@@ -42,36 +37,30 @@ export function ImageDialog({ open, onOpenChange, onInsert }: Props) {
         </DialogHeader>
 
         <div className="space-y-3 mt-1">
-          <div>
-            <label className="text-[11px] text-[var(--ink-muted)] mb-1 block">From your device</label>
-            <input
+          <Field id="image-file" label="From your device" hint={uploading ? <><Spinner size="xs" /> Uploading…</> : undefined}>
+            <Input
+              id="image-file"
               type="file"
+              variant="file"
               accept="image/*"
-              className="text-xs text-[var(--ink-muted)]"
               onChange={event => { const file = event.target.files?.[0]; if (file) upload(file); }}
             />
-            {uploading && (
-              <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--ink-faint)]">
-                <Loader2 className="h-3 w-3 animate-spin" /> Uploading…
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="text-[11px] text-[var(--ink-muted)] mb-1 block">Or a URL</label>
-            <Input placeholder="https://…" value={url} onChange={e => setUrl(e.target.value)} className="glass-input text-xs" />
-          </div>
+          </Field>
+          <Field id="image-url" label="Or a URL">
+            <Input id="image-url" placeholder="https://…" value={url} onChange={e => setUrl(e.target.value)} />
+          </Field>
           {url && <img src={url} alt="" className="image-preview" />}
         </div>
 
         <DialogFooter className="gap-2 mt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="glass-btn border-[var(--line)] text-xs h-8">
+          <Button variant="secondary" size="md" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
+            variant="primary"
+            size="md"
             onClick={() => { onInsert(url.trim()); onOpenChange(false); setUrl(''); }}
             disabled={!url.trim()}
-            className="text-[var(--accent-ink)] font-semibold text-xs h-8"
-            style={{ background: 'var(--accent-400)' }}
           >
             Insert
           </Button>

@@ -1,10 +1,15 @@
 import { Wand2, X } from 'lucide-react';
-import { IconButton } from '@/components/ui/primitives';
+import { Button, IconButton, Chip, type ChipTone } from '@/components/ui';
 import type { RefinedPlan } from '../lib/generation';
 
 const KIND_LABEL: Record<string, string> = {
   moved: 'Moved', renamed: 'Renamed', added: 'Added',
   removed: 'Removed', nested: 'Nested', split: 'Split',
+};
+
+/** Additions read as growth, removals as loss, moves as the accent; the rest stay neutral. */
+const KIND_TONE: Record<string, ChipTone> = {
+  added: 'success', removed: 'danger', moved: 'accent', nested: 'accent',
 };
 
 interface Props {
@@ -46,9 +51,9 @@ export function OutlineProposal({ proposal, onApply, onDiscard }: Props) {
         <div className="orail-changes">
           {proposal.changes.map((change, i) => (
             <div key={i} className="orail-change">
-              <span className="orail-kind" data-kind={change.kind}>
+              <Chip size="xs" caps tone={KIND_TONE[change.kind] ?? 'neutral'} className="orail-kind">
                 {KIND_LABEL[change.kind] ?? change.kind}
-              </span>
+              </Chip>
               <div>
                 <div className="orail-change-title">{change.title}</div>
                 <div className="orail-change-reason">{change.reason}</div>
@@ -59,7 +64,7 @@ export function OutlineProposal({ proposal, onApply, onDiscard }: Props) {
       )}
 
       <div className="orail-proposal-actions">
-        <button className="orail-go" onClick={onApply}>Apply</button>
+        <Button variant="primary" size="xs" onClick={onApply}>Apply</Button>
         <button className="orail-link" onClick={onDiscard}>Discard</button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cpu, Globe, Link2, Plus, Sparkles, X } from 'lucide-react';
-import { IconButton } from '@/components/ui/primitives';
+import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton } from '@/components/ui';
 import type { GenerationMethod } from '../lib/generation';
 
 const METHODS: { key: GenerationMethod; icon: typeof Globe; label: string; hint: string }[] = [
@@ -97,13 +97,13 @@ export function WritePopover({
       </div>
 
       <div className="write-pop-body">
-        <label className="write-pop-label" htmlFor="write-instruction">
-          How should it be written? <span className="write-pop-optional">optional</span>
-        </label>
-        <textarea
+        <Label size="sm" htmlFor="write-instruction" requirement="optional">
+          How should it be written?
+        </Label>
+        <Textarea
           id="write-instruction"
           ref={inputRef}
-          className="write-pop-input"
+          size="sm"
           rows={2}
           value={instruction}
           placeholder={bulk
@@ -119,37 +119,36 @@ export function WritePopover({
 
         <div className="write-pop-asks">
           {ASKS.map(ask => (
-            <button
+            <ChipButton
               key={ask.label}
-              type="button"
-              className="write-pop-ask"
+              tone="outline"
               title={ask.text}
               onClick={() => { setInstruction(ask.text); inputRef.current?.focus(); }}
             >
               {ask.label}
-            </button>
+            </ChipButton>
           ))}
         </div>
 
         <div className="write-pop-divider" />
 
-        <span className="write-pop-label">Where the material comes from</span>
-        <div className="method-switch">
-          {METHODS.map(m => (
-            <button key={m.key} type="button" className="method-btn" data-active={method === m.key}
-              onClick={() => onMethod(m.key)} title={m.hint}>
-              <m.icon className="h-3 w-3" />{m.label}
-            </button>
-          ))}
-        </div>
+        <Label asChild size="sm"><span>Where the material comes from</span></Label>
+        <Segmented
+          size="xs"
+          fill
+          aria-label="Where the material comes from"
+          value={method}
+          onChange={onMethod}
+          options={METHODS.map(m => ({ value: m.key, label: m.label, icon: <m.icon className="h-3 w-3" />, title: m.hint }))}
+        />
         <p className="write-pop-method-hint">{METHODS.find(m => m.key === method)?.hint}</p>
 
         {method === 'urls' && (
           <div className="orail-urls">
             {urls.map((url, i) => (
               <div key={i} className="flex gap-1">
-                <input
-                  className="orail-input" placeholder="https://…" value={url}
+                <Input
+                  size="sm" aria-label={`Source URL ${i + 1}`} placeholder="https://…" value={url}
                   onChange={e => onUrls(urls.map((u, j) => (j === i ? e.target.value : u)))}
                 />
                 {urls.length > 1 && (
@@ -167,10 +166,10 @@ export function WritePopover({
           </div>
         )}
 
-        <button type="submit" className="orail-primary write-pop-go" disabled={needsUrls}>
+        <Button type="submit" variant="primary" size="sm" width="full" className="write-pop-go" disabled={needsUrls}>
           <Sparkles className="h-3 w-3" aria-hidden="true" />
           {needsUrls ? 'Add a URL first' : rewriting ? `Rewrite ${target}` : `Write ${target}`}
-        </button>
+        </Button>
       </div>
     </form>
   );

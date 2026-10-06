@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, CaseSensitive, X, Replace } from 'lucide-react';
-import { IconButton } from '@/components/ui/primitives';
+import { Button, IconButton, Input } from '@/components/ui';
 import type { FindReplace } from '../hooks/useFindReplace';
 
 /** Find and replace, opened with ⌘F and closed with Escape. */
@@ -15,8 +15,9 @@ export function FindBar({ find }: { find: FindReplace }) {
 
   return (
     <div className="find-bar" role="search">
-      <input
+      <Input
         ref={inputRef}
+        size="sm"
         className="find-input"
         placeholder="Find in document"
         value={find.query}
@@ -47,7 +48,8 @@ export function FindBar({ find }: { find: FindReplace }) {
 
       <div className="find-divider" />
 
-      <input
+      <Input
+        size="sm"
         className="find-input"
         placeholder="Replace with"
         value={find.replacement}
@@ -58,12 +60,12 @@ export function FindBar({ find }: { find: FindReplace }) {
         }}
         aria-label="Replace with"
       />
-      <button className="find-btn" onClick={find.replaceCurrent} disabled={!find.matches.length}>
+      <Button variant="secondary" size="md" onClick={find.replaceCurrent} disabled={!find.matches.length}>
         <Replace className="h-3 w-3" /> Replace
-      </button>
-      <button className="find-btn" onClick={find.replaceAll} disabled={!find.matches.length}>
+      </Button>
+      <Button variant="secondary" size="md" onClick={find.replaceAll} disabled={!find.matches.length}>
         All
-      </button>
+      </Button>
 
       <IconButton onClick={() => find.setOpen(false)} title="Close" aria-label="Close find">
         <X className="h-3.5 w-3.5" />

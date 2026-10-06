@@ -170,104 +170,10 @@
 }
 .auth-foot a:hover { text-decoration: underline; }
 
-/* ── Fields ──
-   The label sits above the field and the hint below it, so the eye runs
-   label → field → hint in the order the three are needed. */
-.auth-field { display: flex; flex-direction: column; gap: 0.4rem; }
 
-.auth-label {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--ink-2);
-}
 
-.auth-input-wrap { position: relative; display: flex; align-items: center; }
 
-/* The leading icon names the field at a glance; the input is padded past it
-   rather than the icon being floated over text, so a long value never runs
-   underneath it. */
-.auth-input-icon {
-  position: absolute;
-  left: 0.75rem;
-  display: flex;
-  color: var(--ink-faint);
-  pointer-events: none;
-  transition: color var(--dur-fast) var(--ease-out);
-}
 
-.auth-input {
-  width: 100%;
-  height: 2.75rem;
-  padding: 0 0.9rem 0 2.4rem;
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 2px rgb(var(--shadow-rgb) / 0.07);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  transition: border-color var(--dur-fast) var(--ease-out),
-              background var(--dur-fast) var(--ease-out),
-              box-shadow var(--dur-fast) var(--ease-out);
-}
-
-.auth-input::placeholder { color: var(--ink-ghost); }
-
-/* Room on the right for the reveal button, when there is one. */
-.auth-input--reveal { padding-right: 2.75rem; }
-
-/* No leading icon, so the text starts where the icon would have. Written as
-   a class rather than a Tailwind `pl-*` utility because `.auth-input` sets
-   padding as a shorthand, and this file loads after Tailwind's. */
-.auth-input--bare { padding-left: 0.9rem; }
-
-.auth-input:focus {
-  outline: none;
-  background: var(--surface);
-  border-color: var(--accent-400);
-  box-shadow: 0 0 0 3px var(--accent-soft),
-              inset 0 1px 2px rgb(var(--shadow-rgb) / 0.05);
-}
-
-.auth-input-wrap:focus-within .auth-input-icon { color: var(--accent-500); }
-
-/* Autofill paints its own background straight over the glass. There is no
-   property that stops it, so the fill is pushed off-screen with a very long
-   inset shadow and the text colour is restored by hand. */
-.auth-input:-webkit-autofill,
-.auth-input:-webkit-autofill:hover,
-.auth-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--ink);
-  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
-  caret-color: var(--ink);
-}
-
-.auth-reveal {
-  position: absolute;
-  right: 0.4rem;
-  height: 2rem;
-  width: 2rem;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-faint);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.auth-hint {
-  font-size: 0.6875rem;
-  line-height: 1.45;
-  color: var(--ink-faint);
-}
 
 /* ── Strength meter ──
    Four segments rather than a continuous bar: a bar invites the reader to
@@ -321,15 +227,3 @@
 
 .auth-error svg { flex-shrink: 0; margin-top: 0.1rem; }
 
-/* ── Submit ──
-   Size only. The fill, the border and every state are the primary button in
-   buttons.css, so the one control on this screen is unmistakably the same
-   control the rest of the app uses. It used to declare its own gradient, its
-   own glow and its own travelling white shine here. */
-.auth-submit {
-  margin-top: 0.25rem;
-  height: 2.75rem;
-  width: 100%;
-  font-size: 0.9375rem;
-  cursor: pointer;
-}

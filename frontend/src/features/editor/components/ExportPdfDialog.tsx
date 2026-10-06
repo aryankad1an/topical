@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FileDown, Loader2, X } from 'lucide-react';
+import { FileDown, X } from 'lucide-react';
+import { Button, Checkbox, FieldGroup, IconButton, ChipButton } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 import {
   PDF_DEFAULTS, exportPdf,
@@ -16,25 +17,25 @@ function Choice<T extends string>({
   options: { value: T; label: string; swatch?: string }[];
 }) {
   return (
-    <div className="pdf-field">
-      <span className="pdf-field-label">{label}</span>
+    <FieldGroup label={label}>
       <div className="pdf-choices" role="radiogroup" aria-label={label}>
         {options.map(option => (
-          <button
+          <ChipButton
             key={option.value}
-            type="button"
+            tone="neutral"
+            shape="rounded"
             role="radio"
             aria-checked={value === option.value}
-            className="pdf-choice"
-            data-active={value === option.value}
+            aria-pressed={undefined}
+            selected={value === option.value}
             onClick={() => onChange(option.value)}
           >
             {option.swatch && <span className="pdf-swatch" style={{ background: option.swatch }} />}
             {option.label}
-          </button>
+          </ChipButton>
         ))}
       </div>
-    </div>
+    </FieldGroup>
   );
 }
 
@@ -91,9 +92,9 @@ export function ExportPdfDialog({
           <span className="text-sm font-semibold text-[var(--ink-2)] flex items-center gap-2">
             <FileDown className="h-4 w-4" /> Export PDF
           </span>
-          <button type="button" className="detail-close-btn" onClick={onClose} aria-label="Close">
+          <IconButton type="button" size="lg" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
-          </button>
+          </IconButton>
         </div>
 
         <div className="pdf-body">
@@ -135,35 +136,29 @@ export function ExportPdfDialog({
             ]}
           />
 
-          <div className="pdf-field">
-            <span className="pdf-field-label">Include</span>
+          <FieldGroup label="Include">
             <div className="pdf-toggles">
-              <label className="pdf-toggle">
-                <input type="checkbox" checked={options.titlePage}
-                  onChange={e => set('titlePage', e.target.checked)} />
-                Title page
-              </label>
-              <label className="pdf-toggle">
-                <input type="checkbox" checked={options.colourCode}
-                  onChange={e => set('colourCode', e.target.checked)} />
-                Colour in code blocks
-              </label>
-              <label className="pdf-toggle">
-                <input type="checkbox"
-                  checked={options.edgeToEdge || options.theme === 'ink'}
-                  disabled={options.theme === 'ink'}
-                  onChange={e => set('edgeToEdge', e.target.checked)} />
-                <span>
-                  Hide the browser's date &amp; URL
-                  <span className="pdf-toggle-note">
-                    {options.theme === 'ink'
-                      ? 'Always on for Ink, which needs the full page.'
-                      : 'Removes the page margin they print in; later pages get less top space.'}
-                  </span>
-                </span>
-              </label>
+              <Checkbox
+                label="Title page"
+                checked={options.titlePage}
+                onChange={e => set('titlePage', e.target.checked)}
+              />
+              <Checkbox
+                label="Colour in code blocks"
+                checked={options.colourCode}
+                onChange={e => set('colourCode', e.target.checked)}
+              />
+              <Checkbox
+                label="Hide the browser's date & URL"
+                note={options.theme === 'ink'
+                  ? 'Always on for Ink, which needs the full page.'
+                  : 'Removes the page margin they print in; later pages get less top space.'}
+                checked={options.edgeToEdge || options.theme === 'ink'}
+                disabled={options.theme === 'ink'}
+                onChange={e => set('edgeToEdge', e.target.checked)}
+              />
             </div>
-          </div>
+          </FieldGroup>
 
           {error && <p className="pdf-error">{error}</p>}
 
@@ -180,11 +175,9 @@ export function ExportPdfDialog({
             )}
           </p>
 
-          <button type="submit" className="accent-btn pdf-submit" disabled={busy}>
-            {busy
-              ? <><Loader2 className="h-4 w-4 animate-spin" /> Preparing…</>
-              : <><FileDown className="h-4 w-4" /> Export PDF</>}
-          </button>
+          <Button type="submit" variant="primary" size="xl" width="full" loading={busy}>
+            {busy ? 'Preparing…' : <><FileDown className="h-4 w-4" /> Export PDF</>}
+          </Button>
         </div>
       </form>
     </div>

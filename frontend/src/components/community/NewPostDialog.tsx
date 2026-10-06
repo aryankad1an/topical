@@ -5,6 +5,7 @@ import { createPost } from '@/lib/communityApi';
 import { getPublicLessonPlans } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
+import { Button, Field, IconButton, Input, Textarea } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 
 interface NewPostDialogProps {
@@ -61,9 +62,9 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
           <span className="text-sm font-semibold text-[var(--ink-2)] flex items-center gap-2">
             <PenLine className="h-4 w-4" /> New post
           </span>
-          <button type="button" className="detail-close-btn" onClick={onClose} aria-label="Close">
+          <IconButton type="button" size="lg" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
-          </button>
+          </IconButton>
         </div>
 
         <div className="p-5 flex flex-col gap-4">
@@ -71,49 +72,42 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
               somebody types into it, so a half-filled form of placeholder-only
               fields no longer says what any of them are — and "Title*" put the
               required marker in the one place guaranteed to vanish first. */}
-          <div className="dialog-field">
-            <label className="dialog-label" htmlFor="new-post-title">
-              Title <span className="dialog-req">required</span>
-            </label>
-            <input
+          <Field id="new-post-title" label="Title" requirement="required">
+            <Input
               id="new-post-title"
               autoFocus
               required
-              className="glass-input w-full h-10 px-4 text-sm"
               placeholder="What do you want to ask or share?"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              style={{ cursor: 'text' }}
               maxLength={200}
             />
-          </div>
+          </Field>
 
-          <div className="dialog-field">
-            <label className="dialog-label" htmlFor="new-post-body">
-              Body <span className="dialog-optional">optional</span>
-            </label>
-            <textarea
+          <Field id="new-post-body" label="Body" requirement="optional">
+            <Textarea
               id="new-post-body"
-              className="glass-input w-full p-3 text-sm resize-none"
               placeholder="Add the detail that makes it answerable."
               value={body}
               onChange={e => setBody(e.target.value)}
               rows={4}
-              style={{ borderRadius: 12, cursor: 'text' }}
               maxLength={5000}
             />
-          </div>
+          </Field>
 
           {/* Attach lesson */}
           <div>
-            <button
+            <Button
               type="button"
-              className="flex items-center gap-2 text-xs text-[var(--ink-faint)] hover:text-[var(--ink-muted)] transition-colors mb-2"
+              variant="ghost"
+              size="md"
+              className="mb-2"
+              aria-expanded={showLessons}
               onClick={() => setShowLessons(v => !v)}
             >
               <BookOpen className="h-3.5 w-3.5" />
               {attachedName ? `Attached: ${attachedName}` : 'Attach one of your lessons (optional)'}
-            </button>
+            </Button>
 
             {showLessons && (
               <div className="lesson-picker">
@@ -141,13 +135,15 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="cta-btn w-full"
+            variant="primary"
+            size="hero"
+            width="full"
             disabled={!title.trim() || submitting}
           >
             {submitting ? 'Posting…' : 'Post to community'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

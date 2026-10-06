@@ -1,13 +1,9 @@
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { changePassword } from '@/lib/api';
 import { passwordProblem } from '@/lib/validation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input } from '@/components/ui';
 
 /**
  * Change your password.
@@ -56,8 +52,7 @@ export function ChangePasswordCard() {
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="current-password">Current password</Label>
+          <Field id="current-password" label="Current password">
             <Input
               id="current-password"
               type="password"
@@ -66,9 +61,8 @@ export function ChangePasswordCard() {
               onChange={(e) => setCurrent(e.target.value)}
               required
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-password">New password</Label>
+          </Field>
+          <Field id="new-password" label="New password">
             <Input
               id="new-password"
               type="password"
@@ -77,7 +71,7 @@ export function ChangePasswordCard() {
               onChange={(e) => setNext(e.target.value)}
               required
             />
-          </div>
+          </Field>
 
           {error && (
             <p role="alert" className="text-sm text-[var(--status-danger)]">
@@ -85,8 +79,8 @@ export function ChangePasswordCard() {
             </p>
           )}
 
-          <Button type="submit" variant="outline" className="w-full" disabled={pending}>
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Change password'}
+          <Button type="submit" variant="secondary" size="lg" width="full" loading={pending}>
+            {!pending && 'Change password'}
           </Button>
         </form>
       </CardContent>

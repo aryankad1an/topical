@@ -4,6 +4,7 @@ import type { Post } from '@/lib/communityApi';
 import { votePost } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { relativeTime } from '@/lib/format';
+import { Button, IconButton } from '@/components/ui';
 
 interface PostCardProps {
   post: Post;
@@ -36,28 +37,30 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
 
       {/* ── Vote column ── */}
       <div className="community-vote-col" onClick={e => e.stopPropagation()}>
-        <button
-          className="vote-btn"
+        <IconButton
+          size="lg"
           onClick={e => handleVote(e, 1)}
           disabled={!isAuthenticated || voting}
           title="Upvote"
+          aria-label="Upvote"
         >
           <ArrowUp className="h-4 w-4" />
-        </button>
+        </IconButton>
         <span
           className="vote-score"
           style={{ color: score > 0 ? 'var(--ink-muted)' : score < 0 ? 'var(--ink-ghost)' : 'var(--ink-a12)' }}
         >
           {score}
         </span>
-        <button
-          className="vote-btn"
+        <IconButton
+          size="lg"
           onClick={e => handleVote(e, -1)}
           disabled={!isAuthenticated || voting}
           title="Downvote"
+          aria-label="Downvote"
         >
           <ArrowDown className="h-4 w-4" />
-        </button>
+        </IconButton>
       </div>
 
       {/* ── Content ── */}
@@ -72,36 +75,24 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
             <div onClick={e => e.stopPropagation()} className="shrink-0 flex items-center gap-1">
               {confirming ? (
                 <>
-                  <button
-                    className="text-[10.5px] font-semibold px-2 py-1 rounded-md transition-colors"
-                    /* The label was `--status-danger` on a `--status-danger`
-                       fill: a red lozenge with an invisible word in it. The
-                       fill is the tint, the label is the colour. */
-                    style={{
-                      color: 'var(--status-danger)',
-                      background: 'rgb(var(--danger-rgb) / 0.12)',
-                      border: '1px solid rgb(var(--danger-rgb) / 0.35)',
-                    }}
-                    onClick={() => onDelete(post.id)}
-                  >
+                  <Button variant="secondary" tone="danger" size="xs" onClick={() => onDelete(post.id)}>
                     Delete?
-                  </button>
-                  <button
-                    className="text-[10.5px] px-2 py-1 rounded-md text-[var(--ink-faint)] hover:text-[var(--ink-2)]"
-                    onClick={() => setConfirming(false)}
-                  >
+                  </Button>
+                  <Button variant="ghost" size="xs" onClick={() => setConfirming(false)}>
                     Cancel
-                  </button>
+                  </Button>
                 </>
               ) : (
-                <button
-                  className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                <IconButton
+                  size="sm"
+                  tone="danger"
+                  revealOnHover
                   onClick={() => setConfirming(true)}
                   title="Delete post"
                   aria-label={`Delete post "${post.title}"`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </IconButton>
               )}
             </div>
           )}

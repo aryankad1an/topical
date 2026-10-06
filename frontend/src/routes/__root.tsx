@@ -12,7 +12,7 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
-import { Toaster } from "@/components/ui/sonner"
+import { Avatar, Button, IconButton, Kbd, Toaster } from '@/components/ui';
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
@@ -95,7 +95,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
     return () => window.removeEventListener('resize', measure);
   }, [currentPath, isAuthenticated, navLinks.length]);
 
-  const initial = (user?.given_name?.[0] || user?.username?.[0] || 'U').toUpperCase();
+  const avatarName = user?.given_name || user?.username || null;
   // The same picture the profile page shows: an upload wins, then whatever the
   // identity provider gave us, and only then the letter.
   const avatarSrc = user?.avatarUrl || user?.picture || null;
@@ -160,36 +160,21 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 
         <div style={{ width: 1, height: 16, background: 'var(--ink-a06)', margin: '0 3px', flexShrink: 0 }} />
 
-        <button className="nav-kbd" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
-          <Command className="h-3 w-3" />K
-        </button>
+        <IconButton size="lg" onClick={onOpenCommand} title="Command palette" aria-label="Open command palette">
+          <Command className="h-3 w-3" /><Kbd variant="bare">K</Kbd>
+        </IconButton>
 
         <ThemeToggle className="ml-1" />
 
         {isAuthenticated ? (
           <Link to="/profile" style={{ marginLeft: 8, textDecoration: 'none' }} title="Profile" aria-label="Profile">
-            <span className="nav-avatar">
-              {avatarSrc ? <img src={avatarSrc} alt="" /> : initial}
-            </span>
+            <Avatar size="sm" shape="circle" tone="accent" className="nav-avatar" src={avatarSrc} name={avatarName} />
           </Link>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
-            <Link
-              to="/login"
-              className="accent-btn"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '6px 14px',
-                borderRadius: 100,
-                fontSize: 12.5,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                minHeight: 0,
-              }}
-            >
-              Sign in
-            </Link>
+            <Button asChild variant="primary" size="md" shape="pill">
+              <Link to="/login">Sign in</Link>
+            </Button>
           </div>
         )}
       </nav>
@@ -205,14 +190,14 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
         </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          <button
-            className="icon-btn"
-            style={{ height: 34, width: 34 }}
+          <IconButton
+            size="md"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+          </IconButton>
         </div>
       </div>
 
@@ -224,7 +209,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
               <Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
                 <BrandMark size="md" />
               </Link>
-              <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 text-[var(--ink-muted)]"><X size={20} /></button>
+              <IconButton size="lg" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu"><X size={20} /></IconButton>
             </div>
             <div className="flex flex-col gap-1 p-6">
               {links.map(link => (

@@ -1,8 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { userQueryOptions } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
+import { Button, LoadingState } from '@/components/ui';
 
 /**
  * The gate every signed-in screen sits behind.
@@ -33,10 +32,7 @@ function AuthenticatedLayout() {
 
 function VerifyingSession() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60dvh]">
-      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-      <p className="text-muted-foreground">Verifying authentication...</p>
-    </div>
+    <LoadingState size="page" label="Verifying authentication..." />
   );
 }
 
@@ -52,10 +48,10 @@ function SignInPrompt() {
       <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
       <p className="text-muted-foreground mb-6">Please sign in or create an account to access this content</p>
       <div className="flex gap-4">
-        <Button asChild size="lg">
+        <Button asChild variant="primary" size="xl">
           <Link to="/login" search={{ redirect: pathname }}>Sign in</Link>
         </Button>
-        <Button asChild variant="outline" size="lg">
+        <Button asChild variant="secondary" size="xl">
           <Link to="/register">Create account</Link>
         </Button>
       </div>

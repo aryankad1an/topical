@@ -1,4 +1,5 @@
-import { Globe, Loader2, Lock } from 'lucide-react';
+import { Globe, Lock } from 'lucide-react';
+import { Chip, ChipButton, Spinner } from '@/components/ui';
 
 interface Props {
   isPublic: boolean;
@@ -29,31 +30,29 @@ interface Props {
  * a switch that refuses is worse than no switch.
  */
 export function VisibilityChip({ isPublic, canChange, busy, name, onChange }: Props) {
-  const Icon = busy ? Loader2 : isPublic ? Globe : Lock;
+  const Icon = isPublic ? Globe : Lock;
   const label = isPublic ? 'Public' : 'Private';
 
   const body = (
     <>
-      <Icon className={`h-2.5 w-2.5${busy ? ' animate-spin' : ''}`} />
+      {busy ? <Spinner size="2xs" /> : <Icon className="h-2.5 w-2.5" />}
       {label}
     </>
   );
 
   if (!canChange) {
-    return <span className="doc-chip" data-public={isPublic || undefined}>{body}</span>;
+    return <Chip tone={isPublic ? 'accent' : 'quiet'}>{body}</Chip>;
   }
 
   return (
-    <button
-      type="button"
-      className="doc-chip doc-chip--action"
-      data-public={isPublic || undefined}
+    <ChipButton
+      tone={isPublic ? 'accent' : 'quiet'}
       disabled={busy}
       onClick={() => onChange(!isPublic)}
       title={isPublic ? `Unpublish “${name}”` : `Publish “${name}” to the community`}
       aria-label={isPublic ? `Unpublish “${name}”` : `Publish “${name}” to the community`}
     >
       {body}
-    </button>
+    </ChipButton>
   );
 }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  ArrowLeft, Copy, Download, Eye, FileCode, FileDown, Loader2, Printer, Redo2, Save,
+  ArrowLeft, Copy, Download, Eye, FileCode, FileDown, Printer, Redo2, Save,
   Settings2, SplitSquareHorizontal, Undo2, ListTree, Check, Sun, Moon, Pencil, Link2,
 } from 'lucide-react';
-import { IconButton } from '@/components/ui/primitives';
+import { Button, IconButton, Spinner, Input, Segmented } from '@/components/ui';
 import { Collaborators } from '@/components/Collaborators';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { setTheme, useTheme } from '@/lib/theme';
@@ -108,7 +108,8 @@ export function EditorHeader(props: Props) {
       {/* An input you cannot type into is a lie about what it is: reading gets
           the name as a heading, which is also what it is semantically. */}
       {editing ? (
-        <input
+        <Input
+          variant="bare"
           className="editor-title"
           value={name}
           onChange={event => onRename(event.target.value)}
@@ -171,31 +172,32 @@ export function EditorHeader(props: Props) {
           bar they are the two controls whose absence costs least. */}
       {editing && !compact && (
         <>
-          <button className="toolbar-btn" onClick={onUndo} title="Undo  ⌘Z" aria-label="Undo">
+          <IconButton size="lg" onClick={onUndo} title="Undo  ⌘Z" aria-label="Undo">
             <Undo2 className="h-4 w-4" />
-          </button>
-          <button className="toolbar-btn" onClick={onRedo} title="Redo  ⌘⇧Z" aria-label="Redo">
+          </IconButton>
+          <IconButton size="lg" onClick={onRedo} title="Redo  ⌘⇧Z" aria-label="Redo">
             <Redo2 className="h-4 w-4" />
-          </button>
+          </IconButton>
         </>
       )}
 
       {/* Labels off when there is no width for them — the icons carry it, and
           each button keeps its accessible name. */}
-      <div className={`segmented${compact ? '' : ' segmented--labeled'} ml-1`}>
-        {views.map(view => (
-          <button
-            key={view.mode}
-            data-active={viewMode === view.mode}
-            onClick={() => onViewMode(view.mode)}
-            title={view.label}
-            aria-label={view.label}
-          >
-            <view.icon className="h-3.5 w-3.5" />
-            {!compact && view.label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        size="sm"
+        iconOnly={compact}
+        className="ml-1"
+        aria-label="View"
+        value={viewMode}
+        onChange={onViewMode}
+        options={views.map(view => ({
+          value: view.mode,
+          label: view.label,
+          icon: <view.icon className="h-3.5 w-3.5" />,
+          title: view.label,
+          'aria-label': view.label,
+        }))}
+      />
 
       {/* ── Three controls, or one ──
           Wide, the theme switch, the view options and the export menu each get
@@ -208,15 +210,15 @@ export function EditorHeader(props: Props) {
         {!compact && <ThemeToggle />}
 
         <div className="editor-menu-wrap">
-          <button
-            className="toolbar-btn"
-            data-active={menu === 'view'}
+          <IconButton
+            size="lg"
+            active={menu === 'view'}
             onClick={() => setMenu(menu === 'view' ? 'none' : 'view')}
             title="View options"
             aria-label="View options"
           >
             <Settings2 className="h-4 w-4" />
-          </button>
+          </IconButton>
 
           {menu === 'view' && (
             <div className="editor-menu">
@@ -236,9 +238,9 @@ export function EditorHeader(props: Props) {
 
               <div className="editor-menu-label">Text size</div>
               <div className="editor-menu-row">
-                <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.max(12, options.fontSize - 1) })}>−</button>
+                <Button variant="secondary" size="md" aria-label="Smaller text" onClick={() => onOptions({ fontSize: Math.max(12, options.fontSize - 1) })}>−</Button>
                 <span className="editor-menu-value">{options.fontSize}px</span>
-                <button className="btn-subtle px-2 py-1" onClick={() => onOptions({ fontSize: Math.min(24, options.fontSize + 1) })}>+</button>
+                <Button variant="secondary" size="md" aria-label="Larger text" onClick={() => onOptions({ fontSize: Math.min(24, options.fontSize + 1) })}>+</Button>
               </div>
 
               {compact && (
@@ -270,15 +272,15 @@ export function EditorHeader(props: Props) {
 
         {!compact && (
           <div className="editor-menu-wrap">
-            <button
-              className="toolbar-btn"
-              data-active={menu === 'export'}
+            <IconButton
+              size="lg"
+              active={menu === 'export'}
               onClick={() => setMenu(menu === 'export' ? 'none' : 'export')}
               title="Export"
               aria-label="Export"
             >
               <Download className="h-4 w-4" />
-            </button>
+            </IconButton>
 
             {menu === 'export' && <div className="editor-menu">{exportItems}</div>}
           </div>
@@ -290,21 +292,25 @@ export function EditorHeader(props: Props) {
           the state — the icon still distinguishes saving from saved, and the
           accessible name still says which. */}
       {editing ? (
-        <button
-          className="accent-btn editor-save"
+        /* Secondary is what this rendered: `.editor-save` sat in both the primary
+           and the secondary lists and the secondary one won. LEDGER A-08. */
+        <Button
+          variant="secondary"
+          size="md"
+          density={compact ? 'tight' : 'default'}
           onClick={onSave}
           disabled={isSaving}
           title={isSaving ? 'Saving' : isDirty ? 'Save' : 'Saved'}
           aria-label={isSaving ? 'Saving' : isDirty ? 'Save' : 'Saved'}
         >
-          {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          {isSaving ? <Spinner size="sm" /> : <Save className="h-3.5 w-3.5" />}
           {!compact && (isSaving ? 'Saving' : isDirty ? 'Save' : 'Saved')}
-        </button>
+        </Button>
       ) : onEdit ? (
-        <button className="accent-btn editor-save" onClick={onEdit} title="Edit" aria-label="Edit">
+        <Button variant="secondary" size="md" density={compact ? 'tight' : 'default'} onClick={onEdit} title="Edit" aria-label="Edit">
           <Pencil className="h-3.5 w-3.5" />
           {!compact && 'Edit'}
-        </button>
+        </Button>
       ) : null}
     </header>
   );

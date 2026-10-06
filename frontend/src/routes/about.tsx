@@ -9,7 +9,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { Surface } from '@/components/ui/primitives';
+import { Button, Surface, Chip } from '@/components/ui';
 
 export const Route = createFileRoute('/about')({
   component: About,
@@ -48,7 +48,7 @@ function About() {
       <section className="band" style={{ paddingTop: 'clamp(3.5rem, 8vw, 5.5rem)' }}>
         <div className="band-inner">
           <div className="section-head" style={{ maxWidth: '38rem' }}>
-            <span className="eyebrow">About</span>
+            <Chip size="md" caps tone="accent">About</Chip>
             <h1 className="section-title" style={{ fontSize: 'clamp(2.25rem, 5vw, 3.25rem)', marginTop: '1.1rem' }}>
               Structure first, then the words.
             </h1>
@@ -131,16 +131,14 @@ function About() {
                 ? 'Create another document or explore what the community has published.'
                 : 'Sign up, add a provider key, and make your first document in a couple of minutes.'}
             </p>
-            <Link
-              to={isAuthenticated ? '/projects' : '/register'}
-              className="cta-btn group"
-              style={{ marginTop: '2rem' }}
-            >
+            <Button asChild variant="primary" size="hero" className="mt-8">
+            <Link to={isAuthenticated ? '/projects' : '/register'}>
               <span>{isAuthenticated ? 'Go to Projects' : 'Get started'}</span>
               <span className="cta-arrow cta-arrow-animated">
                 <ArrowRight className="h-[18px] w-[18px]" />
               </span>
             </Link>
+            </Button>
           </div>
         </div>
       </section>

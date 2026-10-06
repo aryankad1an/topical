@@ -31,13 +31,13 @@
   box-shadow: none;
 }
 
-/* Interactive surfaces lift and warm toward the accent on hover */
-.surface--interactive:hover {
-  transform: translateY(-2px);
-  border-color: var(--surface-accent-line, var(--line-strong));
-  box-shadow: var(--shadow);
-}
-.surface--raised:hover { box-shadow: var(--shadow-lg); }
+
+/* Card slots (components/ui/card.tsx): the 24px inset the shadcn card used,
+   with the content butting up to the header rather than re-padding the top. */
+.card-header { display: flex; flex-direction: column; gap: var(--space-1-5); padding: var(--space-6); }
+.card-description { font-size: 0.875rem; line-height: 1.43; color: var(--ink-muted); }
+.card-content { padding: 0 var(--space-6) var(--space-6); }
+.card-footer { display: flex; align-items: center; padding: 0 var(--space-6) var(--space-6); }
 
 /* Padding scale, so panels don't each invent their own */
 .surface-p-sm { padding: 0.85rem 1rem; }
@@ -163,11 +163,10 @@
   .provider-tile:hover,
   .brand-card:hover,
   .community-card:hover,
-  .lesson-community-card:hover,
-  .surface--interactive:hover {
+  .lesson-community-card:hover {
     transform: none;
   }
-  .cta-btn:hover .cta-arrow {
+  .btn:hover .cta-arrow {
     transform: none;
   }
 }
@@ -212,6 +211,19 @@
   height: 88px; width: 88px; border-radius: var(--radius-xl); font-size: 2rem;
   box-shadow: var(--shadow-lg);
 }
+.avatar--circle { border-radius: 50%; }
+/* An upload in progress over the picture it will replace. */
+.avatar-busy {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--scrim);
+}
+/* The nav's avatar: the accent behind the initial, so a transparent picture
+   still reads against the glass pill. */
+.avatar--accent { background: var(--accent-400); border-color: var(--ink-a12); font-family: var(--font-sans); }
+/* The photo picker's: a quiet well, because the picture is what is about to change. */
+.avatar--muted { background: var(--surface-2); color: var(--ink); font-family: var(--font-sans); font-weight: 500; }
 
 /* ── Card heading ──
    Named here rather than left to Tailwind utilities on the component, so the
@@ -226,37 +238,77 @@
   color: var(--ink);
 }
 
-/* ── Unified chip ── */
+/* ── Chip (components/ui/primitives.tsx) ──
+   Labels and the small things you can press. Pills describe; rounded
+   rectangles act — `chip--rounded` is for an option among options. */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 9px;
   border-radius: var(--radius-pill);
-  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.005em;
+  line-height: 1;
   white-space: nowrap;
   border: 1px solid var(--line);
   background: var(--surface-2);
   color: var(--ink-muted);
 }
+.chip--xs { padding: 2px 6px; font-size: 9px; font-weight: 700; }
+.chip--sm { height: 24px; padding: 0 9px; font-size: 10.5px; }
+.chip--md { padding: 0.3rem 0.8rem; font-size: 0.6875rem; }
+.chip--caps { text-transform: uppercase; letter-spacing: 0.07em; }
+.chip--mono { font-family: var(--font-mono); }
+.chip--rounded { border-radius: var(--radius); }
+
+.chip--quiet { color: var(--ink-faint); background: var(--ink-a04); border-color: var(--line-soft); }
+.chip--outline { color: var(--ink-muted); background: transparent; border-color: var(--line-soft); }
 .chip--accent { color: var(--accent-600); background: var(--accent-soft); border-color: var(--accent-line); }
 .chip--latex { color: var(--latex-500); background: var(--latex-soft); border-color: rgb(var(--latex-rgb) / 0.34); }
 .chip--success { color: var(--status-success); background: rgb(var(--success-rgb) / 0.12); border-color: rgb(var(--success-rgb) / 0.35); }
 .chip--danger { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.1); border-color: rgb(var(--danger-rgb) / 0.3); }
-.chip--mono { font-family: var(--font-mono); }
-/* Secondary action. This exact border/background pair was repeated inline
-   across the profile, public profile and providers screens. */
-.btn-subtle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-size: 12px;
-  text-decoration: none;
+.chip--brand {
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 15%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 35%, transparent);
 }
-.btn-subtle--pill { border-radius: var(--radius-pill); }
+
+/* Pressable chips: medium weight at rest, the 40px floor stated for md. */
+.chip-btn {
+  font-weight: 500;
+  cursor: pointer;
+  transition-property: var(--transition-control);
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease-out);
+}
+.chip-btn.chip--sm { min-height: 0; min-width: 0; }
+.chip-btn.chip--md { height: var(--control-h); padding: 0 0.7rem; font-size: var(--text-xs); }
+@media (hover: hover) and (pointer: fine) {
+  .chip-btn:hover:not(:disabled):not([data-selected]) {
+    color: var(--ink-2);
+    background: var(--ink-a08);
+    border-color: var(--line);
+  }
+  .chip-btn.chip--accent:hover:not(:disabled) {
+    color: var(--accent-600);
+    background: rgb(var(--accent-rgb) / 0.18);
+    border-color: var(--accent-400);
+  }
+}
+/* A chip that opens something reads as pressed while it is open. */
+.chip-btn[aria-expanded='true']:not([data-selected]) {
+  color: var(--ink-2);
+  background: var(--ink-a08);
+  border-color: var(--line);
+}
+.chip-btn:active:not(:disabled) { transform: scale(0.97); }
+.chip-btn:disabled { cursor: progress; }
+.chip-btn[data-selected] {
+  color: var(--accent-600);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  font-weight: 600;
+}
 
 /* ── Refreshing ──
    Deliberately not a spinner: a spinner reads as "wait", and nothing here is

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Keyboard, ListTree, Slash, Upload } from 'lucide-react';
 import type { DocFormat } from '@/lib/types';
-import { Chip } from '@/components/ui/primitives';
+import { Button, Chip, IconButton } from '@/components/ui';
 import { actionById, TOOLBAR_GROUPS, type EditorAction } from '../lib/actions';
 
 interface Props {
@@ -120,9 +120,10 @@ export function Toolbar({
 
       {/* The outline is the spine of the document here, so its toggle belongs
           on the bar rather than three clicks deep in the view menu. */}
-      <button
-        className="toolbar-toggle"
-        data-active={outlineOpen}
+      <Button
+        variant="secondary"
+        size="md"
+        active={outlineOpen}
         onClick={onToggleOutline}
         aria-pressed={outlineOpen}
         title={outlineOpen ? 'Hide the outline  ⌘\\' : 'Show the outline  ⌘\\'}
@@ -130,7 +131,7 @@ export function Toolbar({
       >
         <ListTree className="h-3.5 w-3.5" />
         Outline
-      </button>
+      </Button>
 
       <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
 
@@ -145,9 +146,9 @@ export function Toolbar({
             const Icon = action.icon;
             const hint = SHORTCUT_HINT[action.id];
             return (
-              <button
+              <IconButton
                 key={action.id}
-                className="toolbar-btn"
+                size="lg"
                 onClick={() => onRun(action)}
                 title={hint ? `${action.label}  ${hint}` : action.label}
                 aria-label={hint ? `${action.label}, ${hint}` : action.label}
@@ -155,7 +156,7 @@ export function Toolbar({
                 {...roving(index++)}
               >
                 <Icon className="h-4 w-4" />
-              </button>
+              </IconButton>
             );
           })}
 
@@ -164,9 +165,10 @@ export function Toolbar({
               slot on a bar that has to stay scannable. */}
           {group.more && group.more.length > 0 && (
             <div className="toolbar-more">
-              <button
-                className="toolbar-btn toolbar-more-btn"
-                data-active={openGroup?.label === group.label}
+              <IconButton
+                size="lg"
+                width="narrow"
+                active={openGroup?.label === group.label}
                 onClick={e => {
                   e.stopPropagation();
                   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -181,7 +183,7 @@ export function Toolbar({
                 {...roving(index++)}
               >
                 <ChevronDown className="h-3 w-3" />
-              </button>
+              </IconButton>
 
               {openGroup?.label === group.label && createPortal(
                 <div
@@ -216,23 +218,23 @@ export function Toolbar({
 
       <span className="toolbar-divider" role="separator" aria-orientation="vertical" />
 
-      <button
-        className="toolbar-btn"
+      <IconButton
+        size="lg"
         onClick={onUploadImage}
         title="Upload an image"
         aria-label="Upload an image"
         {...roving(index++)}
       >
         <Upload className="h-4 w-4" />
-      </button>
+      </IconButton>
 
       <div className="toolbar-tail">
         <span className="toolbar-hint">
           <Slash className="h-3 w-3" aria-hidden="true" />
           type <kbd>/</kbd> for everything else
         </span>
-        <button
-          className="toolbar-btn"
+        <IconButton
+          size="lg"
           onClick={onShowShortcuts}
           title="Keyboard shortcuts  ⌘/"
           aria-label="Keyboard shortcuts"
@@ -240,7 +242,7 @@ export function Toolbar({
           {...roving(index++)}
         >
           <Keyboard className="h-4 w-4" />
-        </button>
+        </IconButton>
       </div>
     </div>
   );

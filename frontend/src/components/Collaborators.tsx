@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import { Link } from '@tanstack/react-router';
 import { Users, UserPlus } from 'lucide-react';
-import { Avatar } from '@/components/ui/primitives';
+import { Avatar, ChipButton } from '@/components/ui';
 
 interface Props {
   /** The owner's handle. Null for your own document, which has no byline yet. */
@@ -124,11 +124,10 @@ export function Collaborators({ authorUsername, coAuthorUsernames, onManage, cla
 
   return (
     <>
-      <button
+      <ChipButton
         ref={triggerRef}
-        type="button"
-        className={`people-chip${className ? ` ${className}` : ''}`}
-        data-open={open || undefined}
+        tone="quiet"
+        className={className}
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-haspopup="true"
@@ -136,7 +135,7 @@ export function Collaborators({ authorUsername, coAuthorUsernames, onManage, cla
       >
         <Users className="h-3 w-3" />
         {people.length}
-      </button>
+      </ChipButton>
 
       {open && createPortal(
         <div

@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Globe } from 'lucide-react';
 import { DEMO_TOPICS } from './topics';
 import { useTopicDemo } from './useTopicDemo';
+import { Button, Input, ChipButton } from '@/components/ui';
 import { LiveDocument } from './LiveDocument';
 
 /** The OS setting, watched rather than read once — it can change mid-session. */
@@ -79,9 +80,10 @@ export function TopicHero({ startHref, startLabel }: { startHref: string; startL
         <form className="topic-bar animate-fade-in-delay-2" onSubmit={submit}>
           <label className="sr-only" htmlFor="hero-topic">Your topic</label>
           <div className="topic-field">
-            <input
+            <Input
               id="hero-topic"
               ref={inputRef}
+              variant="bare"
               className="topic-input"
               value={value}
               onChange={e => { take(); setValue(e.target.value); }}
@@ -101,24 +103,24 @@ export function TopicHero({ startHref, startLabel }: { startHref: string; startL
               </span>
             )}
           </div>
-          <button type="submit" className="accent-btn topic-go">
+          <Button type="submit" variant="primary" size="xl" className="topic-go">
             <span className="topic-go-label">{startLabel}</span>
             <ArrowRight className="h-4 w-4" />
-          </button>
+          </Button>
         </form>
 
         <div className="topic-tries animate-fade-in-delay-2">
           <span className="topic-tries-label">Watch it build</span>
           {DEMO_TOPICS.map((t, i) => (
-            <button
+            <ChipButton
               key={t.topic}
-              type="button"
-              className="topic-try"
-              data-current={!taken && frame.index === i}
+              tone="outline"
+              size="md"
+              selected={!taken && frame.index === i}
               onClick={() => { setValue(''); jumpTo(i); }}
             >
               {t.topic}
-            </button>
+            </ChipButton>
           ))}
         </div>
 

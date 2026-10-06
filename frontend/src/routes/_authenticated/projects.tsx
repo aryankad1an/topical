@@ -16,15 +16,11 @@ import { createDocument } from '@/lib/newDocument';
 import { documentRoute } from '@/lib/documentUrl';
 import { formatDate } from '@/lib/format';
 import type { DocFormat } from '@/lib/types';
-import { Plus, Loader2, Search, FolderOpen, X, LayoutGrid, List } from 'lucide-react';
+import { Plus, FolderOpen, LayoutGrid, List } from 'lucide-react';
 import { TopicStarter } from '@/components/projects/TopicStarter';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { EmptyState, PageHeader, Refreshing } from '@/components/ui/primitives';
+import { EmptyState, PageHeader, Refreshing, Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, SearchField, Segmented } from '@/components/ui';
 import { VisibilityChip } from '@/components/projects/VisibilityChip';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
 
 export const Route = createFileRoute('/_authenticated/projects')({ component: ProjectsPage });
 
@@ -249,28 +245,25 @@ function ProjectsPage() {
             </span>
             <div className="flex items-center gap-2.5">
               {projects.length > 0 && (
-                <div className="search-field" style={{ width: 200 }}>
-                  <Search className="search-field-icon" />
-                  <input type="text" placeholder="Search documents…" value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Escape') setSearchQuery(''); }}
-                    aria-label="Search documents"
-                    className={`glass-input search-input${searchQuery ? ' search-input--clearable' : ''}`} />
-                  {searchQuery && (
-                    <button className="search-clear" onClick={() => setSearchQuery('')} aria-label="Clear search">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
+                <SearchField
+                  className="w-52"
+                  placeholder="Search documents…"
+                  aria-label="Search documents"
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                  clearOnEscape
+                />
               )}
-              <div className="segmented" role="group" aria-label="View mode">
-                <button data-active={view === 'grid'} onClick={() => setView('grid')} aria-label="Grid view" title="Grid view">
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                </button>
-                <button data-active={view === 'list'} onClick={() => setView('list')} aria-label="List view" title="List view">
-                  <List className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              <Segmented
+                aria-label="View mode"
+                iconOnly
+                value={view}
+                onChange={setView}
+                options={[
+                  { value: 'grid', label: 'Grid', icon: <LayoutGrid className="h-3.5 w-3.5" />, title: 'Grid view', 'aria-label': 'Grid view' },
+                  { value: 'list', label: 'List', icon: <List className="h-3.5 w-3.5" />, title: 'List view', 'aria-label': 'List view' },
+                ]}
+              />
             </div>
           </div>
 
@@ -338,11 +331,9 @@ function ProjectsPage() {
                 ? 'Try a different search term.'
                 : 'Start a blank document and let AI draft the sections for you.'}
               action={!searchQuery && (
-                <button
-                  onClick={() => document.getElementById('workspace-topic')?.focus()}
-                  className="accent-btn inline-flex items-center gap-2 h-9 px-5 rounded-full text-xs">
+                <Button variant="primary" size="lg" onClick={() => document.getElementById('workspace-topic')?.focus()}>
                   <Plus className="h-3.5 w-3.5" /> Name a topic
-                </button>
+                </Button>
               )}
             />
           )}
@@ -369,20 +360,21 @@ function ProjectsPage() {
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button
-              variant="outline"
+              variant="secondary"
+              size="lg"
               onClick={() => setPublishAsk(null)}
               disabled={publishingId !== null}
-              className="glass-btn border-[var(--line)]"
             >
               Cancel
             </Button>
             <Button
-              className="accent-btn"
-              disabled={publishingId !== null}
+              variant="primary"
+              size="lg"
+              loading={publishingId !== null}
               onClick={() => publishAsk && togglePublic(publishAsk.plan, publishAsk.next)}
             >
               {publishingId !== null
-                ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {publishAsk?.next ? 'Publishing…' : 'Unpublishing…'}</>
+                ? (publishAsk?.next ? 'Publishing…' : 'Unpublishing…')
                 : publishAsk?.next ? 'Publish' : 'Unpublish'}
             </Button>
           </DialogFooter>
@@ -397,9 +389,9 @@ function ProjectsPage() {
             <DialogDescription className="text-[var(--ink-faint)]">This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting} className="glass-btn border-[var(--line)]">Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Deleting...</> : 'Delete'}
+            <Button variant="secondary" size="lg" onClick={() => setDeleteId(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="danger" size="lg" onClick={handleDelete} loading={isDeleting}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

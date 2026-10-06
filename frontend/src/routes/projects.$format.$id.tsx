@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { fetchSharedDocument, type SharedDocument } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { formatOf, type DocFormat } from '@/lib/types';
 import { DocumentView } from '@/features/editor/EditorPage';
-import { EmptyState } from '@/components/ui/primitives';
+import { Button, EmptyState, LoadingState } from '@/components/ui';
 
 /**
  * Read or write — which of the two the screen is showing right now.
@@ -98,9 +98,7 @@ function DocumentPage() {
 
   if (isLoading) {
     return (
-      <div className="doc-route-loading">
-        <Loader2 className="h-7 w-7 animate-spin" style={{ color: 'var(--accent-500)' }} />
-      </div>
+      <LoadingState size="page" />
     );
   }
 
@@ -155,13 +153,13 @@ function Unavailable({ known, isAuthenticated }: { known: boolean; isAuthenticat
         action={
           <div className="flex items-center gap-2">
             {known && !isAuthenticated && (
-              <Link to="/login" search={{ redirect: `${pathname}${search}` }} className="accent-btn px-4 py-2 rounded-full text-xs">
-                Sign in
-              </Link>
+              <Button asChild variant="primary" size="lg">
+                <Link to="/login" search={{ redirect: `${pathname}${search}` }}>Sign in</Link>
+              </Button>
             )}
-            <Link to="/community" className="btn-subtle btn-subtle--pill px-4 py-2">
-              Browse the community
-            </Link>
+            <Button asChild variant="secondary" size="md">
+              <Link to="/community">Browse the community</Link>
+            </Button>
           </div>
         }
       />

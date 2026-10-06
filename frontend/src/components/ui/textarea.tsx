@@ -1,30 +1,28 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { inputClass } from "./field-class"
 
+/**
+ * A multi-line text field: the same well as `Input`, growing downward.
+ *   sm — 12px, inside editor panels and popovers
+ *   md — 15px, page forms
+ */
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    /**
-     * Optional prop to control font size scaling with zoom
-     */
-    scaleWithZoom?: boolean;
+  size?: "sm" | "md"
+  /** `none` for fixed-shape boxes; `vertical` lets the reader give themselves room. */
+  resize?: "none" | "vertical"
 }
 
-const Textarea = React.forwardRef<
-    HTMLTextAreaElement,
-    TextareaProps
->(({ className, scaleWithZoom = true, ...props }, ref) => {
-    return (
-        <textarea
-            className={cn(
-                "glass-input flex min-h-[60px] w-full rounded-md px-3 py-2 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                scaleWithZoom ? "text-base sm:text-sm md:text-base" : "text-sm",
-                className
-            )}
-            ref={ref}
-            {...props}
-        />
-    )
-})
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, size = "md", resize = "none", ...props }, ref) => (
+    <textarea
+      ref={ref}
+      className={cn(inputClass({ size, variant: "well" }), "input--multiline", resize === "vertical" && "input--resizable", className)}
+      {...props}
+    />
+  )
+)
 Textarea.displayName = "Textarea"
 
 export { Textarea }

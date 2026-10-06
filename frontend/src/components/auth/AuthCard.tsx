@@ -1,9 +1,9 @@
 import { useId, useState, type ReactNode } from 'react';
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Button, Field, IconButton, Input } from '@/components/ui';
 import { BrandMark } from '@/components/BrandMark';
 
 import { passwordStrength } from '@/lib/validation';
-import { cn } from '@/lib/utils';
 
 /**
  * The frame both sign-in screens sit in.
@@ -112,36 +112,25 @@ type FieldProps = {
   hint?: string | null;
   /** Right-aligned on the label row — a "forgot password?" link, usually. */
   labelAside?: ReactNode;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'id'>;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'id' | 'size'>;
 
 /** One labelled field, with an optional inline rule below it. */
 export function AuthField({
   id, label, value, onChange, icon: Icon, hint, labelAside, className, ...props
 }: FieldProps) {
-  const hintId = `${id}-hint`;
   return (
-    <div className="auth-field">
-      <label className="auth-label" htmlFor={id}>
-        <span>{label}</span>
-        {labelAside}
-      </label>
-      <div className="auth-input-wrap">
-        {Icon && (
-          <span className="auth-input-icon" aria-hidden="true">
-            <Icon className="h-4 w-4" />
-          </span>
-        )}
-        <input
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-describedby={hint ? hintId : undefined}
-          className={cn('auth-input', !Icon && 'auth-input--bare', className)}
-          {...props}
-        />
-      </div>
-      {hint && <span id={hintId} className="auth-hint">{hint}</span>}
-    </div>
+    <Field id={id} label={label} aside={labelAside} hint={hint}>
+      <Input
+        id={id}
+        size="lg"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-describedby={hint ? `${id}-hint` : undefined}
+        leading={Icon ? <Icon className="h-4 w-4" /> : undefined}
+        className={className}
+        {...props}
+      />
+    </Field>
   );
 }
 
@@ -169,42 +158,38 @@ export function AuthPasswordField({
                   'var(--status-info)', 'var(--status-success)'][strength.score];
 
   return (
-    <div className="auth-field">
-      <label className="auth-label" htmlFor={id}>
-        <span>{label}</span>
-        {labelAside}
-      </label>
-
+    <Field id={id} label={label} aside={labelAside} hint={hint}>
       {/* No decorative glyph. A padlock inside a field labelled "Password",
           directly under the word "Password", is the third thing on screen
           saying so — and it was only ever on two of the four fields, so the
           text in a sign-up form started at two different left edges. The eye
           stays: it is a control, not an ornament. */}
-      <div className="auth-input-wrap">
-        <input
-          id={id}
-          type={revealed ? 'text' : 'password'}
-          value={value}
-          autoComplete={autoComplete}
-          onChange={(e) => onChange(e.target.value)}
-          aria-describedby={showStrength && value ? meterId : undefined}
-          {...props}
-          className={cn('auth-input auth-input--bare auth-input--reveal', className)}
-        />
-        <button
-          type="button"
-          className="auth-reveal"
-          onClick={() => setRevealed((r) => !r)}
-          // The label states the action, and `aria-pressed` states the
-          // current state — a screen reader user needs both, and an icon
-          // supplies neither. It stays in the tab order: someone typing a
-          // password with a keyboard is exactly who most needs to check it.
-          aria-label={revealed ? 'Hide password' : 'Show password'}
-          aria-pressed={revealed}
-        >
-          {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
+      <Input
+        id={id}
+        size="lg"
+        type={revealed ? 'text' : 'password'}
+        value={value}
+        autoComplete={autoComplete}
+        onChange={(e) => onChange(e.target.value)}
+        aria-describedby={showStrength && value ? meterId : undefined}
+        className={className}
+        {...props}
+        trailing={
+          <IconButton
+            type="button"
+            size="md"
+            onClick={() => setRevealed((r) => !r)}
+            // The label states the action, and `aria-pressed` states the
+            // current state — a screen reader user needs both, and an icon
+            // supplies neither. It stays in the tab order: someone typing a
+            // password with a keyboard is exactly who most needs to check it.
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+          >
+            {revealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </IconButton>
+        }
+      />
 
       {showStrength && value && (
         <div
@@ -226,8 +211,7 @@ export function AuthPasswordField({
         </div>
       )}
 
-      {hint && <span className="auth-hint">{hint}</span>}
-    </div>
+    </Field>
   );
 }
 
@@ -236,8 +220,8 @@ export function AuthPasswordField({
 /** The submit button, disabled while the request is in flight. */
 export function AuthSubmit({ pending, children }: { pending: boolean; children: ReactNode }) {
   return (
-    <button type="submit" className="auth-submit" disabled={pending}>
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : children}
-    </button>
+    <Button type="submit" variant="primary" size="xl" width="full" className="mt-1" loading={pending}>
+      {!pending && children}
+    </Button>
   );
 }

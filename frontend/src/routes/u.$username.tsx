@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, BookOpen, FileType2, FileCode2, Calendar, UserX, Settings2 } from "lucide-react";
+import { ArrowLeft, BookOpen, FileType2, FileCode2, Calendar, UserX, Settings2 } from 'lucide-react';
 import { fetchPersonProfile, personName, type PublishedDoc } from "@/lib/api";
 import { formatOf } from "@/lib/types";
 import { documentRoute } from "@/lib/documentUrl";
 import { formatDate, formatMonthYear } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
-import { EmptyState, PageHeader, IdentityBanner, DocTypeIcon } from "@/components/ui/primitives";
+import { Button, EmptyState, PageHeader, IdentityBanner, DocTypeIcon, LoadingState } from '@/components/ui';
 
 export const Route = createFileRoute("/u/$username")({
   component: PublicProfile,
@@ -25,9 +25,7 @@ function PublicProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50dvh]">
-        <Loader2 className="h-6 w-6 animate-spin text-[var(--ink-faint)]" />
-      </div>
+      <LoadingState size="region" />
     );
   }
 
@@ -96,12 +94,12 @@ function PublicProfile() {
              public half — name, handle, bio; "Settings" is the private half,
              which was reachable only by navigating away entirely. */
           <span className="flex items-center gap-2">
-            <Link to="/profile/edit" className="btn-subtle btn-subtle--pill h-9 px-4">
-              Edit profile
-            </Link>
-            <Link to="/profile" className="btn-subtle btn-subtle--pill h-9 px-4">
-              <Settings2 className="h-3.5 w-3.5" /> Settings
-            </Link>
+            <Button asChild variant="secondary" size="md">
+              <Link to="/profile/edit">Edit profile</Link>
+            </Button>
+            <Button asChild variant="secondary" size="md">
+              <Link to="/profile"><Settings2 className="h-3.5 w-3.5" /> Settings</Link>
+            </Button>
           </span>
         )}
       />

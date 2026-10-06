@@ -1,15 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, AtSign, Check, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, AtSign, Check, AlertCircle } from 'lucide-react';
+import { Button, PageHeader, Surface, LoadingState } from '@/components/ui';
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 // The server enforces this same rule on PATCH /api/profile.
 import { usernameProblem } from "@/lib/validation";
 import { ProfileEditorFields } from "@/components/ProfileEditorFields";
-import { PageHeader, Surface } from "@/components/ui/primitives";
 
 export const Route = createFileRoute("/_authenticated/profile_/edit")({
   component: EditProfile,
@@ -53,9 +52,7 @@ function EditProfile() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[50dvh]">
-        <Loader2 className="h-6 w-6 animate-spin text-[var(--ink-faint)]" />
-      </div>
+      <LoadingState size="region" />
     );
   }
 
@@ -111,9 +108,8 @@ function EditProfile() {
       </Surface>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave} disabled={isSaving || !dirty || !!usernameError}
-          className="accent-btn h-10 px-6 rounded-full text-sm">
-          {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</> : "Save changes"}
+        <Button variant="primary" size="lg" onClick={handleSave} loading={isSaving} disabled={!dirty || !!usernameError}>
+          {isSaving ? "Saving…" : "Save changes"}
         </Button>
         <Link to="/profile"
           className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors"

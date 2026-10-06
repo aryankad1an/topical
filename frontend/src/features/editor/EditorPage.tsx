@@ -37,6 +37,7 @@ import type { EditorAction } from './lib/actions';
 import { copyText, downloadSource, printPreview, wrapLatexDocument } from './lib/exporters';
 import { ExportPdfDialog } from './components/ExportPdfDialog';
 import { DEFAULT_OPTIONS, loadOptions, saveOptions, type ViewMode, type ViewOptions } from './lib/viewOptions';
+import { Button } from '@/components/ui';
 
 /**
  * The box a single character occupies inside one of the mirror's line
@@ -787,13 +788,17 @@ export function DocumentView({ plan, isOwner, editing, onEdit, onBack }: Documen
               {/* A quiet handle on the selection, rather than a panel that
                   ambushes every time you highlight a word. */}
               {hasSelection && !assistOpen && !slash && (
-                <button
+                <Button
+                  variant="primary"
+                  size="md"
+                  shape="pill"
+                  elevation="float"
                   className="ai-chip"
                   style={anchorForOffset(selection.end) ?? undefined}
                   onClick={() => setAssistOpen(true)}
                 >
                   <Sparkles className="h-3 w-3" /> Edit with AI <kbd>⌘J</kbd>
-                </button>
+                </Button>
               )}
 
               {assistOpen && (

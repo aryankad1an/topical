@@ -205,20 +205,15 @@
 .nav-glass)
 :is(.surface,
 .chip,
-.btn-subtle,
-.doc-btn,
+.btn,
+.icon-btn,
 .model-option,
 .pub-row,
 .doc-row,
 .segmented,
-.sort-pill,
-.community-tab,
-.nav-kbd,
 .nav-indicator,
-.glass-btn,
-.glass-input,
+.input,
 .glass-card,
-.auth-input,
 .liquid-glass) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;

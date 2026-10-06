@@ -1,15 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Button } from '@/components/ui';
 import { ProfileEditorFields } from "@/components/ProfileEditorFields";
 import { useAuth } from "@/lib/auth-context";
 import { updateProfile } from "@/lib/api";
@@ -100,9 +91,9 @@ export function OnboardingModal() {
         />
 
         <DialogFooter>
-          <Button variant="outline" onClick={close} disabled={isSaving}>Skip for now</Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Saving...</> : "Save & Continue"}
+          <Button variant="secondary" size="lg" onClick={close} disabled={isSaving}>Skip for now</Button>
+          <Button variant="primary" size="lg" onClick={handleSave} loading={isSaving}>
+            {isSaving ? "Saving..." : "Save & Continue"}
           </Button>
         </DialogFooter>
       </DialogContent>

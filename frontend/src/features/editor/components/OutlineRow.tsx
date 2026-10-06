@@ -1,7 +1,8 @@
 import {
-  AlertTriangle, ChevronLeft, ChevronRight, GripVertical, Loader2, Pencil, Plus,
+  AlertTriangle, ChevronLeft, ChevronRight, GripVertical, Pencil, Plus,
   Sparkles, Trash2,
 } from 'lucide-react';
+import { IconButton, Spinner } from '@/components/ui';
 import type { PlanItem } from '../lib/plan';
 
 export type RowStatus = 'generating' | 'failed';
@@ -129,7 +130,7 @@ export function OutlineRow({
       {!editing && (
         <span className="orow-meta" data-kind={status ?? (ancestorDepth != null ? 'ancestor' : written ? 'words' : 'todo')}>
           {status === 'generating' ? (
-            <Loader2 className="h-2.5 w-2.5 animate-spin" aria-label="Writing" />
+            <Spinner size="2xs" label="Writing" />
           ) : status === 'failed' ? (
             <AlertTriangle className="h-2.5 w-2.5" aria-label="Failed — click ✨ to retry" />
           ) : ancestorDepth != null ? (
@@ -145,25 +146,25 @@ export function OutlineRow({
       )}
 
       <span className="orow-tools">
-        <button className="orow-tool orow-tool--go" onClick={onGenerate} disabled={busy || empty || !canGenerate}
+        <IconButton size="xs" onClick={onGenerate} disabled={busy || empty || !canGenerate}
           title={written ? 'Write this section again' : 'Write this section'} aria-label="Write this section">
           <Sparkles className="h-3 w-3" />
-        </button>
-        <button className="orow-tool" onClick={onOutdent} disabled={item.level <= 1} title="Outdent" aria-label="Outdent">
+        </IconButton>
+        <IconButton size="xs" onClick={onOutdent} disabled={item.level <= 1} title="Outdent" aria-label="Outdent">
           <ChevronLeft className="h-3 w-3" />
-        </button>
-        <button className="orow-tool" onClick={onIndent} title="Indent" aria-label="Indent">
+        </IconButton>
+        <IconButton size="xs" onClick={onIndent} title="Indent" aria-label="Indent">
           <ChevronRight className="h-3 w-3" />
-        </button>
-        <button className="orow-tool orow-tool--add" onClick={onAddAfter} title="Add a section below" aria-label="Add a section below">
+        </IconButton>
+        <IconButton size="xs" onClick={onAddAfter} title="Add a section below" aria-label="Add a section below">
           <Plus className="h-3 w-3" />
-        </button>
-        <button className="orow-tool" onClick={onEdit} title="Rename" aria-label="Rename">
+        </IconButton>
+        <IconButton size="xs" onClick={onEdit} title="Rename" aria-label="Rename">
           <Pencil className="h-3 w-3" />
-        </button>
-        <button className="orow-tool orow-tool--danger" onClick={onDelete} title="Delete" aria-label="Delete">
+        </IconButton>
+        <IconButton size="xs" tone="danger" onClick={onDelete} title="Delete" aria-label="Delete">
           <Trash2 className="h-3 w-3" />
-        </button>
+        </IconButton>
       </span>
     </div>
   );

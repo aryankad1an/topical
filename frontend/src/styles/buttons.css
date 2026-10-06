@@ -24,23 +24,13 @@
    buttons, not another style.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── Shared geometry ──
+
+/* ── Button (components/ui/button.tsx) ──
    Radius comes from the ramp so a button and the card it sits in are
-   visibly the same kit. Nothing here sets height or padding: those are
-   per-control and already declared where the control is laid out. */
-.accent-btn,
-.cta-btn,
-.glass-btn,
-.btn-subtle,
-.doc-btn,
-.orail-btn,
-.orail-primary,
-.orail-go,
-.editor-save,
-.new-post-btn,
-.auth-submit,
-.toolbar-toggle,
-.orail-add {
+   visibly the same kit. These were thirteen alias classes listed side by
+   side (`.accent-btn`, `.glass-btn`, `.btn-subtle`, `.orail-primary`, …) with
+   their sizes declared in four other files; now the primitive owns both. */
+.btn {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -55,6 +45,8 @@
   letter-spacing: -0.005em;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
 
   /* No background-image at all, so nothing here can be washed out by a
      gradient the way the previous set was. */
@@ -72,27 +64,14 @@
    this saturated, which is what makes it findable without a shadow doing
    the work. The inset hairline is the same lit top edge the glass chrome
    carries, so the two read as one light source. */
-.accent-btn,
-.cta-btn,
-.orail-primary:not(:disabled),
-.orail-go,
-.new-post-btn,
-.auth-submit,
-.doc-btn--primary {
+.btn--primary {
   background-color: var(--accent-400);
   border-color: var(--accent-400);
   color: var(--accent-ink);
   box-shadow: var(--highlight-inset),
               var(--shadow-sm);
 }
-
-.accent-btn:hover:not(:disabled),
-.cta-btn:hover:not(:disabled),
-.orail-primary:hover:not(:disabled),
-.orail-go:hover:not(:disabled),
-.new-post-btn:hover:not(:disabled),
-.auth-submit:hover:not(:disabled),
-.doc-btn--primary:hover:not(:disabled) {
+.btn--primary:hover:not(:disabled) {
   background-color: var(--accent-500);
   border-color: var(--accent-500);
   color: var(--accent-ink);
@@ -102,30 +81,49 @@
 
 /* ── Secondary ──
    Paper. A hairline and a whisper of a shadow: the same construction as a
-   card, at control size. */
-.glass-btn,
-.btn-subtle,
-.doc-btn,
-.orail-btn,
-.editor-save,
-.toolbar-toggle,
-.orail-add {
+   card, at control size. `dashed` is the same tier saying "add one here". */
+.btn--secondary,
+.btn--dashed {
   background-color: var(--surface);
   border-color: var(--line);
   color: var(--ink-2);
   box-shadow: var(--shadow-xs);
 }
-
-.glass-btn:hover:not(:disabled),
-.btn-subtle:hover:not(:disabled),
-.doc-btn:hover:not(.doc-btn--primary):not(:disabled),
-.orail-btn:hover:not(:disabled),
-.editor-save:hover:not(:disabled),
-.toolbar-toggle:hover:not(:disabled),
-.orail-add:hover:not(:disabled) {
+.btn--dashed {
+  border-style: dashed;
+  border-color: var(--line-strong);
+}
+.btn--secondary:hover:not(:disabled),
+.btn--dashed:hover:not(:disabled) {
   background-color: var(--surface-2);
   border-color: var(--line-strong);
   color: var(--ink);
+}
+.btn--dashed:hover:not(:disabled) { border-style: solid; }
+
+/* ── Ghost ──
+   No chrome at rest; the affordance is the hover fill. */
+.btn--ghost {
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--ink-muted);
+}
+.btn--ghost:hover:not(:disabled) {
+  background-color: var(--ink-a06);
+  color: var(--ink);
+}
+
+/* ── Danger ──
+   The filled confirm of a destructive action. Rose, not the terracotta, so
+   "delete" can never be mistaken for the primary at a glance. */
+.btn--danger {
+  background-color: var(--status-danger);
+  border-color: var(--status-danger);
+  color: var(--danger-ink);
+}
+.btn--danger:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--status-danger) 90%, transparent);
 }
 
 /* ── Pressed ──
@@ -135,31 +133,19 @@
 
    A scale rather than the single pixel of travel this used to be. `scale`
    takes the label and the icon down with the button, so the whole control
-   compresses like a physical key; translating the box moved the box and left
-   its contents looking painted on. Kept subtle: below about 0.95 the button
-   reads as recoiling from the pointer. */
-.accent-btn:active:not(:disabled),
-.cta-btn:active:not(:disabled),
-.glass-btn:active:not(:disabled),
-.btn-subtle:active:not(:disabled),
-.doc-btn:active:not(:disabled),
-.orail-btn:active:not(:disabled),
-.orail-primary:active:not(:disabled),
-.orail-go:active:not(:disabled),
-.editor-save:active:not(:disabled),
-.new-post-btn:active:not(:disabled),
-.auth-submit:active:not(:disabled),
-.toolbar-toggle:active,
-.orail-add:active {
+   compresses like a physical key. Kept subtle: below about 0.95 the button
+   reads as recoiling from the pointer. Ghosts are smaller, so they take a
+   little more to register. */
+.btn:active:not(:disabled) {
   transform: scale(0.97);
   box-shadow: none;
   transition-duration: var(--dur-press);
 }
+.btn--ghost:active:not(:disabled) { transform: scale(0.94); }
 
 /* Selected reads as the accent's quiet form, so "on" and "hovered" can
    never be confused for each other. */
-.toolbar-toggle[data-active='true'],
-.orail-btn[data-active='true'] {
+.btn[data-active='true'] {
   background-color: var(--accent-soft);
   border-color: var(--accent-line);
   color: var(--accent-600);
@@ -170,17 +156,7 @@
    visibly unavailable rather than half-erased. `opacity` is deliberately
    not used: it fades the border and the label by the same amount and the
    result reads as a rendering glitch on a light ground. */
-.accent-btn:disabled,
-.cta-btn:disabled,
-.glass-btn:disabled,
-.btn-subtle:disabled,
-.doc-btn:disabled,
-.orail-btn:disabled,
-.orail-primary:disabled,
-.orail-go:disabled,
-.editor-save:disabled,
-.new-post-btn:disabled,
-.auth-submit:disabled {
+.btn:disabled {
   background-color: var(--surface-2);
   color: var(--ink-faint);
   border-color: var(--line);
@@ -188,216 +164,335 @@
   transform: none;
   cursor: not-allowed;
 }
+.btn--ghost:disabled { background-color: transparent; border-color: transparent; }
 
-/* ── Size ──
-   The landing CTA is the one button that has to carry a whole hero, so it
-   gets its own measurements rather than inheriting a form control's. */
-.cta-btn {
-  padding: 0.7rem 1.35rem;
-  font-size: var(--text-md);
-  border-radius: var(--radius-md);
+/* ── Sizes ──
+   Measured from what the old classes rendered; the label inherits the body's
+   1.65 line height, which is what the auto-height sizes are built on. Every
+   size states its own minimum, so the 40px touch floor on bare `button`s
+   never decides a size behind the primitive's back. */
+.btn--xs   { min-height: 0; min-width: 0; padding: 5px 9px;  font-size: 11px; }
+.btn--sm   { min-height: 0; min-width: 0; padding: 8px 10px; font-size: 11.5px; }
+.btn--md   { height: var(--control-h); min-height: var(--control-h); padding: 0 14px; font-size: 12px; }
+.btn--lg   { height: var(--control-h); min-height: var(--control-h); padding: 0 16px; font-size: var(--text-sm); }
+.btn--xl   { min-height: 2.75rem; padding: 0 1.1rem; font-size: var(--text-base); }
+.btn--hero { padding: 0.7rem 1.35rem; font-size: var(--text-md); border-radius: var(--radius-md); }
+.btn--full { width: 100%; }
+.btn--pill { border-radius: var(--radius-pill); }
+.btn--tight { padding-left: 10px; padding-right: 10px; }
+.btn--float:not(:hover) { box-shadow: var(--shadow-lg); }
+/* The label is the colour and the fill is the tint — a rose label on a rose
+   fill was an invisible word in a red lozenge. */
+.btn--tone-danger,
+.btn--tone-danger:hover:not(:disabled) {
+  color: var(--status-danger);
+  background-color: rgb(var(--danger-rgb) / 0.12);
+  border-color: rgb(var(--danger-rgb) / 0.35);
 }
 
-/* ── Ghost / icon-only ──
+/* ── IconButton (components/ui/icon-button.tsx) ──
    No chrome at rest. At 30px a border and a shadow are most of the
    control, and a grid of them reads as a wall of boxes; the affordance is
    the hover fill instead. */
-.toolbar-btn,
-.icon-btn,
-.nav-kbd,
-.orow-tool,
-.detail-close-btn,
-.vote-btn,
-.theme-toggle,
-.auth-reveal {
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background-color: transparent;
   background-image: none;
   box-shadow: none;
   color: var(--ink-muted);
+  cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out),
               border-color var(--dur-fast) var(--ease-out),
+              opacity var(--dur-base) var(--ease-out),
               transform var(--dur-press) var(--ease-out);
 }
+.icon-btn--xs { height: 18px; width: 18px; min-height: 0; min-width: 0; }
+.icon-btn--sm { height: 28px; width: 28px; min-height: 28px; min-width: 28px; }
+.icon-btn--md { height: 30px; width: 30px; min-height: 0; min-width: 0; }
+.icon-btn--lg { height: var(--control-h); width: var(--control-h); min-height: var(--control-h); min-width: var(--control-h); }
+.icon-btn--narrow { width: 20px; min-width: 20px; padding: 0; }
 
-.toolbar-btn:hover:not(:disabled),
-.icon-btn:hover:not(:disabled),
-.nav-kbd:hover:not(:disabled),
-.orow-tool:hover:not(:disabled),
-.detail-close-btn:hover:not(:disabled),
-.vote-btn:hover:not(:disabled),
-.theme-toggle:hover:not(:disabled),
-.auth-reveal:hover:not(:disabled) {
+.icon-btn:hover:not(:disabled) {
   background-color: var(--ink-a06);
   color: var(--ink);
 }
-
 /* Ghost controls had no pressed state at all, which is worst exactly where
    they are used most — a toolbar of them, clicked all day, none of which
-   ever moved. They are small, so they take a little more scale than a
-   filled button to register at 30px. */
-.toolbar-btn:active:not(:disabled),
-.icon-btn:active:not(:disabled),
-.nav-kbd:active:not(:disabled),
-.orow-tool:active:not(:disabled),
-.detail-close-btn:active:not(:disabled),
-.vote-btn:active:not(:disabled),
-.theme-toggle:active:not(:disabled),
-.auth-reveal:active:not(:disabled) {
+   ever moved. */
+.icon-btn:active:not(:disabled) {
   transform: scale(0.94);
   transition-duration: var(--dur-press);
 }
+.icon-btn:disabled { opacity: 0.3; cursor: default; }
 
-/* ── Destructive ghost buttons ──
-   These modifiers used to live beside their components (`.icon-btn--danger`
-   in pages.css, `.orow-tool--danger` in editor.css) at `(0, 2, 0)` and
-   `(0, 3, 0)`, and the generic ghost hover four rules above is `(0, 3, 0)` in a
-   file that loads after both of them — so the danger tint never once painted
-   and every delete button hovered the same neutral grey as every other icon.
-   They belong here, after the rule they are meant to override.
-
-   The fill carries the warning and the icon stays legible on top of it.
+/* The fill carries the warning and the icon stays legible on top of it.
    Colouring both the icon and its background `--status-danger` is what made
    the bin on a document card disappear at the moment you pointed at it. */
-.icon-btn--danger:hover:not(:disabled),
-.orow-tool--danger:hover:not(:disabled) {
+.icon-btn--danger:hover:not(:disabled) {
   background-color: rgb(var(--danger-rgb) / 0.12);
   color: var(--status-danger);
 }
-.icon-btn--danger:active:not(:disabled),
-.orow-tool--danger:active:not(:disabled) {
+.icon-btn--danger:active:not(:disabled) {
   background-color: rgb(var(--danger-rgb) / 0.2);
 }
-
-.toolbar-btn[data-active='true'],
 .icon-btn[data-active='true'] {
   background-color: var(--accent-soft);
   color: var(--accent-600);
 }
 
-/* ── Tabs and segmented trays ──
-   These are navigation, not actions, so they must not look like the
-   primary button. Previously both the section tabs and the sort pills
-   filled solid accent when active — two rows of identical bright blocks, with nothing to say which one changed the page and which one reordered
-   a list.
+/* Hover-revealed tools. Only where the pointer can hover: on touch there is
+   no hover to reveal them, so they stay visible. Focus reveals them too —
+   hover is never the only way in. */
+@media (hover: hover) {
+  .reveal-on-hover { opacity: 0; }
+  .group:hover .reveal-on-hover,
+  .group:focus-within .reveal-on-hover,
+  .reveal-on-hover:focus-visible { opacity: 1; }
+}
 
-   The tray is now the recessed thing and the active tab is the raised one:
-   a tab that is "on" reads as a card lifted out of a well. Sort pills, one
-   level down the hierarchy, only take the accent as text and a hairline. */
-.segmented,
-.community-tabs {
+/* ── Spinner / LoadingState / Kbd ── */
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.loading-state--page { min-height: 60dvh; gap: var(--space-4); }
+.loading-state--region { min-height: 50dvh; }
+.loading-state--inline { padding: 4rem 0; }
+.loading-state-label { color: var(--ink-muted); }
+.spinner--accent { color: var(--accent-400); }
+.spinner--brand  { color: var(--accent-500); }
+.spinner--faint  { color: var(--ink-faint); }
+.spinner--ink    { color: var(--ink); }
+
+.kbd { font-family: var(--font-mono); }
+/* Inside another control: the key's own face at label size. */
+.kbd--bare { font-size: 11px; font-weight: 600; }
+.kbd--key {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: var(--ink-a04);
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+}
+
+/* ── Fields (components/ui/input.tsx, textarea.tsx, label.tsx, field.tsx) ──
+   A well cut into the page rather than a pane sitting on it: shaded at the
+   top so the field reads as recessed, which is what tells you it takes
+   typing. One definition for what were seven field classes. */
+.input {
+  border-radius: var(--radius);
+  color: var(--ink);
+  cursor: text;
+}
+.input--well {
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-sans);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-rgb) / 0.05);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.input--well::placeholder { color: var(--ink-faint); }
+/* The border carries the 3:1 edge a focus indicator needs; the halo is the glow. */
+.input--well:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring),
+              inset 0 1px 2px rgb(var(--shadow-rgb) / 0.04);
+}
+.input--well:disabled { cursor: not-allowed; opacity: 0.6; }
+/* Autofill paints its own background over the well. There is no property that
+   stops it, so the fill is pushed off-screen with a very long inset shadow and
+   the text colour is restored by hand. */
+.input--well:-webkit-autofill,
+.input--well:-webkit-autofill:hover,
+.input--well:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  caret-color: var(--ink);
+}
+
+.input--sm { height: 32px; padding: 0 10px; font-size: 12.5px; }
+.input--md { height: var(--control-h); padding: 0 0.8rem; font-size: var(--text-base); }
+.input--lg { height: 2.75rem; padding: 0 0.9rem; font-size: var(--text-base); }
+.input--multiline { height: auto; min-height: 60px; padding-top: 0.55rem; padding-bottom: 0.55rem; line-height: 1.5; resize: none; }
+.input--multiline.input--sm { padding: 8px 10px; font-size: 12px; }
+.input--resizable { resize: vertical; }
+
+/* No chrome: the composite around it draws the border and the ring, and
+   owns the type and the padding (the topic bar sets a serif; so does the
+   editor's title). */
+.input--bare {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+.input--file { font-family: var(--font-sans); font-size: var(--text-xs); color: var(--ink-muted); cursor: pointer; }
+
+/* Leading icon and trailing control sit inside the field; the text is padded
+   past them rather than running underneath. */
+.input-wrap { position: relative; display: flex; align-items: center; width: 100%; min-width: 0; }
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  display: flex;
+  color: var(--ink-faint);
+  pointer-events: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+/* The icon warms with the field, so the whole control confirms the focus. */
+.input-wrap:focus-within .input-icon { color: var(--accent-500); }
+.input-trailing { position: absolute; right: 0.4rem; display: flex; }
+.input--leading { padding-left: 2.4rem; }
+.input--trailing { padding-right: 2.75rem; }
+
+/* ── MenuSearch ── the filter row across the top of a menu or palette. */
+.menu-search {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+.menu-search--md { gap: 10px; padding: 15px 18px; font-size: 15px; }
+.menu-search--sm { gap: 8px; height: 38px; padding: 0 11px; font-size: 12.5px; }
+.menu-search-icon { display: flex; flex-shrink: 0; color: var(--ink-ghost); }
+.menu-search-icon--accent { color: var(--accent-400); }
+.menu-search-input { flex: 1; min-width: 0; font-size: inherit; }
+.menu-search-input::placeholder { color: var(--ink-faint); }
+
+/* A search box that fills the rest of a toolbar row. */
+.search-field--grow { flex: 1 1 220px; min-width: 200px; width: auto; }
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+}
+.label--sm { font-size: 10.5px; gap: 6px; }
+.label--split { justify-content: space-between; }
+/* The word, not an asterisk. */
+.label-req { font-weight: 500; font-size: 10.5px; letter-spacing: 0.02em; color: var(--ink-ghost); }
+.label-req--required { color: var(--accent-600); }
+
+.field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.checkbox {
+  display: flex;
+  /* `center` put the box halfway down a two-line label. */
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.checkbox-box { margin-top: 2px; accent-color: var(--accent-400); }
+.checkbox:has(.checkbox-box:disabled) { cursor: default; opacity: 0.75; }
+.checkbox-note { display: block; margin-top: 1px; color: var(--ink-ghost); font-size: 10.5px; line-height: 1.4; }
+.field-note { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6875rem; color: var(--ink-faint); line-height: 1.45; }
+.field-note--error { color: var(--status-danger); }
+.field-note--count { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+
+/* ── Segmented (components/ui/segmented.tsx) ──
+   These are navigation, not actions, so they must not look like the
+   primary button. The tray is the recessed thing and the chosen item is the
+   raised one: a tab that is "on" reads as a card lifted out of a well. Sort
+   pills, one level down the hierarchy, take the accent as text and a
+   hairline and have no tray at all. */
+.segmented { display: inline-flex; gap: 3px; }
+.segmented--tray {
+  padding: 3px;
   background-color: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: inset 0 1px 2px rgb(var(--shadow-rgb) / 0.04);
 }
+.segmented--pills { gap: 6px; }
+.segmented--fill { display: flex; }
+.segmented--fill .segmented-item { flex: 1; }
 
-.segmented button,
-.community-tab {
-  /* The tray's radius less its padding. Any other number and the selected
-     block's corners cut across the tray's curve — which is what made the
-     active tab look like it was sitting on top of the tray rather than in
-     it. 12px tray − 3px padding = 9px. */
+.segmented-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  /* The tray's radius less its padding (12px − 3px). Any other number and
+     the chosen item's corners cut across the tray's curve. */
   border-radius: var(--radius);
   border: 1px solid transparent;
   background-color: transparent;
-  background-image: none;
-  box-shadow: none;
   color: var(--ink-muted);
   font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
 }
+/* Height, not padding: a bare `button` carries a 40px touch minimum, and a
+   min-height beats a height — every item states both. */
+.segmented--tray .segmented-item { height: var(--control-inner-h); min-height: var(--control-inner-h); }
+.segmented--md .segmented-item { padding: 0 14px; font-size: 13px; }
+.segmented--sm .segmented-item { padding: 0 12px; font-size: 12px; }
+.segmented--xs .segmented-item { padding: 0 11px; font-size: 11.5px; }
+.segmented--icons .segmented-item { width: 36px; min-width: 36px; padding: 0; }
 
-.segmented button:hover:not([data-active='true']),
-.community-tab:hover:not(.active) {
+.segmented--tray .segmented-item:hover:not([data-active='true']) {
   color: var(--ink);
   background-color: var(--ink-a04);
 }
-
-.segmented button[data-active='true'],
-.community-tab.active {
+.segmented--tray .segmented-item[data-active='true'] {
   background-color: var(--surface);
   border-color: var(--line);
   color: var(--ink);
   font-weight: 600;
   box-shadow: var(--shadow-xs);
 }
-
 /* The accent appears as a mark, not as a fill — enough to say "this one"
    without spending the primary-action colour on a tab. */
-.community-tab.active svg,
-.segmented button[data-active='true'] svg {
-  color: var(--accent-400);
-}
+.segmented--tray .segmented-item[data-active='true'] svg { color: var(--accent-400); }
 
-/* Sort pills sit below tabs in the hierarchy and stay text-weight. */
-.sort-pill {
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-  background-color: transparent;
-  background-image: none;
-  box-shadow: none;
-  color: var(--ink-faint);
-  font-weight: 500;
-}
-.sort-pill:hover:not(.active) {
+.segmented--pills .segmented-item { height: 30px; min-height: 30px; color: var(--ink-faint); }
+.segmented--pills .segmented-item:hover:not([data-active='true']) {
   color: var(--ink-2);
   background-color: var(--ink-a04);
 }
-.sort-pill.active {
+.segmented--pills .segmented-item[data-active='true'] {
   background-color: var(--accent-soft);
   border-color: var(--accent-line);
   color: var(--accent-600);
   font-weight: 600;
 }
 
-/* ── Chips ──
-   Labels, not controls. They keep the pill shape precisely so they cannot
-   be mistaken for something clickable: in this system rounded rectangles
-   act and pills describe. */
-.chip {
-  border-radius: var(--radius-pill);
-  background-image: none;
-  box-shadow: none;
-}
-
 /* ── Keyboard focus ──
    One ring, everywhere, outside the control so it never fights a border. */
-.accent-btn:focus-visible,
-.cta-btn:focus-visible,
-.glass-btn:focus-visible,
-.btn-subtle:focus-visible,
-.doc-btn:focus-visible,
-.orail-btn:focus-visible,
-.orail-primary:focus-visible,
-.orail-go:focus-visible,
-.auth-submit:focus-visible,
-.new-post-btn:focus-visible,
-.editor-save:focus-visible,
-.toolbar-btn:focus-visible,
-.toolbar-toggle:focus-visible,
+.btn:focus-visible,
 .icon-btn:focus-visible,
-.nav-kbd:focus-visible,
-.sort-pill:focus-visible,
-.community-tab:focus-visible,
-.segmented button:focus-visible {
+.chip-btn:focus-visible,
+.segmented-item:focus-visible {
   outline: 2px solid var(--accent-400);
   outline-offset: 2px;
 }
 
 /* Reduced motion: the state still changes, it just does not travel. */
 @media (prefers-reduced-motion: reduce) {
-  .accent-btn, .cta-btn, .glass-btn, .btn-subtle, .doc-btn, .orail-btn,
-  .orail-primary, .orail-go, .editor-save, .new-post-btn, .auth-submit,
-  .toolbar-toggle, .orail-add {
+  .btn {
     transition: background-color var(--dur-fast) var(--ease-out),
                 color var(--dur-fast) var(--ease-out);
   }
-  .accent-btn:active, .cta-btn:active, .glass-btn:active, .btn-subtle:active,
-  .doc-btn:active, .orail-btn:active, .orail-primary:active,
-  .orail-go:active, .editor-save:active, .new-post-btn:active,
-  .auth-submit:active, .toolbar-toggle:active, .orail-add:active {
-    transform: none;
-  }
+  .btn:active, .icon-btn:active { transform: none; }
 }

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ListTree, Loader2, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
-import { IconButton } from '@/components/ui/primitives';
+import { ListTree, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
+import { Button, IconButton, Spinner, Input, ChipButton } from '@/components/ui';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import type { OutlineNode } from '../lib/outline';
@@ -292,16 +292,18 @@ export function OutlineRail({
       )}
 
       <div className="outline-actions">
-        <button
-          className="orail-btn"
+        <Button
+          variant="secondary"
+          size="xs"
+          width="full"
           onClick={() => { setPromptOpen(open => !open); setPromptValue(''); }}
-          data-active={promptOpen}
+          active={promptOpen}
           disabled={working}
           title={nodes.length ? 'Change the structure with an instruction' : 'Build the structure from a subject'}
         >
-          {working ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          {working ? <Spinner size="xs" /> : <Sparkles className="h-3 w-3" />}
           AI outline
-        </button>
+        </Button>
       </div>
 
       {promptOpen && (
@@ -309,9 +311,11 @@ export function OutlineRail({
           className="orail-prompt"
           onSubmit={event => { event.preventDefault(); runOutlineAi(promptValue); }}
         >
-          <input
+          <Input
             ref={promptRef}
-            className="orail-input" autoFocus
+            size="sm"
+            aria-label={nodes.length ? 'How to change the outline' : 'What this document is about'}
+            autoFocus
             placeholder={nodes.length
               ? 'Add a section on…, reorder, split, trim'
               : 'What is this document about?'}
@@ -324,10 +328,8 @@ export function OutlineRail({
           {nodes.length > 0 && (
             <div className="orail-chips">
               {SUGGESTIONS.map(suggestion => (
-                <button
+                <ChipButton
                   key={suggestion.label}
-                  type="button"
-                  className="orail-chip"
                   title={suggestion.text.trim()}
                   onClick={() => {
                     setPromptValue(suggestion.text);
@@ -343,15 +345,15 @@ export function OutlineRail({
                   }}
                 >
                   {suggestion.label}
-                </button>
+                </ChipButton>
               ))}
             </div>
           )}
 
           <div className="orail-prompt-row">
-            <button type="submit" className="orail-go" disabled={!canSubmit}>
+            <Button type="submit" variant="primary" size="xs" disabled={!canSubmit}>
               {submitLabel}
-            </button>
+            </Button>
             <button type="button" className="orail-link" onClick={() => runOutlineAi('', true)}
               disabled={working}>
               From what I've written
@@ -380,9 +382,9 @@ export function OutlineRail({
           <ListTree className="h-6 w-6" aria-hidden="true" />
           <p className="outline-empty-title">No structure yet</p>
           <p>Add sections by hand, or build the whole shape with <b>AI outline</b>.</p>
-          <button className="orail-add" onClick={() => rows.addAfter(null)}>
+          <Button variant="dashed" size="sm" className="mt-2.5" onClick={() => rows.addAfter(null)}>
             <Plus className="h-3.5 w-3.5" /> Add the first section
-          </button>
+          </Button>
         </div>
       ) : (
         // A real list, so the count is announced and rows are navigable as
@@ -460,9 +462,9 @@ export function OutlineRail({
             <p className="gen-now" title={writer.progress.title}>
               Writing <b>{writer.progress.title}</b>
             </p>
-            <button className="orail-primary orail-primary--stop" onClick={writer.stop}>
+            <Button variant="primary" size="sm" width="full" onClick={writer.stop}>
               Stop · {writer.progress.done}/{writer.progress.total}
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -473,8 +475,10 @@ export function OutlineRail({
                 above it had no bearing on what the button did. Rewriting
                 everything is still available; it is just no longer the thing
                 that happens by default. */}
-            <button
-              className="orail-primary"
+            <Button
+              variant="primary"
+              size="sm"
+              width="full"
               onClick={() => setAsking(writer.missing ? 'missing' : 'all')}
               disabled={writer.busy || !nodes.length}
               title={writer.missing
@@ -485,7 +489,7 @@ export function OutlineRail({
               {writer.missing
                 ? `Write ${writer.missing} empty section${writer.missing === 1 ? '' : 's'}`
                 : `Rewrite all ${nodes.length} section${nodes.length === 1 ? '' : 's'}`}
-            </button>
+            </Button>
 
             {writer.missing > 0 && written > 0 && (
               <button

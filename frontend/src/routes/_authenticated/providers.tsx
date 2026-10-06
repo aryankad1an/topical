@@ -2,13 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  Key, Plus, Star, Trash2, Loader2, ExternalLink, Check,
+  Key, Plus, Star, Trash2, ExternalLink, Check,
   ArrowLeft, ShieldCheck, Sparkles,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip } from '@/components/ui';
 import { errorMessage } from "@/lib/utils";
-import { PageHeader, Surface, EmptyState } from "@/components/ui/primitives";
 import {
   type AiCredential, type AiProvider, PROVIDER_PRESETS,
   getCredentials, saveCredential, deleteCredential, setDefaultCredential, presetFor,
@@ -160,7 +158,8 @@ function ProvidersPage() {
                     value={customModel}
                     onChange={e => setCustomModel(e.target.value)}
                     placeholder="Exact model id, e.g. gpt-5.2-mini"
-                    className="bg-[var(--surface)] border-[var(--line)] font-mono text-xs mt-1"
+                    aria-label="Custom model id"
+                    className="mt-1"
                   />
                 )}
               </div>
@@ -182,7 +181,8 @@ function ProvidersPage() {
                 onChange={e => setApiKey(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
                 placeholder={preset.keyPlaceholder}
-                className="bg-[var(--surface)] border-[var(--line)] font-mono text-xs mb-3"
+                aria-label={`${preset.name} API key`}
+                className="mb-3"
               />
 
               <div className="key-note mb-4">
@@ -194,10 +194,10 @@ function ProvidersPage() {
               </div>
 
               <div className="flex items-center gap-3 flex-wrap">
-                <Button onClick={handleAdd} disabled={isVerifying} className="accent-btn h-10 px-6 rounded-full text-sm">
+                <Button variant="primary" size="lg" onClick={handleAdd} loading={isVerifying}>
                   {isVerifying
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying…</>
-                    : <><Plus className="h-4 w-4 mr-1.5" /> Connect {preset.name}</>}
+                    ? 'Verifying…'
+                    : <><Plus className="h-4 w-4" /> Connect {preset.name}</>}
                 </Button>
                 <a href={preset.getKeyUrl} target="_blank" rel="noopener noreferrer"
                   className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] flex items-center gap-1.5 transition-colors">
@@ -230,22 +230,22 @@ function ProvidersPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-[13px] font-semibold text-[var(--ink)]">{p.name}</span>
-                          {cred.isDefault && <span className="provider-default-chip">DEFAULT</span>}
+                          {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
                         </div>
                         <p className="provider-model truncate">{cred.model}</p>
                       </div>
                       {!cred.isDefault && (
-                        <button className="icon-btn"
+                        <IconButton size="sm"
                           onClick={() => setCredentials(setDefaultCredential(cred.id))}
                           title="Use by default" aria-label={`Make ${p.name} default`}>
                           <Star className="h-3.5 w-3.5" />
-                        </button>
+                        </IconButton>
                       )}
-                      <button className="icon-btn icon-btn--danger"
+                      <IconButton size="sm" tone="danger"
                         onClick={() => { setCredentials(deleteCredential(cred.id)); toast.success("Key removed"); }}
                         title="Remove" aria-label={`Remove ${p.name} key`}>
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </IconButton>
                     </div>
                   );
                 })}
@@ -256,11 +256,11 @@ function ProvidersPage() {
                 generation. Star another to switch.
               </p>
 
-              <Link to="/projects"
-                className="mt-4 w-full h-9 rounded-full text-xs font-semibold flex items-center justify-center gap-2 accent-btn"
-                style={{ textDecoration: "none" }}>
-                <Sparkles className="h-3.5 w-3.5" /> Start writing
-              </Link>
+              <Button asChild variant="primary" size="lg" width="full" className="mt-4">
+                <Link to="/projects">
+                  <Sparkles className="h-3.5 w-3.5" /> Start writing
+                </Link>
+              </Button>
             </>
           )}
         </Surface>

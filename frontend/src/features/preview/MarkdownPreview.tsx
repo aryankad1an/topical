@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
+import { Button } from '@/components/ui';
 import { Check, Copy } from 'lucide-react';
 
 interface Props {
@@ -45,7 +46,9 @@ const CALLOUTS: Record<string, { label: string; kind: string }> = {
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="md"
       className="md-copy"
       onClick={() => {
         navigator.clipboard.writeText(text).then(() => {
@@ -57,7 +60,7 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       {copied ? 'Copied' : 'Copy'}
-    </button>
+    </Button>
   );
 }
 

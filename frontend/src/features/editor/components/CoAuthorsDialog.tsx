@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Search as SearchIcon, UserPlus, Users, X } from 'lucide-react';
+import { UserPlus, Users, X } from 'lucide-react';
 import { searchUsername } from '@/lib/api';
-import { Avatar, IconButton } from '@/components/ui/primitives';
-import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Avatar, IconButton, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, SearchField } from '@/components/ui';
 
 interface Props {
   open: boolean;
@@ -56,24 +53,15 @@ export function CoAuthorsDialog({ open, onOpenChange, coAuthors, coAuthorUsernam
           </DialogDescription>
         </DialogHeader>
 
-        {/* The shared search field, not a hand-built one.
-            This was a `<Input className="pl-9">` with an absolutely positioned
-            icon, and the padding never applied: `.glass-input` sets shorthand
-            `padding` in `tokens.css`, which loads *after* Tailwind, so it beat
-            the utility outright. The icon therefore sat on top of the first
-            letter of the placeholder. Every other search box in the product
-            already uses `.search-field`, which reserves the space in the same
-            stylesheet that draws the icon. */}
-        <div className="search-field mt-2">
-          <SearchIcon className="search-field-icon" />
-          <input
-            className="glass-input search-input"
-            placeholder="Search by username…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            autoFocus
-          />
-        </div>
+        {/* The shared search field. Escape is left to the dialog, which closes. */}
+        <SearchField
+          className="mt-2"
+          placeholder="Search by username…"
+          aria-label="Search by username"
+          value={query}
+          onValueChange={setQuery}
+          autoFocus
+        />
 
         {results.length > 0 && (
           <div className="share-results">

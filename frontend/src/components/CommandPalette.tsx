@@ -11,6 +11,7 @@ import {
   FilePlus2, FileCode2, BookOpen, CornerDownLeft, Info, KeyRound,
   LogIn, LogOut, UserPlus, FileText, Settings2, Moon, Keyboard,
 } from 'lucide-react';
+import { MenuSearch } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 export interface Command {
@@ -203,18 +204,15 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
   return (
     <div className="cmdk-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Command palette">
       <div className="cmdk-panel" onClick={e => e.stopPropagation()}>
-        <div className="cmdk-input-row">
-          <Search className="h-4 w-4 text-[var(--ink-ghost)] shrink-0" />
-          <input
-            ref={inputRef}
-            className="cmdk-input"
-            placeholder="Search pages and actions…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            aria-label="Search commands"
-          />
-          <span className="cmdk-key">ESC</span>
-        </div>
+        <MenuSearch
+          ref={inputRef}
+          icon={<Search className="h-4 w-4" />}
+          placeholder="Search pages and actions…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          aria-label="Search commands"
+          trailing={<span className="cmdk-key">ESC</span>}
+        />
 
         <div className="cmdk-list" ref={listRef}>
           {results.length === 0 ? (

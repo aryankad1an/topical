@@ -10,11 +10,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, X, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Clock, Plus, Globe, Layers, BookOpen, Users as UsersIcon, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { fetchPosts, deletePost, type Post, type SortMode } from '@/lib/communityApi';
 import { fetchPeople, personName } from '@/lib/api';
-import { Avatar, EmptyState, PageHeader, Refreshing } from '@/components/ui/primitives';
+import { Avatar, Button, EmptyState, PageHeader, Refreshing, SearchField, Segmented } from '@/components/ui';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { errorMessage } from '@/lib/utils';
@@ -139,41 +139,32 @@ function CommunityPage() {
         title="Community"
         subtitle="Discuss ideas, share lessons, and learn together."
         actions={isAuthenticated && (
-          <button className="new-post-btn" onClick={() => setShowNewPost(true)}>
+          <Button variant="primary" size="lg" onClick={() => setShowNewPost(true)}>
             <Plus className="h-4 w-4" /> New Post
-          </button>
+          </Button>
         )}
       />
 
       <div className="community-controls">
-        <div className="community-tabs">
-          <button className={`community-tab ${tab === 'forum' ? 'active' : ''}`} onClick={() => setTab('forum')}>
-            <TrendingUp className="h-3.5 w-3.5" /> Forum
-          </button>
-          <button className={`community-tab ${tab === 'lessons' ? 'active' : ''}`} onClick={() => setTab('lessons')}>
-            <BookOpen className="h-3.5 w-3.5" /> Public Lessons
-          </button>
-          <button className={`community-tab ${tab === 'people' ? 'active' : ''}`} onClick={() => setTab('people')}>
-            <UsersIcon className="h-3.5 w-3.5" /> People
-          </button>
-        </div>
+        <Segmented
+          aria-label="Community sections"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'forum', label: 'Forum', icon: <TrendingUp className="h-3.5 w-3.5" /> },
+            { value: 'lessons', label: 'Public Lessons', icon: <BookOpen className="h-3.5 w-3.5" /> },
+            { value: 'people', label: 'People', icon: <UsersIcon className="h-3.5 w-3.5" /> },
+          ]}
+        />
 
-        <div className="search-field search-field--grow">
-          <Search className="search-field-icon" />
-          <input
-            type="text"
-            className={`glass-input search-input${search ? ' search-input--clearable' : ''}`}
-            placeholder={tab === 'forum' ? 'Search posts…' : tab === 'people' ? 'Search people…' : 'Search lessons…'}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Escape') setSearch(''); }}
-          />
-          {search && (
-            <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchField
+          grow
+          placeholder={tab === 'forum' ? 'Search posts…' : tab === 'people' ? 'Search people…' : 'Search lessons…'}
+          aria-label={tab === 'forum' ? 'Search posts' : tab === 'people' ? 'Search people' : 'Search lessons'}
+          value={search}
+          onValueChange={setSearch}
+          clearOnEscape
+        />
       </div>
 
       {/* ── Forum tab ── */}
@@ -181,14 +172,17 @@ function CommunityPage() {
         <section className="community-section">
           <div className="community-toolbar">
             {/* Sort pills */}
-            <div className="sort-pills">
-              <button className={`sort-pill ${sort === 'latest' ? 'active' : ''}`} onClick={() => setSort('latest')}>
-                <Clock className="h-3 w-3" /> Latest
-              </button>
-              <button className={`sort-pill ${sort === 'top' ? 'active' : ''}`} onClick={() => setSort('top')}>
-                <TrendingUp className="h-3 w-3" /> Top
-              </button>
-            </div>
+            <Segmented
+              variant="pills"
+              size="sm"
+              aria-label="Sort posts"
+              value={sort}
+              onChange={setSort}
+              options={[
+                { value: 'latest', label: 'Latest', icon: <Clock className="h-3 w-3" /> },
+                { value: 'top', label: 'Top', icon: <TrendingUp className="h-3 w-3" /> },
+              ]}
+            />
 
             <span className="flex items-center gap-2.5">
               <Refreshing active={postsFetching && !postsLoading} />
@@ -243,9 +237,11 @@ function CommunityPage() {
                 {search ? `No posts matching "${search}"` : 'No posts yet — be the first!'}
               </p>
               {isAuthenticated && !search && (
-                <button className="cta-btn mt-5 h-10 px-6 text-sm" onClick={() => setShowNewPost(true)}>
+                /* Hero type in a 40px box is what this renders today: the size
+                   utilities it was written with lost to `.cta-btn`. LEDGER A-07. */
+                <Button variant="primary" size="hero" className="mt-5 h-10" onClick={() => setShowNewPost(true)}>
                   <Plus className="h-4 w-4" /> Start a discussion
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -341,13 +337,14 @@ function CommunityPage() {
                         separate read-only page in a new tab, and "Edit", which
                         was shown to anyone signed in and failed for everyone
                         who did not own the document. */}
-                    <button
-                      className="w-full h-8 text-xs rounded-lg flex items-center justify-center gap-1 font-medium transition-all"
-                      style={{ background: 'var(--accent-400)', color: 'var(--accent-ink)' }}
+                    <Button
+                      variant="primary"
+                      size="md"
+                      width="full"
                       onClick={() => handleViewLesson(plan.id, plan.mainTopic)}
                     >
                       Open <ArrowUpRight className="h-3 w-3" />
-                    </button>
+                    </Button>
                   </div>
                 );
               })}

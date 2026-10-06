@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, FileType2, FileCode2, Loader2 } from 'lucide-react';
+import { ArrowRight, FileType2, FileCode2 } from 'lucide-react';
+import { Button, Input, Segmented } from '@/components/ui';
 import type { DocFormat } from '@/lib/types';
 
 /**
@@ -52,9 +53,10 @@ export function TopicStarter({
   return (
     <form className="topic-bar topic-bar--workspace" onSubmit={submit}>
       <label className="sr-only" htmlFor="workspace-topic">Topic</label>
-      <input
+      <Input
         id="workspace-topic"
         ref={inputRef}
+        variant="bare"
         className="topic-input"
         placeholder="What's the topic?"
         value={topic}
@@ -68,20 +70,21 @@ export function TopicStarter({
       {/* Format lives inside the bar because it qualifies the topic rather
           than being a step before it. Two options, both always visible: a
           select would hide half the answer behind a click. */}
-      <div className="topic-format segmented" role="group" aria-label="Format">
-        <button type="button" data-active={format === 'mdx'} onClick={() => setFormat('mdx')} title="MDX — interactive document">
-          <FileType2 className="h-3.5 w-3.5" /> MDX
-        </button>
-        <button type="button" data-active={format === 'latex'} onClick={() => setFormat('latex')} title="LaTeX — typeset for academic work">
-          <FileCode2 className="h-3.5 w-3.5" /> LaTeX
-        </button>
-      </div>
+      <Segmented
+        size="xs"
+        className="topic-format"
+        aria-label="Format"
+        value={format}
+        onChange={setFormat}
+        options={[
+          { value: 'mdx', label: 'MDX', icon: <FileType2 className="h-3.5 w-3.5" />, title: 'MDX — interactive document' },
+          { value: 'latex', label: 'LaTeX', icon: <FileCode2 className="h-3.5 w-3.5" />, title: 'LaTeX — typeset for academic work' },
+        ]}
+      />
 
-      <button type="submit" className="accent-btn topic-go" disabled={busy || !topic.trim()}>
-        {busy
-          ? <Loader2 className="h-4 w-4 animate-spin" />
-          : <><span className="topic-go-label">Start</span><ArrowRight className="h-4 w-4" /></>}
-      </button>
+      <Button type="submit" variant="primary" size="xl" className="topic-go" loading={busy} disabled={!topic.trim()}>
+        {!busy && <><span className="topic-go-label">Start</span><ArrowRight className="h-4 w-4" /></>}
+      </Button>
     </form>
   );
 }

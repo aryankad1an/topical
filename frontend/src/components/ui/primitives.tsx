@@ -6,6 +6,7 @@
  * background written inline. Every screen builds from these instead, so the
  * look is defined in one place and changing it changes everywhere.
  */
+import { forwardRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { hueFor } from '@/lib/hue';
 
@@ -16,30 +17,26 @@ type Div = React.HTMLAttributes<HTMLDivElement>;
 export interface SurfaceProps extends Div {
   /** Visual weight. `dashed` reads as "nothing here yet". */
   variant?: 'solid' | 'dashed';
+  /** Corner: `sm` for rows, `md` for cards and panels, `lg` for page-level panels. */
   size?: 'sm' | 'md' | 'lg';
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-  /** Lift and warm on hover — for surfaces that are clickable. */
-  interactive?: boolean;
-  raised?: boolean;
   as?: 'div' | 'section' | 'article';
 }
 
 const PAD = { none: '', sm: 'surface-p-sm', md: 'surface-p-md', lg: 'surface-p-lg', xl: 'surface-p-xl' };
 
 /** The one panel. Everything card-shaped in the app is a Surface. */
-export function Surface({
-  variant = 'solid', size = 'md', padding = 'md',
-  interactive, raised, as: Tag = 'div', className, children, ...rest
-}: SurfaceProps) {
+export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface({
+  variant = 'solid', size = 'md', padding = 'md', as: Tag = 'div', className, children, ...rest
+}, ref) {
   return (
     <Tag
+      ref={ref}
       className={cn(
         'surface',
         size === 'lg' && 'surface--lg',
         size === 'sm' && 'surface--sm',
         variant === 'dashed' && 'surface--dashed',
-        interactive && 'surface--interactive',
-        raised && 'surface--raised',
         PAD[padding],
         className,
       )}
@@ -48,7 +45,7 @@ export function Surface({
       {children}
     </Tag>
   );
-}
+});
 
 /* ─────────────────────────── PageHeader ─────────────────────────── */
 
@@ -94,7 +91,7 @@ export function PageHeader({
   return (
     <div className={cn('page-head', className)}>
       <div className="page-head-text">
-        {eyebrow && <div className="mb-3"><span className="eyebrow">{eyebrow}</span></div>}
+        {eyebrow && <div className="mb-3"><Chip size="md" caps tone="accent">{eyebrow}</Chip></div>}
         {kicker && <p className="page-kicker">{kicker}</p>}
         <h1 className="page-title">{title}</h1>
         {subtitle && <p className="page-sub">{subtitle}</p>}
@@ -170,33 +167,68 @@ export interface AvatarProps {
   src?: string | null;
   name?: string | null;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  /** `circle` where the surrounding chrome is round (the nav pill, the photo picker). */
+  shape?: 'rounded' | 'circle';
+  /**
+   * `seeded` is the person's own hue. `accent` and `muted` exist because the
+   * nav and the photo picker drew their own avatars in those colours; see
+   * LEDGER A-09 on making every avatar seeded.
+   */
+  tone?: 'seeded' | 'accent' | 'muted';
+  /** Alt text when the picture is meaningful on its own (not beside the name). */
+  alt?: string;
   className?: string;
 }
 
-export function Avatar({ seed, src, name, size = 'md', className }: AvatarProps) {
+export function Avatar({
+  seed, src, name, size = 'md', shape = 'rounded', tone = 'seeded', alt, className,
+}: AvatarProps) {
   const initial = (name?.trim()?.[0] || 'U').toUpperCase();
+  // A picture that fails to load falls back to the initial rather than a
+  // broken-image glyph — the behaviour the Radix avatar this replaced had.
+  const [failed, setFailed] = useState<string | null>(null);
+  const showImage = !!src && failed !== src;
   return (
     <span
-      className={cn('avatar', `avatar--${size}`, className)}
-      style={{ ['--av-h' as string]: String(hueFor(seed ?? name)) }}
-      aria-hidden="true"
+      className={cn(
+        'avatar', `avatar--${size}`,
+        shape === 'circle' && 'avatar--circle',
+        tone !== 'seeded' && `avatar--${tone}`,
+        className,
+      )}
+      style={tone === 'seeded' ? { ['--av-h' as string]: String(hueFor(seed ?? name)) } : undefined}
+      aria-hidden={alt ? undefined : true}
+      role={alt ? 'img' : undefined}
+      aria-label={alt}
     >
-      {src ? <img src={src} alt="" /> : initial}
+      {showImage ? <img src={src} alt="" onError={() => setFailed(src)} /> : initial}
     </span>
   );
 }
 
 /* ─────────────────────────── Chip ─────────────────────────── */
 
+export type ChipTone = 'neutral' | 'quiet' | 'outline' | 'accent' | 'latex' | 'success' | 'danger' | 'brand';
+
 export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
-  tone?: 'neutral' | 'accent' | 'latex' | 'success' | 'danger';
+  /**
+   * `neutral` a filled well · `quiet` a faint wash · `outline` a hairline only ·
+   * `accent`/`latex`/`success`/`danger` the status tints · `brand` takes the
+   * nearest `--brand` (a provider's own colour).
+   */
+  tone?: ChipTone;
+  /** `xs` a 9px badge · `sm` the 24px chip · `md` a hero-scale label. */
+  size?: 'xs' | 'sm' | 'md';
   mono?: boolean;
+  /** Tracked capitals — for kind badges and eyebrows. */
+  caps?: boolean;
 }
 
-export function Chip({ tone = 'neutral', mono, className, children, ...rest }: ChipProps) {
+/** A label that describes — a tag, a handle, a status. Pills describe; rounded rectangles act. */
+export function Chip({ tone = 'neutral', size = 'sm', mono, caps, className, children, ...rest }: ChipProps) {
   return (
     <span
-      className={cn('chip', tone !== 'neutral' && `chip--${tone}`, mono && 'chip--mono', className)}
+      className={cn('chip', `chip--${size}`, tone !== 'neutral' && `chip--${tone}`, mono && 'chip--mono', caps && 'chip--caps', className)}
       {...rest}
     >
       {children}
@@ -204,27 +236,34 @@ export function Chip({ tone = 'neutral', mono, className, children, ...rest }: C
   );
 }
 
-/* ─────────────────────────── IconButton ─────────────────────────── */
-
-export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  tone?: 'neutral' | 'danger';
-  /** Reveal on hover of the nearest `.group` ancestor. */
-  revealOnHover?: boolean;
+export interface ChipButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  tone?: ChipTone;
+  size?: 'sm' | 'md';
+  /** Chosen, in the accent's quiet form. Reported with aria-pressed. */
+  selected?: boolean;
+  /** `rounded` for an option among options (it acts); `pill` for a suggestion or a state. */
+  shape?: 'pill' | 'rounded';
 }
 
-export function IconButton({ tone = 'neutral', revealOnHover, className, ...rest }: IconButtonProps) {
+/**
+ * A chip you can press: a suggestion that fills a field, a state you can flip,
+ * an option in a set. One component for what were `.doc-chip--action`,
+ * `.people-chip`, `.orail-chip`, `.write-pop-ask`, `.topic-try` and `.pdf-choice`.
+ */
+export const ChipButton = forwardRef<HTMLButtonElement, ChipButtonProps>(function ChipButton({
+  tone = 'quiet', size = 'sm', selected, shape = 'pill', className, type = 'button', ...rest
+}, ref) {
   return (
     <button
-      className={cn(
-        'icon-btn',
-        tone === 'danger' && 'icon-btn--danger',
-        revealOnHover && 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
-        className,
-      )}
+      ref={ref}
+      type={type}
+      className={cn('chip', 'chip-btn', `chip--${size}`, tone !== 'neutral' && `chip--${tone}`, shape === 'rounded' && 'chip--rounded', className)}
+      data-selected={selected || undefined}
+      aria-pressed={selected === undefined ? undefined : selected}
       {...rest}
     />
   );
-}
+});
 
 /* ─────────────────────────── IdentityBanner ─────────────────────────── */
 

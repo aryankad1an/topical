@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { FileType2, FileCode2, ArrowUpRight, Trash2 } from 'lucide-react';
-import { docTypeVars } from '@/components/ui/primitives';
+import { Button, IconButton, docTypeVars } from '@/components/ui';
 import { Collaborators } from '@/components/Collaborators';
 import { formatOf } from '@/lib/types';
 
@@ -173,10 +173,9 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
                the icon *and* the background to `--status-danger`, so pointing
                at delete made the bin vanish into a solid red block. The shared
                class tints the well and leaves the icon to read against it. */
-            <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+            <IconButton size="sm" tone="danger" revealOnHover onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}>
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </IconButton>
           )}
         </div>
 
@@ -193,9 +192,9 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
 
         {doc.id != null && (
           <div className="doc-actions">
-            <button className="doc-btn doc-btn--primary" onClick={() => onOpen(doc.id!)}>
+            <Button variant="secondary" size="md" width="full" onClick={() => onOpen(doc.id!)}>
               Open <ArrowUpRight className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -239,14 +238,13 @@ export function DocumentRow({ doc, isAuthor, onOpen, onDelete, formatDate, child
               coAuthorUsernames={doc.coAuthorUsernames}
             />
           )}
-          <button className="doc-btn doc-btn--primary px-3" style={{ flex: 'none' }} onClick={() => onOpen(doc.id!)}>
+          <Button variant="secondary" size="md" onClick={() => onOpen(doc.id!)}>
             Open <ArrowUpRight className="h-3.5 w-3.5" />
-          </button>
+          </Button>
           {isAuthor && (
-            <button onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}
-              className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+            <IconButton size="sm" tone="danger" revealOnHover onClick={() => onDelete(doc.id!)} aria-label={`Delete ${doc.name}`}>
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </IconButton>
           )}
         </div>
       )}

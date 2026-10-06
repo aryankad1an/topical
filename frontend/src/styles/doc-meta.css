@@ -34,78 +34,10 @@
   margin-top: 12px;
 }
 
-/* While the document route is deciding what to show. Roughly where the sheet's
-   first line will land, so the spinner is not somewhere content never appears. */
-.doc-route-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8rem 0;
-}
 
 /* ── Who is on a document ──
    The count is a control, not a label: it opens the names. */
-/* ── The shared chip ──
-   A pill that states one fact about the document. `--action` marks the ones
-   that are also buttons; the rest are labels, and in this system pills
-   describe while rounded rectangles act — so an actionable pill has to earn
-   it with a hover and a pressed state. */
-.doc-chip,
-.people-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  /* Explicit, against the global 2.5rem touch-target floor on `button`. */
-  height: var(--doc-chip-h);
-  min-height: 0;
-  min-width: 0;
-  padding: 0 9px;
-  border-radius: var(--radius-pill);
-  font-size: 10.5px;
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-  color: var(--ink-faint);
-  background: var(--ink-a04);
-  border: 1px solid var(--line-soft);
-}
 
-/* Published is a state worth seeing across a grid of cards without reading
-   it, so it takes the accent as a tint. Private is the resting state and
-   stays neutral — if both were coloured neither would carry information. */
-.doc-chip[data-public] {
-  color: var(--accent-600);
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-}
-
-.doc-chip--action,
-.people-chip {
-  cursor: pointer;
-  transition-property: var(--transition-control);
-  transition-duration: var(--dur-fast);
-  transition-timing-function: var(--ease-out);
-}
-.doc-chip--action:hover:not(:disabled),
-.people-chip:hover {
-  color: var(--ink-2);
-  background: var(--ink-a08);
-  border-color: var(--line);
-}
-.doc-chip--action[data-public]:hover:not(:disabled) {
-  color: var(--accent-600);
-  background: rgb(var(--accent-rgb) / 0.18);
-  border-color: var(--accent-400);
-}
-.doc-chip--action:active:not(:disabled),
-.people-chip:active { transform: scale(0.94); }
-.doc-chip--action:disabled { cursor: progress; }
-
-.people-chip[data-open] {
-  color: var(--ink-2);
-  background: var(--ink-a08);
-  border-color: var(--line);
-}
 
 .people-pop {
   /* Fixed and portalled to the body: two of the four places this is used clip

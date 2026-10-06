@@ -1,4 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
+import { IconButton } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { setTheme, useTheme, type Theme } from '@/lib/theme';
 
 interface Props {
@@ -18,8 +20,9 @@ export function ThemeToggle({ className }: Props) {
   const next: Theme = theme === 'dark' ? 'light' : 'dark';
 
   return (
-    <button
-      className={`theme-toggle${className ? ` ${className}` : ''}`}
+    <IconButton
+      size="md"
+      className={cn('theme-toggle', className)}
       onClick={event => {
         // The wipe grows from the button, so it needs where the button is.
         const box = event.currentTarget.getBoundingClientRect();
@@ -30,6 +33,6 @@ export function ThemeToggle({ className }: Props) {
     >
       <Sun className="theme-icon theme-icon--sun h-4 w-4" />
       <Moon className="theme-icon theme-icon--moon h-4 w-4" />
-    </button>
+    </IconButton>
   );
 }

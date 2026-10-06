@@ -1,11 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Upload } from "lucide-react";
+import { Button, Input, Textarea, Avatar, Spinner, Field } from '@/components/ui';
 import { uploadFile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 // The same ceiling the server stores to, and the schema rejects past.
@@ -74,16 +70,10 @@ export function ProfileEditorFields({
     <div className="space-y-5">
       <div className="flex items-center gap-4">
         <div className="relative">
-          <Avatar className="h-16 w-16">
-            {displayedAvatar ? (
-              <AvatarImage src={displayedAvatar} alt="Avatar" />
-            ) : (
-              <AvatarFallback className="text-lg">{fallbackInitial}</AvatarFallback>
-            )}
-          </Avatar>
+          <Avatar size="lg" shape="circle" tone="muted" src={displayedAvatar} name={fallbackInitial} alt="Avatar" />
           {isUploading && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-[rgba(25,25,23,0.45)]">
-              <Loader2 className="h-5 w-5 animate-spin text-[var(--ink)]" />
+            <div className="avatar-busy">
+              <Spinner size="lg" tone="ink" />
             </div>
           )}
         </div>
@@ -95,38 +85,34 @@ export function ProfileEditorFields({
             className="hidden"
             onChange={handleFileSelected}
           />
-          <Button type="button" variant="outline" size="sm" onClick={handlePickFile} disabled={disabled || isUploading}>
-            <Upload className="h-3.5 w-3.5 mr-1.5" /> Change photo
+          <Button type="button" variant="secondary" size="md" onClick={handlePickFile} disabled={disabled || isUploading}>
+            <Upload className="h-3.5 w-3.5" /> Change photo
           </Button>
           <p className="text-xs text-muted-foreground mt-1.5">JPEG, PNG, GIF or WebP, up to 5MB.</p>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="profile-username" className="text-sm font-medium mb-2 block">Username</Label>
+      <Field id="profile-username" label="Username">
         <Input
           id="profile-username"
           value={username}
           onChange={(e) => onUsernameChange(e.target.value)}
           placeholder="Choose a unique username"
-          className="max-w-[280px] bg-[var(--surface)] border-[var(--line)]"
+          className="max-w-[280px]"
           disabled={disabled}
         />
-      </div>
+      </Field>
 
-      <div>
-        <Label htmlFor="profile-bio" className="text-sm font-medium mb-2 block">Bio</Label>
+      <Field id="profile-bio" label="Bio" count={{ value: bio.length, max: MAX_BIO_LENGTH }}>
         <Textarea
           id="profile-bio"
           value={bio}
           onChange={(e) => onBioChange(e.target.value.slice(0, MAX_BIO_LENGTH))}
           placeholder="Tell the community a bit about yourself"
-          className="bg-[var(--surface)] border-[var(--line)] resize-none"
           rows={3}
           disabled={disabled}
         />
-        <p className="text-xs text-muted-foreground mt-1 text-right">{bio.length}/{MAX_BIO_LENGTH}</p>
-      </div>
+      </Field>
     </div>
   );
 }

@@ -53,3 +53,46 @@ Status: **fix** = fixed in the batch that lists it · **ask** = needs your decis
 | TK-18 | P3 | tokens.css | component styles live in the token file (`.glass-card`, `.glass-input`, `.gradient-text`, `.theme-toggle`, `.cta-arrow`, `.mobile-menu-overlay`) | moved with their primitive in batch 2/3 | see PR/SH rows |
 | TK-19 | — | tokens.css:475 | `animation-duration: 0.01ms` in the reduced-motion block | the standard "effectively off" technique, not a tunable duration | wontfix |
 | TK-20 | — | tokens (all) | colour-token parity light ↔ dark | checked: every colour token exists in both themes | ok |
+
+### Batch 2a — primitives layer, P1 (overlapping primitives and look-alikes of existing ones)
+
+Every row here is a merge: the look-alikes were migrated at **every** call site in the codebase, and the old CSS was deleted behind the CSS gate. "Visible" names a deliberate convergence (one primitive, one look) rather than a regression; each one was reviewed in the pixel diff.
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| PR-01 | P1 | components/ui/button.tsx; styles/buttons.css | Two button systems: a shadcn `Button` (Tailwind palette, `outline`/`destructive`) and 13 CSS aliases of the three tiers (`.accent-btn .cta-btn .glass-btn .btn-subtle .doc-btn .orail-btn .orail-primary .orail-go .editor-save .new-post-btn .auth-submit .toolbar-toggle .orail-add`), sizes scattered over 4 files | One `Button`: `variant` primary/secondary/ghost/dashed/danger, `size` xs/sm/md/lg/xl/hero (measured from what rendered), `width`, `shape`, `density`, `elevation`, `tone`, `loading`, `active`, `asChild`; 41 call sites migrated, 33 dead rules deleted | fix |
+| PR-02 | P1 | components/ui/icon-button.tsx | 8 aliases for the ghost icon control (`.toolbar-btn .icon-btn .orow-tool .vote-btn .detail-close-btn .theme-toggle .auth-reveal .nav-kbd`); most declared sizes silently overridden by the 40px touch floor | `IconButton` sizes xs 18 / sm 28 / md 30 / lg 40 (what rendered), `tone`, `active`, `width="narrow"`, `revealOnHover`; 38 call sites | fix |
+| PR-03 | P1 | DocumentCard, PostCard, PostDetail | delete buttons revealed **only** on hover (`opacity-0 group-hover:opacity-100`): unreachable on touch | `revealOnHover` hides only under `@media (hover: hover)`, and `:focus-within` reveals it | fix |
+| PR-04 | P0 | PostCard:40,54; PostDetail:112,127,129 | vote and close buttons had no accessible name (icon only / `title` only) | `aria-label` (required by `IconButton`'s type) | fix |
+| PR-05 | P2 | 20 files | 20 hand-rolled `Loader2 animate-spin` at 9 sizes + a second ring spinner (`.detail-spinner`) | `Spinner` (8 sizes, 5 tones, labelled) and `LoadingState` page/region/inline; Button `loading` | fix |
+| PR-06 | P1 | ui/avatar.tsx, __root.tsx (`.nav-avatar`), primitives Avatar | three avatar implementations | one `Avatar` (+ `shape`, `tone`, image-error fallback that the Radix one had); Radix avatar deleted | fix |
+| PR-07 | P1 | label.tsx, `.auth-label` `.dialog-label` `.pdf-field-label` `.write-pop-label` | four label faces; shadcn's set fields at a different size from every other form | `Label` (`requirement` word, `aside` slot, `size`), `Field` (label/control/hint/error/count), `FieldGroup` | fix |
+| PR-08 | P1 | input.tsx, `.glass-input .auth-input .search-input .orail-input .find-input .ai-assist-input .write-pop-input` | seven field looks; shadcn `Input` utilities lost to `.glass-input` | `Input`/`Textarea` sm/md/lg × `well`/`bare`/`file`, leading/trailing slots, focus tokens; `SearchField` (clear button, Escape-to-clear opt-in); 22 call sites | fix |
+| PR-09 | P2 | CommandPalette, AiAssist | the menu filter row drawn twice (`.cmdk-input-row`, `.ai-assist-search`) | `MenuSearch` md/sm | fix |
+| PR-10 | P0 | AiAssist:186,255; CoAuthorsDialog:66; PostDetail:205; providers:156,177; WritePopover:151; OutlineRail:314 | fields with no label (placeholder only) | `aria-label` on each | fix |
+| PR-11 | P2 | ExportPdfDialog `.pdf-toggle` | native checkboxes in a hand-rolled label (MISSING toggle category) | `Checkbox` (label, note, accent box) | fix |
+| PR-12 | P1 | card.tsx vs Surface | Card and Surface were the same sheet declared twice; Card lifted on hover though nothing on it was clickable | `Card` composes `Surface`; slots tokenised; `Surface` forwards refs and lost two unused booleans | fix |
+| PR-13 | P1 | `.segmented .community-tabs .sort-pill .topic-format .method-switch` | five implementations of one-of-N | `Segmented` tray/pills × md/sm/xs, `iconOnly`, `fill`, `aria-pressed`; 6 call sites | fix |
+| PR-14 | P1 | `.doc-chip .people-chip .orail-chip .write-pop-ask .topic-try .pdf-choice .eyebrow .orail-kind .provider-default-chip` | nine chip look-alikes beside `Chip` | `Chip` (+ size xs/sm/md, `caps`, tones quiet/outline/brand) and `ChipButton` (selected, rounded option shape) | fix |
+| PR-15 | P2 | components/ui | no barrel; primitives imported file by file | `components/ui/index.ts`; every importer uses it | fix |
+| PR-16 | P2 | primitives.tsx Surface | 2 unused booleans (`interactive`, `raised`) + `--surface-accent-line` phantom hook | deleted | fix |
+| PR-17 | P3 | 13 removed rules | dead appearance rules that never painted (cascade losers): `.theme-toggle:hover`, `.nav-kbd:hover`, `.vote-btn:hover`, `.orow-tool--go/--add:hover`, `.orail-primary--stop`, `.topic-format` accent state, `.doc-btn--primary` fill, `rounded-full`/`h-9 px-4 text-xs` utilities under `.accent-btn`/`.cta-btn` | deleted with their aliases; rendered result kept | fix |
+| PR-18 | P0 | editor.css `.editor-title:focus` | the title field's only focus indicator was a 4% wash | inset 1px `--focus-border` ring | fix |
+| PR-20 | P2 | community.tsx:247, PostDetail.tsx:214 | "Start a discussion" and the comment "Post" button render hero type (17px) in a 40px box: the size utilities they were written with (`h-9 px-4 text-xs`) lost to `.cta-btn` | kept as rendered (`size="hero"` + the height) | **ask A-07** |
+| PR-21 | P2 | EditorHeader Save/Edit, DocumentCard Open | written as primary (`.accent-btn`, `.doc-btn--primary`) but **render secondary**: the secondary rule was listed later in the same file and won | kept as rendered (`variant="secondary"`) | **ask A-08** |
+| PR-22 | P3 | __root nav avatar, ProfileEditorFields picker | avatars in a fixed accent / grey instead of the person's own seeded hue used everywhere else | kept (`tone="accent"` / `"muted"`) | **ask A-09** |
+| PR-19 | P1 | ui/dialog.tsx vs NewPostDialog, PostDetail, ExportPdfDialog, CommandPalette | hand-rolled modal overlays beside the Radix `Dialog`: no focus trap, no `aria-modal` on three | migrating changes behaviour (focus trap, portal, return focus) | **ask A-10** |
+
+**Visible convergences in 2a** (each a small, deliberate change; listed so they can be vetoed):
+- Buttons sit on measured sizes:
+  - Secondary links that were 36px tall are now 40 (`md`).
+  - The nav "Sign in" went 34.6 → 40, so the nav's controls share one height.
+  - The PDF submit went 40 → 44 (`xl`).
+- Shadcn-styled buttons ("Change password", "Change photo", "Skip for now", dialog footers) took the app's tiers: white paper, 600 weight, 9px corners.
+- The ⌘K key is a 40px icon button (it was 43 wide). The mobile menu toggle went 34 → 30, matching the theme switch beside it.
+- Inputs moved onto the 15px well, and the projects search is 8px wider (208px).
+- The AI panel and write popover fields sit on the same well instead of `--ink-a04` / `--bg` tints.
+- The write popover's method switch became the tray `Segmented`: a raised chosen item instead of an accent wash.
+- Pressable chips are weight 500. The hero suggestions were 400 and static chips are 600. The neutral chip hover is one look everywhere.
+- Spinners are one family. The post-detail ring is now the standard spinner. The document route's loader went 28 → 48px, centred like every page loader.
+- Profile cards no longer lift on hover. Their shadow is `--shadow-xs` like every other card.

@@ -1,11 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from "lucide-react";
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState } from '@/components/ui';
+import { User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from 'lucide-react';
 import { useState, useEffect } from "react";
 import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
-import { Avatar, EmptyState, PageHeader } from "@/components/ui/primitives";
 import { ChangePasswordCard } from "@/components/auth/ChangePasswordCard";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -22,10 +20,7 @@ function Profile() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60dvh]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading profile...</p>
-      </div>
+      <LoadingState size="page" label="Loading profile..." />
     );
   }
 
@@ -34,7 +29,7 @@ function Profile() {
       <div className="text-center p-8">
         <h2 className="text-2xl font-bold mb-2">Authentication Error</h2>
         <p className="text-muted-foreground mb-4">Unable to load user profile</p>
-        <Button asChild><Link to="/login">Sign in again</Link></Button>
+        <Button asChild variant="primary" size="lg"><Link to="/login">Sign in again</Link></Button>
       </div>
     );
   }
@@ -57,15 +52,9 @@ function Profile() {
         title="Your account"
         subtitle="Your name, handle and bio are public. Everything else on this page is yours alone."
         actions={
-          /* `.btn-subtle`, the product's secondary tier — this was a shadcn
-             ghost `Button` with four Tailwind colour overrides, the only page
-             action in the app that was not one of the three control tiers
-             `buttons.css` owns. */
-          <button className="btn-subtle h-9 px-4" onClick={logout} disabled={isNavigating}>
-            {isNavigating
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <><LogOut className="h-3.5 w-3.5" /> Sign out</>}
-          </button>
+          <Button variant="secondary" size="md" onClick={logout} loading={isNavigating}>
+            {!isNavigating && <><LogOut className="h-3.5 w-3.5" /> Sign out</>}
+          </Button>
         }
       />
 
@@ -127,16 +116,18 @@ function Profile() {
             )}
 
             {/* Editing is its own screen — this page is for viewing. */}
-            <div className="flex items-center gap-2.5 pt-1.5">
-              <Link to="/profile/edit" className="btn-subtle h-9 px-4">
-                <Pencil className="h-3.5 w-3.5" /> Edit profile
-              </Link>
-              {user.username && (
-                <Link to="/u/$username" params={{ username: user.username }}
-                  className="h-9 px-4 rounded-lg text-xs font-medium flex items-center gap-2 text-[var(--ink-faint)] hover:text-[var(--ink-2)] transition-colors"
-                  style={{ textDecoration: "none" }}>
-                  <Eye className="h-3.5 w-3.5" /> View public profile
+            <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+              <Button asChild variant="secondary" size="md">
+                <Link to="/profile/edit">
+                  <Pencil className="h-3.5 w-3.5" /> Edit profile
                 </Link>
+              </Button>
+              {user.username && (
+                <Button asChild variant="ghost" size="md">
+                  <Link to="/u/$username" params={{ username: user.username }}>
+                    <Eye className="h-3.5 w-3.5" /> View public profile
+                  </Link>
+                </Button>
               )}
             </div>
           </CardContent>
@@ -169,7 +160,7 @@ function Profile() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-[13px] font-semibold text-[var(--ink)]">{preset.name}</span>
-                          {cred.isDefault && <span className="provider-default-chip">DEFAULT</span>}
+                          {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
                         </div>
                         <p className="provider-model truncate">{cred.model}</p>
                       </div>
@@ -180,11 +171,12 @@ function Profile() {
             )}
 
             {/* Managing keys is its own task with its own screen. */}
-            <Link to="/providers"
-              className="btn-subtle w-full h-9">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              {credentials.length ? "Manage providers" : "Connect a provider"}
-            </Link>
+            <Button asChild variant="secondary" size="md" width="full">
+              <Link to="/providers">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                {credentials.length ? "Manage providers" : "Connect a provider"}
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
