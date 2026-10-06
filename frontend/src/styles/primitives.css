@@ -267,6 +267,7 @@
 .chip--latex { color: var(--latex-500); background: var(--latex-soft); border-color: rgb(var(--latex-rgb) / 0.34); }
 .chip--success { color: var(--status-success); background: rgb(var(--success-rgb) / 0.12); border-color: rgb(var(--success-rgb) / 0.35); }
 .chip--danger { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.1); border-color: rgb(var(--danger-rgb) / 0.3); }
+.chip--doc { color: var(--doc-accent); background: var(--doc-accent-soft); border-color: var(--doc-accent-line); }
 .chip--brand {
   color: var(--brand);
   background: color-mix(in srgb, var(--brand) 15%, transparent);

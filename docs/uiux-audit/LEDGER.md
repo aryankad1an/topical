@@ -174,3 +174,15 @@ Document coverage 12.0% → 52.3%.
 The harness gained two `doc-blank-*` states, read and write, with an empty document. It is served by id only, so the lists are unchanged.
 
 Document coverage 52.3% → 54.3%.
+
+### Batch 5 — workspace (P1–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| WS-01 | P1 | DocumentCard:160, :213 | look-alike of `DocTypeIcon`: two hand-built format tiles (raw `h-8`/`h-9` boxes with inline `style` for the doc hue) beside the primitive that draws exactly that | `DocTypeIcon` sm (now with the 14px glyph the card used) / md — pixel-identical | fix |
+| WS-02 | P2 | DocumentCard:165–170, :220–228 | titles and meta lines as raw `text-[11px] text-[var(--ink-faint)]` utility strings | `Text` (`as="h3"`, size/weight/tone/truncate) in a `Row` — pixel-identical | fix |
+| WS-03 | P2 | DocumentCard:221 | the list view's MDX/TEX badge was a private 9.5px rounded tag with an inline-style hue | `Chip size="xs"` with a new `doc` tone (`--doc-accent` from `docTypeVars`). Visible: a 9px pill with a hairline, like every other badge | fix |
+| WS-04 | P1 | projects.tsx:241, providers.tsx:91, :211 | `Heading`'s display/section sizes pointed at classes that were never defined (`heading--display`, `heading--section`), so the primitive could not be used for a heading. Three call sites restyled `.section-title` with an inline `fontSize` instead | `Heading` sizes now map to the real classes (`page-title`, `section-title`), plus `subsection` (--text-lg) and `group` (1rem) — pixel-identical | fix |
+| WS-05 | — | projects.tsx (`doc-card` skeleton, `workspace-facts`), DocumentCard (`doc-thumb*`, `doc-meta`, `doc-actions`), TopicStarter (`topic-bar`) | the card's miniature, the skeleton that mirrors the card's geometry, the one-line facts row and the topic bar are the workspace's own composites | domain geometry, single owner | wontfix (documented) |
+
+Workspace coverage 27.1% → 71.4%.

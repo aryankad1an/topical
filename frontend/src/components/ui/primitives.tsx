@@ -244,7 +244,7 @@ export function Avatar({
 
 /* ─────────────────────────── Chip ─────────────────────────── */
 
-export type ChipTone = 'neutral' | 'quiet' | 'outline' | 'accent' | 'latex' | 'success' | 'danger' | 'brand';
+export type ChipTone = 'neutral' | 'quiet' | 'outline' | 'accent' | 'latex' | 'success' | 'danger' | 'brand' | 'doc';
 
 export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {
   /**
@@ -383,7 +383,7 @@ export function DocTypeIcon({
 }) {
   return (
     <span className={cn('doc-type-icon', `doc-type-icon--${size}`, className)} style={docTypeVars(type)}>
-      <Icon className={size === 'lg' ? 'h-5 w-5' : 'h-4 w-4'} />
+      <Icon className={size === 'lg' ? 'h-5 w-5' : size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
     </span>
   );
 }

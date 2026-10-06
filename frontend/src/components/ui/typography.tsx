@@ -53,12 +53,17 @@ Text.displayName = "Text"
 
 /**
  * A heading. `level` is the outline (h1–h4); `size` the voice:
- *   display — the serif at page-title scale   section — the serif at section scale
- *   card    — the serif at card scale           label  — a small sans heading
+ *   display    — the serif at page-title scale (what `PageHeader` prints)
+ *   section    — the serif at marketing-section scale (`SectionHead`)
+ *   subsection — the serif at --text-lg: a section inside an app screen
+ *   group      — the serif at 1rem: a group inside such a section
+ *   card       — the serif at card scale
+ *   label      — the 10px caps caption over a group of controls
  */
 const HEADING = {
-  display: "heading heading--display", section: "heading heading--section",
-  card: "card-heading", label: "heading heading--label",
+  display: "page-title", section: "section-title",
+  subsection: "section-title section-title--subsection", group: "section-title section-title--group",
+  card: "card-heading", label: "heading--label",
 } as const
 
 export interface HeadingProps extends React.HTMLAttributes<HTMLHeadingElement> {

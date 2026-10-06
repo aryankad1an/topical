@@ -19,7 +19,7 @@ import type { DocFormat } from '@/lib/types';
 import { Plus, FolderOpen, LayoutGrid, List } from 'lucide-react';
 import { TopicStarter } from '@/components/projects/TopicStarter';
 import { DocumentCard, DocumentRow, wordCount } from '@/components/projects/DocumentCard';
-import { EmptyState, PageHeader, Refreshing, Button, SearchField, Segmented, Skeleton, Page, ConfirmDialog, Row, Grid, Stack } from '@/components/ui';
+import { EmptyState, PageHeader, Refreshing, Button, SearchField, Segmented, Skeleton, Page, ConfirmDialog, Row, Grid, Stack, Heading } from '@/components/ui';
 import { VisibilityChip } from '@/components/projects/VisibilityChip';
 
 export const Route = createFileRoute('/_authenticated/projects')({ component: ProjectsPage });
@@ -238,7 +238,7 @@ function ProjectsPage() {
         <div>
           <Row align="center" justify="between" gap={3} wrap className="mb-4">
             <Row align="center" gap={3} as="span">
-              <h2 className="section-title" style={{ fontSize: 'var(--text-lg)' }}>Your documents</h2>
+              <Heading level={2} size="subsection">Your documents</Heading>
               <Refreshing active={isFetching && !isLoading} />
             </Row>
             <Row align="center" gap={2.5}>

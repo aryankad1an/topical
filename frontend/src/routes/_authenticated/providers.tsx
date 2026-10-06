@@ -5,7 +5,7 @@ import {
   Key, Plus, Star, Trash2, ExternalLink, Check,
   ShieldCheck, Sparkles,
 } from "lucide-react";
-import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page, Text, Row } from '@/components/ui';
+import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page, Text, Row, Heading } from '@/components/ui';
 import { errorMessage } from "@/lib/utils";
 import {
   type AiCredential, type AiProvider, PROVIDER_PRESETS,
@@ -88,7 +88,7 @@ function ProvidersPage() {
 
         {/* ── Add a provider ── */}
         <Surface size="lg" padding="lg">
-          <h2 className="section-title mb-6" style={{ fontSize: "var(--text-lg)" }}>Connect a provider</h2>
+          <Heading level={2} size="subsection" className="mb-6">Connect a provider</Heading>
 
           {/* Step 1 — provider */}
           <div className="setup-step" data-done={true}>
@@ -208,7 +208,7 @@ function ProvidersPage() {
         {/* ── Connected ── */}
         <Surface size="lg" padding="md">
           <Row align="center" justify="between" className="mb-4">
-            <h2 className="section-title" style={{ fontSize: "1rem" }}>Connected</h2>
+            <Heading level={2} size="group">Connected</Heading>
             <span className="topic-count">{credentials.length}</span>
           </Row>
 
