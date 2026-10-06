@@ -399,21 +399,8 @@ h1.editor-title--static:hover { background: transparent; }
    How much of the outline is written, stated once. The rail used to say this
    with a tick on every written row, which is the same fact repeated as many
    times as there are sections and readable as none of them. */
-.outline-meter {
-  height: 2px;
-  margin: 0 12px 9px;
-  border-radius: var(--radius-pill);
-  background: var(--ink-a06);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.outline-meter-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: rgb(var(--accent-rgb) / 0.55);
-  transition: width var(--dur-base) var(--ease-out);
-}
-
+/* Placement of the coverage Progress under the rail head. */
+.outline-meter { margin: 0 12px 9px; flex-shrink: 0; }
 /* The drag handle sits over the border, not beside it, so the rail loses no
    width to something you only touch occasionally. */
 .outline-resize {
@@ -466,14 +453,6 @@ h1.editor-title--static:hover { background: transparent; }
   flex-shrink: 0;
   max-height: 46vh;
   display: flex; flex-direction: column;
-}
-.orail-proposal-head {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 8px 8px 10px;
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--accent-500);
-  border-bottom: 1px solid var(--line-soft);
 }
 .orail-summary {
   padding: 8px 10px;
@@ -817,12 +796,8 @@ h1.editor-title--static:hover { background: transparent; }
 }
 /* Sized by its content like the plain input it was, never squeezed below 150px. */
 .find-bar .find-input { width: auto; min-width: 150px; }
-.find-count {
-  min-width: 52px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-}
+/* Holds its width while the count changes. */
+.find-count { min-width: 52px; }
 /* ── Slash menu ── */
 /* Placement at the caret; the panel is a MenuPanel. */
 .slash-menu { position: absolute; z-index: var(--z-popover); width: 320px; max-height: 300px; overflow-y: auto; }
@@ -852,14 +827,6 @@ h1.editor-title--static:hover { background: transparent; }
   transform-origin: top left;
   animation: cmdk-rise var(--dur-enter) var(--ease-out);
 }
-.ai-assist-head {
-  display: flex; align-items: center; gap: 7px;
-  padding: 9px 10px 9px 12px;
-  font-size: 11.5px; font-weight: 600;
-  color: var(--ink-muted);
-  border-bottom: 1px solid var(--line-soft);
-}
-
 /* Six rows and a scroll, not twelve and a wall. */
 .ai-assist-list { max-height: 218px; overflow-y: auto; padding: 4px; }
 /* Only ever on the row under the cursor. Printed on all twelve it was a
@@ -894,26 +861,6 @@ h1.editor-title--static:hover { background: transparent; }
   border: 1px solid var(--line-soft);
 }
 .ai-assist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
-.ai-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  height: 28px; padding: 0 11px;
-  border-radius: var(--radius);
-  font-size: 11.5px; font-weight: 600;
-  color: var(--ink-2);
-  background: var(--ink-a04);
-  border: 1px solid var(--line);
-  transition-property: var(--transition-control);
-  transition-duration: var(--dur-fast);
-  transition-timing-function: var(--ease-out);
-}
-.ai-btn:hover:not(:disabled) { color: var(--ink); background: var(--ink-a06); }
-.ai-btn:disabled { opacity: 0.4; }
-.ai-btn--primary {
-  color: var(--accent-ink);
-  background: var(--accent-400);
-  border-color: var(--accent-400);
-}
-.ai-btn--primary:hover:not(:disabled) { background: var(--accent-500); color: var(--accent-ink); }
 
 .share-results {
   display: flex; flex-direction: column; gap: 2px;
@@ -931,12 +878,6 @@ h1.editor-title--static:hover { background: transparent; }
 .share-row:hover { background: var(--ink-a04); }
 .share-row--filled { background: var(--ink-a02); border: 1px solid var(--line-soft); }
 .share-name { flex: 1; font-size: 12.5px; color: var(--ink-2); }
-.share-heading {
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.09em;
-  color: var(--ink-faint);
-  margin-bottom: 7px;
-}
 .image-preview {
   max-height: 150px;
   width: 100%;
@@ -966,14 +907,7 @@ h1.editor-title--static:hover { background: transparent; }
   .shortcut-columns { grid-template-columns: 1fr 1fr; }
 }
 
-.shortcut-heading {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-bottom: 0.6rem;
-}
+.shortcut-heading { margin-bottom: 0.6rem; }
 
 .shortcut-list { display: flex; flex-direction: column; gap: 1px; }
 
@@ -1073,23 +1007,7 @@ h1.editor-title--static:hover { background: transparent; }
   transform-origin: bottom center;
   animation: cmdk-rise var(--dur-base) var(--ease-out);
 }
-
-.write-pop-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 8px 9px 12px;
-  border-bottom: 1px solid var(--line-soft);
-}
-.write-pop-title {
-  font-size: 11.5px;
-  color: var(--ink-muted);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.write-pop-title b { color: var(--ink); font-weight: 600; }
+.panel-header-title b { color: var(--ink); font-weight: 600; }
 
 .write-pop-body {
   padding: 11px;

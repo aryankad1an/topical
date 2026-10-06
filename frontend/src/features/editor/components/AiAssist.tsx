@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Sparkles, X, RotateCcw, Check, CornerDownLeft, Copy, ArrowLeft } from 'lucide-react';
+import { Sparkles, RotateCcw, Check, CornerDownLeft, Copy, ArrowLeft } from 'lucide-react';
 import { transformSelection } from '@/lib/api';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
-import { IconButton, Spinner, MenuSearch, Input, Kbd, MenuEmpty, MenuItem } from '@/components/ui';
+import { Spinner, MenuSearch, Input, Kbd, MenuEmpty, MenuItem, PanelHeader, Button } from '@/components/ui';
 import { AI_ACTIONS, CONTEXT_CHARS, MIN_PASSAGE_WORDS, type AiAction } from '../lib/aiActions';
 import { countWords } from '../lib/stats';
 import { copyText } from '../lib/exporters';
@@ -235,11 +235,7 @@ export function AiAssist({
       )}
 
       {phase !== 'menu' && (
-        <div className="ai-assist-head">
-          <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--accent-400)' }} />
-          <span>{action ? action.label : 'Custom instruction'}</span>
-          <IconButton className="ml-auto" onClick={onClose} aria-label="Close"><X className="h-3.5 w-3.5" /></IconButton>
-        </div>
+        <PanelHeader icon={<Sparkles className="h-3.5 w-3.5" />} title={action ? action.label : 'Custom instruction'} onClose={onClose} />
       )}
 
       {phase === 'custom' && (
@@ -260,12 +256,12 @@ export function AiAssist({
             onChange={event => setInstruction(event.target.value)}
           />
           <div className="ai-assist-actions">
-            <button type="button" className="ai-btn" onClick={() => setPhase('menu')}>
+            <Button type="button" variant="secondary" size="xs" onClick={() => setPhase('menu')}>
               <ArrowLeft className="h-3 w-3" /> Back
-            </button>
-            <button type="submit" className="ai-btn ai-btn--primary" disabled={!instruction.trim()}>
+            </Button>
+            <Button type="submit" variant="primary" size="xs" disabled={!instruction.trim()}>
               <CornerDownLeft className="h-3 w-3" /> Run
-            </button>
+            </Button>
           </div>
         </form>
       )}
@@ -285,25 +281,27 @@ export function AiAssist({
                 something you read, so pushing it into the page is the wrong
                 thing to highlight. */}
             {action.replaces && hasSelection && (
-              <button className="ai-btn ai-btn--primary" onClick={() => { onReplace(result); onClose(); }}>
+              <Button variant="primary" size="xs" onClick={() => { onReplace(result); onClose(); }}>
                 <Check className="h-3 w-3" /> Replace
-              </button>
+              </Button>
             )}
-            <button
-              className={`ai-btn${action.replaces && !hasSelection ? ' ai-btn--primary' : ''}`}
+            <Button
+              variant={action.replaces && !hasSelection ? 'primary' : 'secondary'}
+              size="xs"
               onClick={() => { onInsertAfter(result); onClose(); }}
             >
               <CornerDownLeft className="h-3 w-3" /> Insert below
-            </button>
-            <button
-              className={`ai-btn${action.replaces ? '' : ' ai-btn--primary'}`}
+            </Button>
+            <Button
+              variant={action.replaces ? 'secondary' : 'primary'}
+              size="xs"
               onClick={() => copyText(result).then(() => toast.success('Copied'))}
             >
               <Copy className="h-3 w-3" /> Copy
-            </button>
-            <button className="ai-btn" onClick={() => run(action, instruction)}>
+            </Button>
+            <Button variant="secondary" size="xs" onClick={() => run(action, instruction)}>
               <RotateCcw className="h-3 w-3" /> Retry
-            </button>
+            </Button>
           </div>
         </div>
       )}

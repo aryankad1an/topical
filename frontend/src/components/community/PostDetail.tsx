@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { X, Send, BookOpen, Trash2 } from 'lucide-react';
+import { Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
-import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text } from '@/components/ui';
+import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text, PanelHeader } from '@/components/ui';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -108,9 +108,7 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
     <div className="post-detail-overlay" onClick={onClose}>
       <div className="post-detail-panel" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="post-detail-header">
-          <IconButton size="lg" onClick={onClose} aria-label="Close"><X className="h-4 w-4" /></IconButton>
-        </div>
+        <PanelHeader size="md" onClose={onClose} className="justify-end" />
 
         {isLoading ? (
           <LoadingState size="inline" />

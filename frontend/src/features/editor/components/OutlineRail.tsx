@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ListTree, PanelLeftClose, Plus, Sparkles } from 'lucide-react';
-import { Button, IconButton, Spinner, Input, ChipButton, TextLink } from '@/components/ui';
+import { Button, IconButton, Spinner, Input, ChipButton, TextLink, Progress } from '@/components/ui';
 import { errorMessage } from '@/lib/utils';
 import type { DocFormat } from '@/lib/types';
 import type { OutlineNode } from '../lib/outline';
@@ -286,9 +286,7 @@ export function OutlineRail({
       {/* Written-ness, once, as a line — rather than as a tick repeated down
           every row of the list. */}
       {nodes.length > 0 && (
-        <div className="outline-meter" role="presentation">
-          <div className="outline-meter-fill" style={{ width: `${coverage}%` }} />
-        </div>
+        <Progress value={coverage / 100} className="outline-meter" />
       )}
 
       <div className="outline-actions">
@@ -452,10 +450,7 @@ export function OutlineRail({
 
         {writer.progress ? (
           <div className="gen-run">
-            <div className="gen-progress">
-              <div className="gen-progress-fill"
-                style={{ width: `${(writer.progress.done / writer.progress.total) * 100}%` }} />
-            </div>
+            <Progress size="md" value={writer.progress.done / writer.progress.total} label="Sections written" />
             {/* Which section, not just how many. A bar that says 3/7 during a
                 four-minute run tells the writer nothing about what is landing
                 in their document. */}

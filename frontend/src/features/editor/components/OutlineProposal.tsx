@@ -1,5 +1,5 @@
-import { Wand2, X } from 'lucide-react';
-import { Button, IconButton, Chip, type ChipTone, TextLink } from '@/components/ui';
+import { Wand2 } from 'lucide-react';
+import { Button, Chip, type ChipTone, TextLink, PanelHeader } from '@/components/ui';
 import type { RefinedPlan } from '../lib/generation';
 
 const KIND_LABEL: Record<string, string> = {
@@ -29,13 +29,7 @@ interface Props {
 export function OutlineProposal({ proposal, onApply, onDiscard }: Props) {
   return (
     <div className="orail-proposal">
-      <div className="orail-proposal-head">
-        <Wand2 className="h-3 w-3" />
-        <span>Proposed structure</span>
-        <IconButton className="ml-auto" onClick={onDiscard} aria-label="Discard">
-          <X className="h-3 w-3" />
-        </IconButton>
-      </div>
+      <PanelHeader icon={<Wand2 className="h-3 w-3" />} title="Proposed structure" onClose={onDiscard} closeLabel="Discard" />
 
       {proposal.summary && <p className="orail-summary">{proposal.summary}</p>}
 

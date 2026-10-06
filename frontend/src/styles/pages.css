@@ -195,24 +195,6 @@
   box-shadow: var(--shadow-pop);
 }
 
-/* `justify-content: space-between` with a single child pins that child to the
-   left, which is how the post view ended up with its close button in the top
-   *left* corner of a 45px empty bar — while the new-post dialog, which has a
-   title beside it, put the same button on the right. One convention: the
-   close is always the last thing on the row, and the row is only as tall as
-   what is in it. */
-.post-detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--line-soft);
-  flex-shrink: 0;
-}
-.post-detail-header > :first-child:not(.icon-btn) {
-  margin-right: auto;
-}
 .post-detail-body { padding: 18px 20px 24px; }
 
 .attached-lesson-row {
@@ -1727,19 +1709,6 @@ a:active > .brand-lockup {
    AI generation panel — outline as workflow
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Progress meter for a whole-outline run */
-.gen-progress {
-  height: 3px;
-  border-radius: 3px;
-  background: var(--ink-a04);
-  overflow: hidden;
-}
-.gen-progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent-600), var(--accent-300));
-  transition: width var(--dur-slow) var(--ease-out);
-}
 .topic-count {
   font-size: 9.5px;
   font-weight: 700;

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, CaseSensitive, X, Replace } from 'lucide-react';
-import { Button, IconButton, Input, Divider } from '@/components/ui';
+import { Button, IconButton, Input, Divider, Text } from '@/components/ui';
 import type { FindReplace } from '../hooks/useFindReplace';
 
 /** Find and replace, opened with ⌘F and closed with Escape. */
@@ -28,9 +28,9 @@ export function FindBar({ find }: { find: FindReplace }) {
         }}
         aria-label="Find"
       />
-      <span className="find-count">
+      <Text as="span" mono size="2xs" tone="faint" className="find-count">
         {find.query ? (find.matches.length ? `${find.current + 1}/${find.matches.length}` : 'none') : ''}
-      </span>
+      </Text>
       <IconButton onClick={() => find.step(-1)} title="Previous match" aria-label="Previous match">
         <ChevronUp className="h-3.5 w-3.5" />
       </IconButton>

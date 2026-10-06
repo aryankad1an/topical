@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { FileDown, X } from 'lucide-react';
-import { Button, Checkbox, FieldGroup, IconButton, ChipButton, Notice } from '@/components/ui';
+import { FileDown } from 'lucide-react';
+import { Button, Checkbox, FieldGroup, ChipButton, Notice, PanelHeader } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 import {
   PDF_DEFAULTS, exportPdf,
@@ -88,14 +88,7 @@ export function ExportPdfDialog({
   return (
     <div className="post-detail-overlay" onClick={onClose}>
       <form className="pdf-dialog" onClick={e => e.stopPropagation()} onSubmit={submit}>
-        <div className="post-detail-header">
-          <span className="text-sm font-semibold text-[var(--ink-2)] flex items-center gap-2">
-            <FileDown className="h-4 w-4" /> Export PDF
-          </span>
-          <IconButton type="button" size="lg" onClick={onClose} aria-label="Close">
-            <X className="h-4 w-4" />
-          </IconButton>
-        </div>
+        <PanelHeader size="md" icon={<FileDown className="h-4 w-4" />} title="Export PDF" onClose={onClose} />
 
         <div className="pdf-body">
           <Choice<PdfTheme>

@@ -139,3 +139,25 @@ Visible in 2b:
 | SH-03 | P1 | router (main.tsx) | no not-found or error UI: an unknown URL renders TanStack's bare "Not Found" text with no way back; a thrown error renders nothing designed | add `defaultNotFoundComponent`/`defaultErrorComponent` built from `EmptyState` | **ask A-12** (new behaviour) |
 | SH-04 | P1 | components/CommandPalette.tsx:205, routes/__root.tsx:178 | the palette and the mobile menu are hand-rolled fixed overlays (no focus trap; the mobile menu has no Escape) | part of A-10 | **ask A-10** |
 | SH-05 | — | routes/__root.tsx:123 `.nav-indicator` | inline `style` on the sliding indicator | measured position (dynamic value) — the documented exception | wontfix |
+
+### Batch 4.1 — document area: panel headers, progress, captions (P1–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| DC-01 | P2 | AiAssist, WritePopover, OutlineProposal, ExportPdfDialog, NewPostDialog, PostDetail | six panels drew their own header strip (icon, title, close) in four styles: two near-identical 11.5px rows, a caps accent caption on the proposal, and `post-detail-header` with a `:first-child` margin hack | `PanelHeader` sm (popovers) / md (sheets, dialogs); the title truncates with an ellipsis (the write popover's did; now all do) | fix |
+| DC-02 | P2 | OutlineRail:289, :453 | two hand-built bars (`outline-meter`, `gen-progress`) with their own track/fill rules; the run bar exposed no progress semantics | `Progress` sm/md; the generation bar is now `role=progressbar` with a label and value | fix |
+| DC-03 | P2 | AiAssist:259–304 | a private button family (`.ai-btn`, `.ai-btn--primary`): 28px, an ink-tint fill, its own hover and disabled rules | `Button size="xs"` primary/secondary | fix |
+| DC-04 | P3 | ShortcutsSheet:91, CoAuthorsDialog:85 | two caps captions with drifted values (11px/0.07em vs 10px/0.09em) | `Heading size="label"` (one caption: 10px/700/0.09em, `--ink-faint`) | fix |
+| DC-05 | P3 | FindBar:31 | mono count styled by a page rule | `Text mono size="2xs" tone="faint"`; `.find-count` keeps only its min-width | fix |
+
+Visible in 4.1:
+- The proposal panel's header reads "Proposed structure" in the panel-header style, not as an accent caps caption.
+- In the write popover, "Write" is now semibold like the rest of the header. The section name stays in full ink.
+- The AI result buttons are standard `xs` buttons: about 2px taller, with a surface fill instead of an ink tint.
+- The shortcuts captions are 1px smaller, and the co-author caption has 1px more space below it.
+
+Verified with the harness: 0 unexpected diffs. The harness gained six editor-overlay states, `ov-*` (shortcuts, find, AI with and without a selection, export PDF, co-authors), and those are now in the baseline. Two diffs were caught and fixed before the commit:
+- `Progress` was `width: 100%` inside a margined flex child, so it overflowed by 24px.
+- The md header lost the 20px line-height that `text-sm` used to carry.
+
+Document coverage 12.0% → 52.3%.

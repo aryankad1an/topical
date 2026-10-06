@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Cpu, Globe, Link2, Plus, Sparkles, X } from 'lucide-react';
-import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton, Divider, TextLink, Row } from '@/components/ui';
+import { Button, IconButton, Label, Textarea, Input, Segmented, ChipButton, Divider, TextLink, Row, PanelHeader } from '@/components/ui';
 import type { GenerationMethod } from '../lib/generation';
 
 const METHODS: { key: GenerationMethod; icon: typeof Globe; label: string; hint: string }[] = [
@@ -86,15 +86,11 @@ export function WritePopover({
 
   return (
     <form className="write-pop" onSubmit={submit} onClick={e => e.stopPropagation()}>
-      <div className="write-pop-head">
-        <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--accent-400)' }} />
-        <span className="write-pop-title">
-          {rewriting ? 'Rewrite' : 'Write'} <b>{target}</b>
-        </span>
-        <IconButton className="ml-auto" onClick={onClose} aria-label="Close">
-          <X className="h-3.5 w-3.5" />
-        </IconButton>
-      </div>
+      <PanelHeader
+        icon={<Sparkles className="h-3.5 w-3.5" />}
+        title={<>{rewriting ? 'Rewrite' : 'Write'} <b>{target}</b></>}
+        onClose={onClose}
+      />
 
       <div className="write-pop-body">
         <Label size="sm" htmlFor="write-instruction" requirement="optional">

@@ -33,16 +33,18 @@ export interface TextProps extends React.HTMLAttributes<HTMLElement> {
   truncate?: boolean
   /** Figures that line up in columns. */
   numeric?: boolean
+  /** The mono face — counts, ids, code-like values. */
+  mono?: boolean
   dateTime?: string
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as: Tag = "p", size, tone, weight, leading, italic, truncate, numeric, className, ...rest }, ref) =>
+  ({ as: Tag = "p", size, tone, weight, leading, italic, truncate, numeric, mono, className, ...rest }, ref) =>
     React.createElement(Tag, {
       ref,
       className: cn(
         size && SIZE[size], tone && TONE[tone], weight && WEIGHT[weight], leading && LEADING[leading],
-        italic && "italic", truncate && "truncate", numeric && "tabular-nums", className,
+        italic && "italic", truncate && "truncate", numeric && "tabular-nums", mono && "font-mono", className,
       ),
       ...rest,
     })

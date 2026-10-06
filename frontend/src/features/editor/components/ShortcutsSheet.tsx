@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Kbd } from '@/components/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Kbd, Heading } from '@/components/ui';
 import type { DocFormat } from '@/lib/types';
 
 /**
@@ -88,7 +88,7 @@ export function ShortcutsSheet({
         <div className="shortcut-columns">
           {sections.map(section => (
             <section key={section.title} className="shortcut-section">
-              <h3 className="shortcut-heading">{section.title}</h3>
+              <Heading level={3} size="label" className="shortcut-heading">{section.title}</Heading>
               <dl className="shortcut-list">
                 {section.rows.map(row => (
                   <div className="shortcut-row" key={row.label}>

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { X, PenLine, BookOpen } from 'lucide-react';
+import { PenLine, BookOpen } from 'lucide-react';
 import type { Post } from '@/lib/communityApi';
 import { createPost } from '@/lib/communityApi';
 import { getPublicLessonPlans } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Field, IconButton, Input, Textarea, MenuEmpty, MenuItem, MenuPanel, Stack } from '@/components/ui';
+import { Button, Field, Input, Textarea, MenuEmpty, MenuItem, MenuPanel, Stack, PanelHeader } from '@/components/ui';
 import { useDialogDismiss } from '@/hooks/useDialogDismiss';
 
 interface NewPostDialogProps {
@@ -58,14 +58,7 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
         onClick={e => e.stopPropagation()}
         onSubmit={e => { e.preventDefault(); handleSubmit(); }}
       >
-        <div className="post-detail-header">
-          <span className="text-sm font-semibold text-[var(--ink-2)] flex items-center gap-2">
-            <PenLine className="h-4 w-4" /> New post
-          </span>
-          <IconButton type="button" size="lg" onClick={onClose} aria-label="Close">
-            <X className="h-4 w-4" />
-          </IconButton>
-        </div>
+        <PanelHeader size="md" icon={<PenLine className="h-4 w-4" />} title="New post" onClose={onClose} />
 
         <Stack gap={4} className="p-5">
           {/* Labelled, not placeholder-only. A placeholder is gone the instant
