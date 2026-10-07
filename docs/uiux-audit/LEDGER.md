@@ -235,3 +235,9 @@ Marketing coverage 0.7% → 40.0%. Most of the remaining raw count is MK-02.
 | AU-03 | — | AuthCard (`auth-shell`/`auth-layout`/`auth-panel`, pitch column, strength meter) | the auth shell is already the one shared component for both screens. The strength meter is four discrete segments coloured per score, not a `Progress` | single owner | wontfix (documented) |
 
 Auth coverage 0.0% → 36.7%.
+
+### Batch 10 — community at 360px (P0)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| CM-01 | P0 | community.tsx:150, :261, :273 | every community screen was 8–15px wider than a 360px phone. `body { overflow-x: hidden }` (A-05) hid the scrollbar, so the overflow was **clipped**: the People tab, the right edge of every person card and the end of each bio were cut off. Two causes: the tab switch could not fit "Public Lessons" plus three icons in 296px, and the People grid had no base column count, so its implicit column sized to the longest unbroken line | the tab reads "Lessons" (the line under it already says "N public lessons"); the People grid is `cols={{ base: 1, sm: 2 }}`, so bios truncate. Now 0 of 128 captures overflow | fix |

@@ -152,7 +152,7 @@ function CommunityPage() {
           onChange={setTab}
           options={[
             { value: 'forum', label: 'Forum', icon: <TrendingUp className="h-3.5 w-3.5" /> },
-            { value: 'lessons', label: 'Public Lessons', icon: <BookOpen className="h-3.5 w-3.5" /> },
+            { value: 'lessons', label: 'Lessons', icon: <BookOpen className="h-3.5 w-3.5" /> },
             { value: 'people', label: 'People', icon: <UsersIcon className="h-3.5 w-3.5" /> },
           ]}
         />
@@ -258,7 +258,7 @@ function CommunityPage() {
           </div>
 
           {peopleLoading ? (
-            <Grid gap={2} cols={{ sm: 2 }}>
+            <Grid gap={2} cols={{ base: 1, sm: 2 }}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="person-card">
                   <Skeleton height={44} width={44} radius="md" />
@@ -270,7 +270,7 @@ function CommunityPage() {
               ))}
             </Grid>
           ) : people.length > 0 ? (
-            <Grid gap={2} cols={{ sm: 2 }}>
+            <Grid gap={2} cols={{ base: 1, sm: 2 }}>
               {people.map(p => (
                 <Link key={p.id} to="/u/$username" params={{ username: p.username ?? '' }} className="person-card">
                   <Avatar seed={p.id} src={p.avatarUrl} name={personName(p)} size="md" />
