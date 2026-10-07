@@ -200,12 +200,10 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
                   aria-label="Write a comment"
                   rows={2}
                 />
-                {/* Hero type in a 40px box is what this renders today: the size
-                    utilities it was written with lost to `.cta-btn`. LEDGER A-07. */}
                 <Button
                   variant="primary"
-                  size="hero"
-                  className="h-9 self-end"
+                  size="lg"
+                  className="self-end"
                   disabled={!commentText.trim() || comment.isPending}
                   onClick={() => commentText.trim() && comment.mutate(commentText.trim())}
                 >

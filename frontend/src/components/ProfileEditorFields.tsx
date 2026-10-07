@@ -12,6 +12,8 @@ interface ProfileEditorFieldsProps {
   onAvatarChange: (url: string) => void;
   fallbackAvatar?: string | null;
   fallbackInitial?: string;
+  /** The person's id: seeds the avatar's colour, as everywhere else. */
+  seed?: string | null;
   username: string;
   onUsernameChange: (value: string) => void;
   bio: string;
@@ -25,6 +27,7 @@ export function ProfileEditorFields({
   onAvatarChange,
   fallbackAvatar,
   fallbackInitial = "U",
+  seed,
   username,
   onUsernameChange,
   bio,
@@ -70,7 +73,7 @@ export function ProfileEditorFields({
     <Stack gap={5}>
       <Row align="center" gap={4}>
         <div className="relative">
-          <Avatar size="lg" shape="circle" tone="muted" src={displayedAvatar} name={fallbackInitial} alt="Avatar" />
+          <Avatar size="lg" shape="circle" seed={seed} src={displayedAvatar} name={fallbackInitial} alt="Avatar" />
           {isUploading && (
             <div className="avatar-busy">
               <Spinner size="lg" tone="ink" />

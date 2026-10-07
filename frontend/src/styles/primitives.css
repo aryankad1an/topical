@@ -219,11 +219,6 @@
   border-radius: 50%;
   background: var(--scrim);
 }
-/* The nav's avatar: the accent behind the initial, so a transparent picture
-   still reads against the glass pill. */
-.avatar--accent { background: var(--accent-400); border-color: var(--ink-a12); font-family: var(--font-sans); }
-/* The photo picker's: a quiet well, because the picture is what is about to change. */
-.avatar--muted { background: var(--surface-2); color: var(--ink); font-family: var(--font-sans); font-weight: 500; }
 
 /* ── Card heading ──
    Named here rather than left to Tailwind utilities on the component, so the

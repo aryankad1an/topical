@@ -314,3 +314,11 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 | ask | change | result |
 |---|---|---|
 | A-05 | `body { overflow-x: hidden }` removed. The auth shell never needed it: its −1rem side margins cancel `<main>`'s padding exactly, and it keeps its own `overflow: hidden` for its decoration. The comment that claimed it relied on `body` is corrected | every route state at **360 / 768 / 1280 / 1920** reports `scrollWidth ≤ clientWidth`. Sign-in, sign-up and the landing page are pixel-identical. A future overflow now scrolls and is flagged instead of being cut off |
+
+### Batch 15 — button sizes, one primary, seeded avatars (A-07, A-08, A-09)
+
+| ask | change | result |
+|---|---|---|
+| A-07 | "Start a discussion" (empty forum) and the comment "Post" button: `size="hero"` with a height override → `size="lg"` | 13px in a 40px button, like every other in-app action |
+| A-08 | decided per view: **Edit** (reading mode) → primary, the only action on that screen. **Save** (writing mode) stays secondary: the outline rail's "Write sections" is that view's primary and the document autosaves. **Open** on a document card stays secondary: the projects page's primary is Start | one primary per view, and the code says what renders |
+| A-09 | the nav avatar and the profile photo picker are seeded with the person's id; Avatar's `accent`/`muted` tones and their CSS are deleted | a person is one colour everywhere: nav, people list, comments, profile |

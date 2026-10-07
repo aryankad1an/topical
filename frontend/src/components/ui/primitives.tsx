@@ -205,19 +205,13 @@ export interface AvatarProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** `circle` where the surrounding chrome is round (the nav pill, the photo picker). */
   shape?: 'rounded' | 'circle';
-  /**
-   * `seeded` is the person's own hue. `accent` and `muted` exist because the
-   * nav and the photo picker drew their own avatars in those colours; see
-   * LEDGER A-09 on making every avatar seeded.
-   */
-  tone?: 'seeded' | 'accent' | 'muted';
   /** Alt text when the picture is meaningful on its own (not beside the name). */
   alt?: string;
   className?: string;
 }
 
 export function Avatar({
-  seed, src, name, size = 'md', shape = 'rounded', tone = 'seeded', alt, className,
+  seed, src, name, size = 'md', shape = 'rounded', alt, className,
 }: AvatarProps) {
   const initial = (name?.trim()?.[0] || 'U').toUpperCase();
   // A picture that fails to load falls back to the initial rather than a
@@ -229,10 +223,9 @@ export function Avatar({
       className={cn(
         'avatar', `avatar--${size}`,
         shape === 'circle' && 'avatar--circle',
-        tone !== 'seeded' && `avatar--${tone}`,
         className,
       )}
-      style={tone === 'seeded' ? { ['--av-h' as string]: String(hueFor(seed ?? name)) } : undefined}
+      style={{ ['--av-h' as string]: String(hueFor(seed ?? name)) }}
       aria-hidden={alt ? undefined : true}
       role={alt ? 'img' : undefined}
       aria-label={alt}

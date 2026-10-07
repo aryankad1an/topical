@@ -71,6 +71,7 @@ function EditProfile() {
           avatarUrl={avatarUrl}
           onAvatarChange={setAvatarUrl}
           fallbackAvatar={user.picture}
+          seed={user.id}
           fallbackInitial={user.given_name?.[0] || "U"}
           username={username}
           onUsernameChange={setUsername}

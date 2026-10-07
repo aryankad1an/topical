@@ -156,7 +156,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 
         {isAuthenticated ? (
           <Link to="/profile" className="ml-2" title="Profile" aria-label="Profile">
-            <Avatar size="sm" shape="circle" tone="accent" className="nav-avatar" src={avatarSrc} name={avatarName} />
+            <Avatar size="sm" shape="circle" className="nav-avatar" seed={user?.id} src={avatarSrc} name={avatarName} />
           </Link>
         ) : (
           <Button asChild variant="primary" size="md" shape="pill" className="ml-1">

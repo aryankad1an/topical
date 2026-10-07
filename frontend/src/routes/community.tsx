@@ -236,9 +236,7 @@ function CommunityPage() {
               tone="muted"
               title={search ? `No posts matching “${search}”` : 'No posts yet — be the first!'}
               action={isAuthenticated && !search && (
-                /* Hero type in a 40px box is what this renders today: the size
-                   utilities it was written with lost to `.cta-btn`. LEDGER A-07. */
-                <Button variant="primary" size="hero" className="h-10" onClick={() => setShowNewPost(true)}>
+                <Button variant="primary" size="lg" onClick={() => setShowNewPost(true)}>
                   <Plus className="h-4 w-4" /> Start a discussion
                 </Button>
               )}

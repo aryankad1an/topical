@@ -291,8 +291,9 @@ export function EditorHeader(props: Props) {
           the state — the icon still distinguishes saving from saved, and the
           accessible name still says which. */}
       {editing ? (
-        /* Secondary is what this rendered: `.editor-save` sat in both the primary
-           and the secondary lists and the secondary one won. LEDGER A-08. */
+        /* Secondary while writing: the outline rail's "Write sections" is that
+           view's primary action, and the document autosaves. Edit, below, is
+           primary: in reading mode it is the only action on the screen. */
         <Button
           variant="secondary"
           size="md"
@@ -306,7 +307,7 @@ export function EditorHeader(props: Props) {
           {!compact && (isSaving ? 'Saving' : isDirty ? 'Save' : 'Saved')}
         </Button>
       ) : onEdit ? (
-        <Button variant="secondary" size="md" density={compact ? 'tight' : 'default'} onClick={onEdit} title="Edit" aria-label="Edit">
+        <Button variant="primary" size="md" density={compact ? 'tight' : 'default'} onClick={onEdit} title="Edit" aria-label="Edit">
           <Pencil className="h-3.5 w-3.5" />
           {!compact && 'Edit'}
         </Button>
