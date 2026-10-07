@@ -12,7 +12,7 @@ export function ProviderTile({ credential, actions }: { credential: AiCredential
   return (
     <div className="provider-tile" data-default={credential.isDefault}
       style={{ ['--brand' as string]: preset.color }}>
-      <span className="provider-mark">{preset.name[0]}</span>
+      <span className="provider-mark" aria-hidden="true">{preset.name[0]}</span>
       <div className="min-w-0 flex-1">
         <Row align="center" gap={1.5}>
           <span className="provider-name">{preset.name}</span>

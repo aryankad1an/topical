@@ -323,7 +323,7 @@ function CommunityPage() {
                     </Row>
                     <Row align="center" gap={3} className="mb-3">
                       <Text as="span" size="2xs" tone="ghost">{isOwn ? 'You' : userMap[plan.userId] || 'Member'}</Text>
-                      <Text as="span" size="2xs" tone="ghost">·</Text>
+                      <Text as="span" size="2xs" tone="ghost" aria-hidden="true">·</Text>
                       <Text as="span" size="2xs" tone="ghost">{formatDate(plan.createdAt)}</Text>
                     </Row>
                     <Text as="div" size="3xs" tone="ghost" icon={<Layers className="h-2.5 w-2.5" />} className="mb-4">

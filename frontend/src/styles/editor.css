@@ -284,7 +284,7 @@ h1.editor-title--static:hover { background: transparent; }
 }
 .code-surface[data-focus='true'] .cl { opacity: 0.32; }
 .code-surface[data-focus='true'] .cl-active { opacity: 1; }
-.code-surface[data-focus='true'] .cl-active::before { color: var(--accent-400); }
+.code-surface[data-focus='true'] .cl-active::before { color: var(--accent-500); }
 
 /* ── Where the caret just landed ──
    A caret arriving from somewhere else — a click in the preview, an outline
@@ -326,7 +326,7 @@ h1.editor-title--static:hover { background: transparent; }
 }
 .cl-section-top { border-top-left-radius: var(--radius-xs); border-top-right-radius: var(--radius-xs); }
 .cl-section-end { border-bottom-left-radius: var(--radius-xs); border-bottom-right-radius: var(--radius-xs); }
-.code-surface[data-gutter='true'] .cl-section::before { color: var(--accent-400); }
+.code-surface[data-gutter='true'] .cl-section::before { color: var(--accent-500); }
 .code-surface[data-focus='true'] .cl-section { opacity: 1; }
 
 /* ── Tokens ── */
@@ -596,7 +596,7 @@ h1.editor-title--static:hover { background: transparent; }
   font-family: var(--font-mono);
   font-size: 9.5px;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-ghost);
+  color: var(--ink-faint);
   transition: opacity var(--dur-fast) linear;
 }
 .orow-meta[data-kind='generating'] { color: var(--accent-500); }
@@ -609,7 +609,7 @@ h1.editor-title--static:hover { background: transparent; }
   line-height: 1;
   padding: 2px 4px;
   border-radius: var(--radius-xs);
-  color: var(--accent-500);
+  color: var(--accent-600);
   background: rgb(var(--accent-rgb) / 0.12);
 }
 /* Failed reads as "still to do, and something went wrong" — the row stays

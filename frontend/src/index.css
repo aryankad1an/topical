@@ -5,7 +5,6 @@
    cascade — later files override earlier ones, so keep them in this sequence:
    vendor, then Tailwind, then tokens, then everything built on them. */
 
-@import 'highlight.js/styles/github.css';
 @import 'katex/dist/katex.min.css';
 /* Display: Bricolage Grotesque — a grotesque with optical-size and width
    axes and a deliberate coarseness. Chosen against a serif display, which

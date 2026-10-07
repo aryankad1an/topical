@@ -276,3 +276,20 @@ Each of these changes behaviour, a token value or name, a visible design decisio
 | 11 | A-09 | P3 · two avatars | the nav avatar and the photo picker use a fixed accent/grey instead of the person's seeded hue | PR-22 |
 | 12 | A-06 | P2 · developer clarity | rename the shadcn bridge `--accent` (a neutral fill) so it stops colliding with the brand accent | TK-17 |
 | 13 | A-13 | dependency | `@radix-ui/react-avatar` is in `package.json` but imported nowhere (`Avatar` is our own): remove it | — |
+
+## Resolutions (2026-10-07)
+
+You approved every ask with "do it your way", and A-12 with "add it". Each one below was verified with the same harness, plus a text-contrast probe (`harness/contrast.js`, run through `probe.py --themes light,dark`). The probe composites each visible text element's ink, opacity and layered ground across all 126 captures.
+
+### Batch 11 — contrast tokens (A-01 – A-04, P0–P1)
+
+| ask | change | result |
+|---|---|---|
+| A-01 | `--accent-400` #c25e38 → **#b85a36** (and `--accent-rgb`, `-soft`, `-line`, `-glow`, the PDF terracotta) | white on the primary fill 4.24 → **4.61:1** |
+| A-02 | light: muted #6b6459 → #625b51, faint #8e8679 → #6d665c, ghost #b0a897 → #736d61. Dark: muted #a29b8e → #aba598, faint #847d71 → #9e978d, ghost #655f55 → #948f86 | on every resting ground (page, card, well, strip), in both themes: muted ≥ 5.9, faint ≥ 5.0, ghost ≥ 4.5:1. The ramp is tighter but keeps its order |
+| A-03 | accent *text* (gutter line markers, footnote marks) → `--accent-500`; the outline "P1" tag → `--accent-600` | icons keep `--accent-400`, which only needs 3:1 |
+| A-04 | new `--control-line` (light #8e887c, dark #78746c) on the fields you type into (`Input`/`Textarea` well, the topic bar) | ≥ 3.1:1 against every ground (WCAG 1.4.11). Separating hairlines stay `--line` |
+| — | the GitHub highlight.js theme is no longer imported: its compound selectors (`.hljs-title.function_`…) outranked the token mapping and painted light-theme colours into dark code blocks (function names at 2.2:1). The token mapping now covers every class it styled, including its `pre code` padding | |
+| — | decorative "·" separators and the providers' logo initials are `aria-hidden`; the active menu row's hint, the outline word counts and the selected provider's model count moved one ink step darker | |
+
+Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures in both themes. The only exclusions are heading anchors at opacity 0 and the editor textarea, whose text is drawn by an overlay.

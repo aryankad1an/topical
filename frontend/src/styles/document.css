@@ -589,7 +589,7 @@
 .lx-ref { color: var(--latex-500); font-variant-numeric: tabular-nums; }
 .lx-ref-missing { color: var(--status-warning); background: rgb(var(--warning-rgb) / 0.1); padding: 0 0.25em; border-radius: 3px; }
 .lx-cite { color: var(--latex-500); text-decoration: none; }
-.lx-fn-mark a { color: var(--accent-400); text-decoration: none; font-size: 0.75em; }
+.lx-fn-mark a { color: var(--accent-500); text-decoration: none; font-size: 0.75em; }
 .lx-fn-back { color: var(--ink-faint); text-decoration: none; margin-right: 0.3rem; }
 
 .lx-footnotes, .lx-bibliography {

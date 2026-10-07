@@ -162,7 +162,7 @@ export function DocumentCard({ doc, isAuthor, onOpen, onDelete, formatDate, chil
             <Text as="h3" size="sm" weight="semibold" tone="ink" truncate>{doc.name}</Text>
             <Row align="center" gap={1.5} className="mt-0.5">
               <Text as="span" size="2xs" tone="faint">{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</Text>
-              {words > 0 && <><Text as="span" size="2xs" tone="ghost">·</Text><Text as="span" size="2xs" tone="faint">{words.toLocaleString()} words</Text></>}
+              {words > 0 && <><Text as="span" size="2xs" tone="ghost" aria-hidden="true">·</Text><Text as="span" size="2xs" tone="faint">{words.toLocaleString()} words</Text></>}
             </Row>
           </div>
           {isAuthor && doc.id != null && (
@@ -216,7 +216,7 @@ export function DocumentRow({ doc, isAuthor, onOpen, onDelete, formatDate, child
         </Row>
         <Row align="center" gap={1.5} className="mt-0.5">
           <Text as="span" size="2xs" tone="ghost">{formatDate(doc.updatedAt ?? doc.createdAt ?? null)}</Text>
-          {words > 0 && <><Text as="span" size="2xs" tone="ghost">·</Text><Text as="span" size="2xs" tone="ghost">{words.toLocaleString()} words</Text></>}
+          {words > 0 && <><Text as="span" size="2xs" tone="ghost" aria-hidden="true">·</Text><Text as="span" size="2xs" tone="ghost">{words.toLocaleString()} words</Text></>}
         </Row>
       </div>
 

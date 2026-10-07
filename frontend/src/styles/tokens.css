@@ -24,13 +24,16 @@
     --line-soft: #eae6dc;
     --line: #dfdace;
     --line-strong: #c9c2b2;
+    /* The edge of a field you type into: ≥ 3:1 against every ground it sits on
+       (WCAG 1.4.11). Hairlines that only separate stay `--line`. */
+    --control-line: #8e887c;
 
     /* Warm ink ramp, darkest to lightest */
     --ink: #1f1c17;        /* primary text */
     --ink-2: #403a32;      /* secondary text */
-    --ink-muted: #6b6459;  /* labels, metadata */
-    --ink-faint: #8e8679;  /* placeholders, disabled */
-    --ink-ghost: #b0a897;  /* dividers that must still read as text */
+    --ink-muted: #625b51;  /* labels, metadata */
+    --ink-faint: #6d665c;  /* placeholders, metadata */
+    --ink-ghost: #736d61;  /* the quietest text: still ≥ 4.5:1 on every resting surface */
 
     /* Translucent ink, for overlays that must sit on an unknown surface.
        On a light ground these replace the white-alpha overlays a dark UI
@@ -53,13 +56,13 @@
        bright hue appears the signal is gone. */
     --accent-200: #f6ddd2;
     --accent-300: #e29c7c;
-    --accent-400: #c25e38; /* the accent */
+    --accent-400: #b85a36; /* the accent: white on it is ≥ 4.5:1 */
     --accent-500: #a54b29; /* hover / pressed */
     --accent-600: #87381c; /* accent text on an accent-soft fill */
     --accent-ink: #ffffff; /* text on a filled accent surface */
-    --accent-soft: rgba(194, 94, 56, 0.10);
-    --accent-line: rgba(194, 94, 56, 0.30);
-    --accent-glow: rgba(194, 94, 56, 0.22);
+    --accent-soft: rgba(184, 90, 54, 0.10);
+    --accent-line: rgba(184, 90, 54, 0.30);
+    --accent-glow: rgba(184, 90, 54, 0.22);
 
     /* Secondary hue, reserved for LaTeX-typed documents. An indigo rather
        than another warm tone: as an amber it sat inside the accent's own
@@ -152,7 +155,7 @@
        why translucent uses of these colours were written as literals and
        then survived a retheme that changed every one of them. Anything
        needing an alpha of a palette colour uses `rgb(var(--x-rgb) / a)`. */
-    --accent-rgb:  194 94 56;
+    --accent-rgb:  184 90 54;
     --danger-rgb:  178 58 72;
     --success-rgb: 61 107 74;
     --warning-rgb: 138 101 22;
@@ -360,12 +363,13 @@
     --line-soft: #2a2723;
     --line: #35312b;
     --line-strong: #4a453d;
+    --control-line: #78746c;
 
     --ink: #f5f2ec;
     --ink-2: #d5d0c6;
-    --ink-muted: #a29b8e;
-    --ink-faint: #847d71;
-    --ink-ghost: #655f55;
+    --ink-muted: #aba598;
+    --ink-faint: #9e978d;
+    --ink-ghost: #948f86;
 
     /* Overlays flip direction: on a dark ground, "slightly raised" is light.
        The steps are a touch stronger than their light counterparts because
@@ -606,20 +610,29 @@ html { color-scheme: light; }
 html[data-theme='dark'] { color-scheme: dark; }
 
 /* ─── Code highlighting ───
-   `rehype-highlight` emits .hljs-* classes and the imported GitHub theme
-   colours them for a light page only. Mapping them onto the syntax tokens
-   instead means one definition serves both themes and stays in the same
-   muted range as the rest of the palette. */
+   `rehype-highlight` emits .hljs-* classes. They are mapped onto the syntax
+   tokens here, so one definition serves both themes and stays in the same
+   muted range as the rest of the palette. This is the whole theme: the GitHub
+   stylesheet it used to sit on top of is no longer imported. Its compound
+   selectors (`.hljs-title.function_`, `.hljs-meta .hljs-keyword`…) outranked
+   these rules and painted light-theme colours into dark code blocks, e.g.
+   function names at 2.2:1. */
+pre code.hljs { display: block; overflow-x: auto; padding: 1em; }
+code.hljs { padding: 3px 5px; }
 .hljs { color: var(--ink); background: transparent; }
 .hljs-comment,
 .hljs-quote        { color: var(--ink-faint); font-style: italic; }
+.hljs-code,
+.hljs-formula      { color: var(--ink-faint); }
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-literal,
 .hljs-doctag,
+.hljs-template-tag,
 .hljs-type         { color: var(--syn-cmd); }
 .hljs-string,
 .hljs-regexp,
+.hljs-selector-pseudo,
 .hljs-addition     { color: var(--syn-code); }
 .hljs-number,
 .hljs-symbol,
@@ -629,14 +642,18 @@ html[data-theme='dark'] { color-scheme: dark; }
 .hljs-section,
 .hljs-name,
 .hljs-selector-id,
-.hljs-selector-class { color: var(--syn-link); }
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-operator     { color: var(--syn-link); }
+.hljs-section      { font-weight: 700; }
 .hljs-attr,
 .hljs-attribute,
 .hljs-variable,
 .hljs-template-variable { color: var(--syn-tag); }
 .hljs-built_in,
 .hljs-class .hljs-title { color: var(--latex-500); }
-.hljs-deletion     { color: var(--status-danger); }
+.hljs-addition     { background: rgb(var(--success-rgb) / 0.1); }
+.hljs-deletion     { color: var(--status-danger); background: rgb(var(--danger-rgb) / 0.1); }
 .hljs-emphasis     { font-style: italic; }
 .hljs-strong       { font-weight: 700; }
 

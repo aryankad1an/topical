@@ -103,7 +103,7 @@ export function ExportPdfDialog({
           <Choice<PdfAccent>
             label="Accent" value={options.accent} onChange={v => set('accent', v)}
             options={[
-              { value: 'terracotta', label: 'Terracotta', swatch: '#c25e38' },
+              { value: 'terracotta', label: 'Terracotta', swatch: '#b85a36' },
               { value: 'indigo', label: 'Indigo', swatch: '#4a5b8c' },
               { value: 'forest', label: 'Forest', swatch: '#3d6b4a' },
               { value: 'none', label: 'None' },

@@ -553,7 +553,7 @@ textarea:focus-visible {
   padding: 0.5rem 0.5rem 0.5rem 0.5rem;
   border-radius: var(--radius-xl);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   box-shadow: var(--shadow-lg);
   text-align: left;
   transition: box-shadow var(--dur-base) var(--ease-out),

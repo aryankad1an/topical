@@ -123,12 +123,12 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
             <User className="h-3 w-3" />
             {post.authorName}
           </span>
-          <span className="meta-item" style={{ opacity: 0.4 }}>·</span>
+          <span className="meta-item" style={{ opacity: 0.4 }} aria-hidden="true">·</span>
           <span className="meta-item">
             <Clock className="h-3 w-3" />
             {relativeTime(post.createdAt)}
           </span>
-          <span className="meta-item" style={{ opacity: 0.4 }}>·</span>
+          <span className="meta-item" style={{ opacity: 0.4 }} aria-hidden="true">·</span>
           <span className="meta-item">
             <MessageSquare className="h-3 w-3" />
             {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}

@@ -112,10 +112,10 @@ function ProvidersPage() {
                     {provider === p.provider && (
                       <span className="brand-card-check"><Check className="h-2.5 w-2.5" strokeWidth={3.5} /></span>
                     )}
-                    <span className="brand-card-mark">{p.name[0]}</span>
+                    <span className="brand-card-mark" aria-hidden="true">{p.name[0]}</span>
                     <span className="min-w-0">
                       <span className="block text-[13px] font-semibold text-[var(--ink)] truncate">{p.name}</span>
-                      <Text size="2xs" tone="ghost" as="span" className="block">
+                      <Text size="2xs" tone="muted" as="span" className="block">
                         {p.models.length} model{p.models.length === 1 ? "" : "s"}
                       </Text>
                     </span>

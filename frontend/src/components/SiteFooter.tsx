@@ -13,7 +13,7 @@ export function SiteFooter({ links }: { links: { to: '/' | '/about' | '/communit
       <div className="band-inner site-footer-inner">
         <Row align="center" gap={3}>
           <span className="font-brand text-lg">Topical</span>
-          <Text tone="ghost" size="xs" as="span">·</Text>
+          <Text tone="ghost" size="xs" as="span" aria-hidden="true">·</Text>
           <Text size="xs" tone="faint" as="span">All you need is a topic</Text>
         </Row>
         <Row gap={6} align="center">

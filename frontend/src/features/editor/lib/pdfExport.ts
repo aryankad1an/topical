@@ -74,7 +74,7 @@ const THEMES: Record<PdfTheme, { bg: string; ink: string; ink2: string; faint: s
 };
 
 const ACCENTS: Record<PdfAccent, string> = {
-  terracotta: '#c25e38',
+  terracotta: '#b85a36',
   indigo: '#4a5b8c',
   forest: '#3d6b4a',
   none: 'currentColor',
