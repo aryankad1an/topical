@@ -128,7 +128,7 @@ function PublicProfile() {
               <button key={doc.id} className="pub-row" onClick={() => openDoc(doc)}>
                 <DocTypeIcon type={format} icon={Icon} />
                 <span className="min-w-0 flex-1 text-left">
-                  <span className="block text-[13px] font-medium text-[var(--ink)] truncate">{doc.name}</span>
+                  <Text as="span" size="sm" weight="medium" tone="ink" truncate className="block">{doc.name}</Text>
                   <Text size="2xs" tone="ghost" as="span" className="block">
                     {isLatex ? "LaTeX" : "MDX"}
                     {doc.updatedAt && ` · ${formatDate(doc.updatedAt)}`}

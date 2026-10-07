@@ -1,5 +1,13 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/* The type ladder adds `3xs`, `2xs` and `md` to Tailwind's size names (see
+   tailwind.config). tailwind-merge must know they are font sizes: unknown
+   `text-*` names are read as colours, and a size would silently knock out
+   the tone class beside it. */
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: { "font-size": [{ text: ["3xs", "2xs", "md"] }] } },
+});
 
 /** Merge Tailwind class lists, with later classes winning conflicts. */
 export function cn(...inputs: ClassValue[]) {

@@ -27,6 +27,23 @@ module.exports = {
       },
     },
     extend: {
+      /* One type ladder. Tailwind's own sizes (14/16/18px…) ran beside the
+         token ladder (13/15/17px…), so `text-sm` and `--text-sm` were 1px
+         apart. These are the tokens; each step keeps Tailwind's line-height,
+         so line boxes stay where they were. */
+      fontSize: {
+        "3xs": "var(--text-3xs)",
+        "2xs": "var(--text-2xs)",
+        xs: ["var(--text-xs)", { lineHeight: "1rem" }],
+        sm: ["var(--text-sm)", { lineHeight: "1.25rem" }],
+        base: ["var(--text-base)", { lineHeight: "1.5rem" }],
+        md: ["var(--text-md)", { lineHeight: "1.625rem" }],
+        lg: ["var(--text-lg)", { lineHeight: "1.75rem" }],
+        xl: ["var(--text-xl)", { lineHeight: "2rem" }],
+        "2xl": ["var(--text-2xl)", { lineHeight: "2.25rem" }],
+        "3xl": ["var(--text-3xl)", { lineHeight: "2.5rem" }],
+        "4xl": ["var(--text-4xl)", { lineHeight: "1" }],
+      },
       fontFamily: {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],

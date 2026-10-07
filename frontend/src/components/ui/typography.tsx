@@ -5,15 +5,14 @@ import { cn } from "@/lib/utils"
 /**
  * Text and headings.
  *
- * `size` is the scale the markup renders today (Tailwind's: xs 12/16, sm 14/20,
- * base 16/24, lg 18/28, xl 20/28, 2xl 24/32) plus the small steps the product
- * uses for metadata (2xs 11px, 3xs 10px). The token scale in tokens.css is a
- * second, slightly different ladder — LEDGER A-11 asks to unify them.
+ * `size` is the one type ladder, the `--text-*` tokens that Tailwind's
+ * `text-*` sizes now also resolve to: 3xs 10 · 2xs 11 · xs 12 · sm 13 ·
+ * base 15 · md 17 · lg 20 · xl 24 · 2xl 30 (px).
  * `tone` is the ink ramp; `faint`/`ghost` are for metadata, never for body copy.
  */
 const SIZE = {
-  "3xs": "text-[10px]", "2xs": "text-[11px]", xs: "text-xs", sm: "text-sm", base: "text-base",
-  lg: "text-lg", xl: "text-xl", "2xl": "text-2xl",
+  "3xs": "text-3xs", "2xs": "text-2xs", xs: "text-xs", sm: "text-sm", base: "text-base",
+  md: "text-md", lg: "text-lg", xl: "text-xl", "2xl": "text-2xl",
 } as const
 const TONE = {
   ink: "text-[var(--ink)]", "ink-2": "text-[var(--ink-2)]", muted: "text-[var(--ink-muted)]",

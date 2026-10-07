@@ -329,3 +329,9 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 |---|---|---|
 | A-06 | the shadcn bridge's neutral hover fill `--accent` / `--accent-foreground` → `--shadcn-accent` / `--shadcn-accent-foreground`, with the Tailwind key `shadcn-accent`. The dialog close button (its only user) is updated. The bridge's `--primary` and `--ring` still held the pre-A-01 terracotta, so they now follow it | `accent` in this codebase means the brand ramp only. Compiled-CSS gate: one class renamed, the variable blocks changed, nothing else |
 | A-13 | `npm uninstall @radix-ui/react-avatar`: nothing imported it (`Avatar` is our own primitive) | `package.json` −1, `package-lock.json` −84 lines (the package and its two private copies of Radix internals, plus `react-use-is-hydrated`) |
+
+### Batch 17 — one type ladder (A-11, P3)
+
+| ask | change | result |
+|---|---|---|
+| A-11 | Tailwind's `text-*` sizes now resolve to the `--text-*` tokens: 3xs 10 · 2xs 11 · xs 12 · sm 13 · base 15 · md 17 · lg 20 · xl 24 · 2xl 30 · 3xl 38 · 4xl 48 (px). New tokens `--text-3xs` and `--text-2xs`. Each step keeps Tailwind's line-height, so line boxes stay put. `Text` maps onto the same ladder (`md` added), and `cn()` registers the new names with tailwind-merge so a size can never knock out a tone class | `text-sm` and `--text-sm` are the same 13px. Visible: `Text size="sm"` titles (document cards, people, lessons, post bodies) are 1px smaller. The footer wordmark is 17px (was 18px). The signed-out gate keeps 24px (`xl`). The remaining raw `text-[13px]` titles (providers, published documents) are now `Text size="sm"` |

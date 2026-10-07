@@ -129,7 +129,7 @@ function Profile() {
               )}
             </Row>
           </CardContent>
-          <CardFooter className="text-[11px] text-[var(--ink-ghost)]">
+          <CardFooter className="text-2xs text-[var(--ink-ghost)]">
             <Row inline align="center" gap={1.5} as="span">
               <User className="h-3 w-3" /> {user.id}
             </Row>

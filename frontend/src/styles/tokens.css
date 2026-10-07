@@ -115,6 +115,8 @@
        to 2.5rem to 3.5rem, so a page had a giant title, a small section
        heading and nothing in between — every landing section ended up
        looking like fine print under a billboard. */
+    --text-3xs:  0.625rem;
+    --text-2xs:  0.6875rem;
     --text-xs:   0.75rem;
     --text-sm:   0.8125rem;
     --text-base: 0.9375rem;

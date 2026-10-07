@@ -45,7 +45,7 @@ function SignInPrompt() {
   const { pathname } = useLocation();
   return (
     <Stack gapY={2} align="center" justify="center" className="min-h-[60dvh]">
-      <Text as="h2" size="2xl" weight="bold" className="mb-4">Authentication Required</Text>
+      <Text as="h2" size="xl" weight="bold" className="mb-4">Authentication Required</Text>
       <Text tone="muted" className="mb-6">Please sign in or create an account to access this content</Text>
       <Row gap={4}>
         <Button asChild variant="primary" size="xl">

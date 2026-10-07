@@ -114,7 +114,7 @@ function ProvidersPage() {
                     )}
                     <span className="brand-card-mark" aria-hidden="true">{p.name[0]}</span>
                     <span className="min-w-0">
-                      <span className="block text-[13px] font-semibold text-[var(--ink)] truncate">{p.name}</span>
+                      <Text as="span" size="sm" weight="semibold" tone="ink" truncate className="block">{p.name}</Text>
                       <Text size="2xs" tone="muted" as="span" className="block">
                         {p.models.length} model{p.models.length === 1 ? "" : "s"}
                       </Text>
