@@ -215,3 +215,13 @@ Community coverage 5.1% → 64.8%.
 | AC-08 | — | providers.tsx (`setup-step` rail, `brand-card`, `model-option`, `key-note`), profile.tsx (`account-identity`), u.$username (`pub-row`), ProfileEditorFields (`avatar-busy`), profile_.edit (username feedback row) | the setup stepper, the two pickers, the identity block and the published-document row each have one owner. The remaining raw `text-[13px]` titles wait on A-11, the two type scales | domain geometry; type blocked by A-11 | wontfix (documented) |
 
 Account coverage 27.9% → 65.6%.
+
+### Batch 8 — marketing (P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| MK-01 | P3 | index.tsx:57, about.tsx:43 | page roots as raw `flex flex-col` wrappers | `Stack` — pixel-identical | fix |
+| MK-02 | — | features/home/LiveDocument.tsx (34 elements) | the hero's moving picture of the editor. It reuses the editor's own rail, pane and status vocabulary (`preview-*`) so that it looks like the product, and it is `aria-hidden` | an illustration, not interface: primitives would make it stop resembling the editor | wontfix (documented) |
+| MK-03 | — | features/home/TopicHero.tsx | the performed hero: title, ghost text and caret, and the topic bar shared with the workspace's `TopicStarter` | one owner; its controls are already `Button`/`ChipButton`/`TextLink` | wontfix (documented) |
+
+Marketing coverage 0.7% → 40.0%. Most of the remaining raw count is MK-02.

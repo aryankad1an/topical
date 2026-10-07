@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Globe, PenLine, Layers, BookOpen, ListTree, MousePointerClick, CheckCheck } from 'lucide-react';
 import { TopicHero } from '@/features/home/TopicHero';
 import { Reveal } from '@/features/home/Reveal';
-import { Chip, Row, Band, SectionHead, FeatureCard } from '@/components/ui';
+import { Chip, Row, Band, SectionHead, FeatureCard, Stack } from '@/components/ui';
 import { SiteFooter } from '@/components/SiteFooter';
 
 export const Route = createFileRoute('/')({
@@ -54,7 +54,7 @@ function Home() {
   const startLabel = isAuthenticated ? 'Open Topical' : 'Start free';
 
   return (
-    <div className="flex flex-col min-h-dvh w-full overflow-x-hidden">
+    <Stack className="min-h-dvh w-full overflow-x-hidden">
       <TopicHero startHref={startHref} startLabel={startLabel} />
 
       {/* ── The three beats ── */}
@@ -111,6 +111,6 @@ function Home() {
 
       {/* ── Footer ── */}
       <SiteFooter links={[{ to: '/community', label: 'Community' }, { to: '/about', label: 'About' }]} />
-    </div>
+    </Stack>
   );
 }

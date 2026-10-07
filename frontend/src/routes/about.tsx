@@ -9,7 +9,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Surface, Chip, Grid, Text, Band, SectionHead, FeatureCard } from '@/components/ui';
+import { Button, Surface, Chip, Grid, Text, Band, SectionHead, FeatureCard, Stack } from '@/components/ui';
 import { SiteFooter } from '@/components/SiteFooter';
 
 export const Route = createFileRoute('/about')({
@@ -40,7 +40,7 @@ function About() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-dvh w-full">
+    <Stack className="min-h-dvh w-full">
 
       {/* ── Hero ──
           The decorative `green-orb glow-pulse` div that used to sit here
@@ -120,6 +120,6 @@ function About() {
 
       {/* ── Footer ── */}
       <SiteFooter links={[{ to: '/community', label: 'Community' }, { to: '/', label: 'Home' }]} />
-    </div>
+    </Stack>
   );
 }
