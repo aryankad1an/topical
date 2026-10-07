@@ -27,7 +27,7 @@ Live catalogue. **Every new or changed primitive updates this file in the same c
 ### Type
 | export | use this when… | variants / props |
 |---|---|---|
-| `Text` | any run of text that is not a heading | `size` 3xs–2xl, `tone`, `weight`, `leading`, `italic`, `truncate`, `numeric`, `mono`, `icon` (a leading glyph 6px from the text: a count, a meta item), `as` (p/span/div/h2–h4/time…) |
+| `Text` | any run of text that is not a heading | `size` 3xs 10 · 2xs 11 · xs 12 · sm 13 · base 15 · md 17 · lg 20 · xl 24 · 2xl 30 (the token ladder), `tone`, `weight`, `leading`, `italic`, `truncate`, `numeric`, `mono`, `icon` (a leading glyph 6px from the text: a count, a meta item), `as` (p/span/div/h2–h4/time…) |
 | `Heading` | a heading | `level` 1–4 (the outline) · `size` display (page title) / section (marketing section) / subsection (--text-lg, a section in an app screen) / group (1rem) / card / label (the 10px caps caption over a group) |
 
 ### Controls
@@ -54,7 +54,7 @@ Live catalogue. **Every new or changed primitive updates this file in the same c
 ### Data display
 | export | use this when… | variants |
 |---|---|---|
-| `Avatar` | a person, anywhere (seeded hue: one person, one colour) | `size` xs 24 · sm 30 · md 44 · lg 64 · xl 88; `shape` rounded/circle; `tone` seeded / accent (nav) / muted (photo picker), `alt` when meaningful; falls back to the initial if the image fails |
+| `Avatar` | a person, anywhere (seeded hue: one person, one colour) | `size` xs 24 · sm 30 · md 44 · lg 64 · xl 88; `shape` rounded/circle; always the person's seeded hue (pass `seed`), `alt` when meaningful; falls back to the initial if the image fails |
 | `DocTypeIcon`, `docTypeVars()` | the MDX/LaTeX format mark | `type`, `size` sm 32 (14px glyph) / md 36 / lg 44 |
 | `ListRow` | one item in a short list inside a panel or dialog (a person found, a person added) | `leading` (avatar/icon), `trailing` (its one action), `variant` plain (hover only) / filled (a chosen item), ref |
 
@@ -75,7 +75,8 @@ Live catalogue. **Every new or changed primitive updates this file in the same c
 ### Overlays
 | export | use this when… | variants |
 |---|---|---|
-| `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | a modal (Radix: focus trap, Escape, return focus) | `DialogContent material` glass (over the page) / solid (opened from frosted chrome), `size` sm/md/lg. On `--z-modal`. Hand-rolled overlays still exist: LEDGER A-10 |
+| `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | a modal (Radix: focus trap, Escape, return focus) | `DialogContent material` glass (over the page) / solid (opened from frosted chrome), `size` sm/md/lg. On `--z-modal`. Modals with a shape of their own use `Modal` |
+| `Modal` | a modal whose scrim and panel are the caller's (a sheet, the ⌘K palette, a full-screen menu) | `label` (required: the accessible name), `onClose`, `overlayClassName`, one panel element as the child. Radix supplies the focus trap, `aria-modal`, Escape, scrim click, scroll lock; focus goes to the panel (or an `autoFocus` field) and returns to the opener |
 
 ### Domain components that behave like primitives (outside `components/ui`)
 - `BrandMark`, `ThemeToggle` (an `IconButton`), `VisibilityChip` (a `Chip`/`ChipButton`), `Collaborators` (a `ChipButton` + popover)
@@ -111,7 +112,7 @@ Live catalogue. **Every new or changed primitive updates this file in the same c
 | feedback | progress | `Progress` | OK |
 | feedback | error / confirm | `Notice` / `ConfirmDialog` | OK |
 | feedback | toast | `Toaster` | OK |
-| overlay | dialog | Radix `Dialog` | PARTIAL (hand-rolled overlays, A-10) |
+| overlay | dialog | Radix `Dialog`, `Modal` | OK |
 | overlay | popover / menu / drawer | — / `MenuPanel` / — | MISSING / OK / MISSING |
 | media | image / code / markdown | — / — / `MarkdownPreview` | MISSING / MISSING / PARTIAL |
 
@@ -119,6 +120,6 @@ Live catalogue. **Every new or changed primitive updates this file in the same c
 
 `.claude/skills/uiux/harness/coverage.py` (see `audit.md`).
 
-| | baseline (25562bd) | after 2a | after 2b | after 3b | after 4.2 | end (51ee359) |
-|---|---|---|---|---|---|---|
-| all areas | 13.5% | 29.0% | 37.8% | ≈50% | 53.3% | 58.2% |
+| | baseline (25562bd) | after 2a | after 2b | after 3b | after 4.2 | 51ee359 | asks resolved (12e4626) |
+|---|---|---|---|---|---|---|---|
+| all areas | 13.5% | 29.0% | 37.8% | ≈50% | 53.3% | 58.2% | 59.0% |

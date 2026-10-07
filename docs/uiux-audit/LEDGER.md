@@ -10,16 +10,16 @@ The measure is a proxy defined in `audit.md`: P ÷ (P + R).
 
 What R still counts after the audit is mostly documented domain geometry, each piece with a single owner (DC-09, WS-05, CM-07, AC-08, MK-02, MK-03, AU-03). Examples are the editor's panes and rail, the forum card, the provider setup stepper, and the hero's `aria-hidden` illustration of the editor (34 elements on its own). The 13px titles that remain wait on A-11.
 
-| area | before | after |
+| area | before | after (12e4626) |
 |---|---|---|
-| shell | 20.4% (11 / 43) | 68.5% (37 / 54) |
-| document | 12.0% (37 / 271) | 54.3% (163 / 300) |
+| shell | 20.4% (11 / 43) | 72.2% (39 / 54) |
+| document | 12.0% (37 / 271) | 54.7% (164 / 300) |
 | workspace | 27.1% (19 / 51) | 71.4% (45 / 63) |
-| community | 5.1% (7 / 130) | 64.8% (83 / 128) |
+| community | 5.1% (7 / 130) | 65.9% (85 / 129) |
 | marketing | 0.7% (1 / 134) | 40.0% (36 / 90) |
-| account | 27.9% (48 / 124) | 65.6% (107 / 163) |
+| account | 27.9% (48 / 124) | 66.9% (109 / 163) |
 | auth | 0.0% (0 / 33) | 36.7% (11 / 30) |
-| **all** | **13.5% (123 / 786)** | **58.2% (482 / 828)** |
+| **all** | **13.5% (123 / 786)** | **59.0% (489 / 829)** |
 
 ## How every batch was verified
 
@@ -246,36 +246,36 @@ Auth coverage 0.0% → 36.7%.
 
 ## Totals
 
-100 findings across 13 commits (`6bd0eff` … `51ee359`).
+100 findings across 13 commits (`6bd0eff` … `51ee359`), then 13 asks resolved across 9 more (`f3435e6` … `12e4626`).
 
 | | P0 | P1 | P2 | P3 | — | total |
 |---|---|---|---|---|---|---|
 | fixed | 5 | 17 | 42 | 10 | — | 74 |
-| ask | 2 | 6 | 4 | 2 | — | 14 rows → 12 asks |
+| ask → resolved on 2026-10-07 | 2 | 6 | 4 | 2 | — | 14 rows → 12 asks (+ A-13) |
 | wontfix (documented exception) | — | — | — | 1 | 9 | 10 |
 | other (informational) | — | — | — | 1 | 1 | 2 |
 
-Remaining unfixed by severity: P0 2 (A-01, A-02) · P1 6 (A-03, A-04, A-10 ×3 rows, A-12) · P2 4 · P3 2, all of them asks.
+Remaining unfixed: **none**. Every ask was resolved on 2026-10-07 (batches 11–17). Those batches also found and fixed three more problems: a P0 (PC-01, a post could not be opened without a pointer), PC-02, and the GitHub highlight theme that painted light colours into dark code blocks.
 
 ## Asks — ordered by impact
 
-Each of these changes behaviour, a token value or name, a visible design decision, or the dependencies, so each needs your call.
+Each of these changed behaviour, a token value or name, a visible design decision, or the dependencies. You approved all of them on 2026-10-07; every one is resolved, in the batch named in the last column (see Resolutions).
 
-| # | id | impact | what is asked | rows |
-|---|---|---|---|---|
-| 1 | A-01 | P0 · every primary button | raise `--accent-ink` on `--accent-400` from 4.24:1 to ≥ 4.5:1 (darken the fill or the label) | TK-12 |
-| 2 | A-02 | P0 · ~150 text uses | `--ink-faint` (3.42:1) and `--ink-ghost` (2.24:1) are used as text: darken faint to ≥ 4.5:1 and keep ghost for non-text only | TK-13 |
-| 3 | A-10 | P1 · 6 overlays | move the hand-rolled overlays (new post, post detail, export PDF, ⌘K palette, mobile menu) onto Radix `Dialog`: focus trap, `aria-modal`, Escape, focus return. The mobile menu has no Escape at all | PR-19, SH-04, CM-08 |
-| 4 | A-12 | P1 · every bad URL or crash | add `defaultNotFoundComponent` / `defaultErrorComponent` built from `EmptyState`; today an unknown URL is TanStack's bare "Not Found" with no way back | SH-03 |
-| 5 | A-04 | P1 · every control | control borders (`--line` 1.39:1, `--line-strong` 1.77:1) are under the 3:1 non-text floor | TK-15 |
-| 6 | A-03 | P1 · accent text | `--accent-400` as text is 4.03:1: switch accent text to `--accent-500`/`-600`. Some (AC-05) already moved | TK-14 |
-| 7 | A-05 | P2 · hides layout bugs | drop `body { overflow-x: hidden }` and clip only `.auth-shell`. It hid CM-01, a clipped 360px layout | TK-16 |
-| 8 | A-08 | P2 · one primary per view | Save/Edit (editor) and Open (document card) are written as primary but render secondary. Pick one | PR-21 |
-| 9 | A-11 | P3 · blocks the last type migrations | unify Tailwind's `text-sm` (14px) with `--text-sm` (13px); the remaining raw `text-[13px]` titles wait on this | PR-36, AC-08 |
-| 10 | A-07 | P2 · two buttons | "Start a discussion" and the comment "Post" render hero type (17px) in a 40px box: make them `lg` | PR-20 |
-| 11 | A-09 | P3 · two avatars | the nav avatar and the photo picker use a fixed accent/grey instead of the person's seeded hue | PR-22 |
-| 12 | A-06 | P2 · developer clarity | rename the shadcn bridge `--accent` (a neutral fill) so it stops colliding with the brand accent | TK-17 |
-| 13 | A-13 | dependency | `@radix-ui/react-avatar` is in `package.json` but imported nowhere (`Avatar` is our own): remove it | — |
+| # | id | impact | what is asked | rows | resolved |
+|---|---|---|---|---|---|
+| 1 | A-01 | P0 · every primary button | raise `--accent-ink` on `--accent-400` from 4.24:1 to ≥ 4.5:1 (darken the fill or the label) | TK-12 | batch 11 |
+| 2 | A-02 | P0 · ~150 text uses | `--ink-faint` (3.42:1) and `--ink-ghost` (2.24:1) are used as text: darken faint to ≥ 4.5:1 and keep ghost for non-text only | TK-13 | batch 11 |
+| 3 | A-10 | P1 · 6 overlays | move the hand-rolled overlays (new post, post detail, export PDF, ⌘K palette, mobile menu) onto Radix `Dialog`: focus trap, `aria-modal`, Escape, focus return. The mobile menu has no Escape at all | PR-19, SH-04, CM-08 | batch 13 |
+| 4 | A-12 | P1 · every bad URL or crash | add `defaultNotFoundComponent` / `defaultErrorComponent` built from `EmptyState`; today an unknown URL is TanStack's bare "Not Found" with no way back | SH-03 | batch 12 |
+| 5 | A-04 | P1 · every control | control borders (`--line` 1.39:1, `--line-strong` 1.77:1) are under the 3:1 non-text floor | TK-15 | batch 11 |
+| 6 | A-03 | P1 · accent text | `--accent-400` as text is 4.03:1: switch accent text to `--accent-500`/`-600`. Some (AC-05) already moved | TK-14 | batch 11 |
+| 7 | A-05 | P2 · hides layout bugs | drop `body { overflow-x: hidden }` and clip only `.auth-shell`. It hid CM-01, a clipped 360px layout | TK-16 | batch 14 |
+| 8 | A-08 | P2 · one primary per view | Save/Edit (editor) and Open (document card) are written as primary but render secondary. Pick one | PR-21 | batch 15 |
+| 9 | A-11 | P3 · blocks the last type migrations | unify Tailwind's `text-sm` (14px) with `--text-sm` (13px); the remaining raw `text-[13px]` titles wait on this | PR-36, AC-08 | batch 17 |
+| 10 | A-07 | P2 · two buttons | "Start a discussion" and the comment "Post" render hero type (17px) in a 40px box: make them `lg` | PR-20 | batch 15 |
+| 11 | A-09 | P3 · two avatars | the nav avatar and the photo picker use a fixed accent/grey instead of the person's seeded hue | PR-22 | batch 15 |
+| 12 | A-06 | P2 · developer clarity | rename the shadcn bridge `--accent` (a neutral fill) so it stops colliding with the brand accent | TK-17 | batch 16 |
+| 13 | A-13 | dependency | `@radix-ui/react-avatar` is in `package.json` but imported nowhere (`Avatar` is our own): remove it | — | batch 16 |
 
 ## Resolutions (2026-10-07)
 

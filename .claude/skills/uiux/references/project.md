@@ -42,7 +42,8 @@ Theming: `:root` holds the light values and `:root[data-theme='dark']` overrides
 |---|---|---|
 | ground/surfaces | `--bg`, `--bg-subtle`, `--surface`, `--surface-2`, `--surface-3` | page · recessed strips/stripes · cards & popovers · inset wells/secondary buttons · hover on secondary |
 | lines | `--line-soft`, `--line`, `--line-strong` | hairlines; **separate with a line, not a shadow** |
-| ink | `--ink`, `--ink-2`, `--ink-muted`, `--ink-faint`, `--ink-ghost` | primary text · secondary · labels/meta · placeholder/disabled · dividers-that-read-as-text |
+| ink | `--ink`, `--ink-2`, `--ink-muted`, `--ink-faint`, `--ink-ghost` | primary text · secondary · labels/meta · placeholders/metadata · the quietest text. Every step is ≥ 4.5:1 on every resting ground in both themes (muted ≥ 5.9, faint ≥ 5.0, ghost ≥ 4.5); keep it that way |
+| control edge | `--control-line` | the border of a field you type into: ≥ 3:1 (WCAG 1.4.11). Separating hairlines stay `--line`/`--line-soft` |
 | translucent ink | `--ink-a02 … --ink-a40`, `--ink-a04-pct` | overlays on unknown surfaces; direction flips per theme |
 | accent (the one) | `--accent-200 … -600`, `--accent-ink`, `--accent-soft`, `--accent-line`, `--accent-glow`, `--accent-rgb` | 400 = the accent; 500 hover/pressed; 600 = text on `--accent-soft`; 200/300 fills only, never text; `--accent-ink` = text on filled accent |
 | category hue | `--latex-500/-300/-soft`, `--latex-rgb` | LaTeX documents only |
@@ -51,7 +52,7 @@ Theming: `:root` holds the light values and `:root[data-theme='dark']` overrides
 | alpha channels | `--*-rgb`, `--bg-rgb`, `--shadow-rgb` | `rgb(var(--x-rgb) / a)`; never write a palette colour as a literal |
 | scrim | `--scrim` | behind modals; dark in both themes |
 | type families | `--font-sans` (IBM Plex Sans, UI), `--font-serif` (Newsreader, display + reading), `--font-mono` (IBM Plex Mono) | |
-| type scale | `--text-xs .75 · -sm .8125 · -base .9375 · -md 1.0625 · -lg 1.25 · -xl 1.5 · -2xl 1.875 · -3xl 2.375 · -4xl 3 · -display clamp(3,8vw,5.5)rem` | |
+| type scale | `--text-3xs .625 · -2xs .6875 · -xs .75 · -sm .8125 · -base .9375 · -md 1.0625 · -lg 1.25 · -xl 1.5 · -2xl 1.875 · -3xl 2.375 · -4xl 3 · -display clamp(3,8vw,5.5)rem` | the only ladder: Tailwind's `text-*` sizes resolve to these tokens (with Tailwind's line-heights), and so does `Text size` |
 | radius | `--radius-xs 5 · -sm 7 · --radius 9 (controls) · -md 12 · -lg 14 (cards/panels) · -xl 18 (dialogs/sheets) · -pill` | "rounded rectangles act, pills describe". `--radius-legacy` is an alias of `-lg` |
 | control height | `--control-h 40px`, `--control-inner-h 32px` | every toolbar-row control; inner = inside a 3px-padded tray |
 | shadows | `--shadow-xs/-sm/(base)/-lg/-pop` | barely there; a card is defined by its hairline |
@@ -61,7 +62,7 @@ Theming: `:root` holds the light values and `:root[data-theme='dark']` overrides
 | z-index | `--z-handle 5 · -peer 19 · -toolbar 20 · -chrome 30 · -drawer-scrim 39 · -drawer 40 · -menu 60 · -popover-low 65 · -popover 70 · -popover-high 72 · -overflow-menu 80 · -nav 100 · -float 200 · -modal 300` | local stacking inside one component (0/1/2) stays literal |
 | focus | `--focus-border` (accent-400), `--focus-ring` (3px accent-soft halo) | any field that suppresses the outline draws these instead |
 | misc | `--highlight-inset(-strong)` (lit top edge on filled controls), `--theorem-def-rgb`, `--print-*` (theme-invariant paper colours) | |
-| shadcn bridge | `--background --foreground --card --popover --primary --secondary --muted --accent --destructive --border --input --ring` (HSL triples) | consumed by `components/ui/*` via Tailwind colours. **Note:** shadcn's `--accent` is a neutral fill, *not* the brand accent. |
+| shadcn bridge | `--background --foreground --card --popover --primary --secondary --muted --shadcn-accent --destructive --border --input --ring` (HSL triples) | consumed by `components/ui/*` via Tailwind colours. shadcn's `--accent` was renamed `--shadcn-accent` (a neutral fill); `accent` everywhere else means the brand ramp. `--primary`/`--ring` follow `--accent-400` |
 | tailwind colours | `ink.*`, `line.*`, `surface.*`, `brand.*` map to the vars above | |
 
 ## Design language (read-back)
@@ -76,7 +77,7 @@ Theming: `:root` holds the light values and `:root[data-theme='dark']` overrides
 **Deviations from the dominant language (audit input):**
 - Two parallel button systems. The shadcn `Button` (cva, Tailwind colours) coexists with 13 aliased CSS button classes in `styles/buttons.css`, and the icon-button look has 8 aliases.
 - Two avatar implementations (`ui/avatar.tsx` Radix vs `Avatar` in `primitives.tsx`), plus a hand-rolled `.nav-avatar` in the shell.
-- Two dialog implementations: Radix `Dialog`, and hand-rolled fixed overlays with `useDialogDismiss` (NewPostDialog, PostDetail, ExportPdfDialog, CommandPalette).
+- Modals: Radix `Dialog` for centred dialogs, and `Modal` (Radix behaviour, caller-owned scrim and panel) for sheets, the ⌘K palette and the mobile menu. Never hand-roll a fixed overlay.
 - Arbitrary Tailwind values (`text-[13px]`, `text-[11.5px]`, `text-[var(--ink-muted)]`) and inline `style={{…}}` in pages and in primitives themselves (`EmptyState`, `DocTypeIcon`, the nav in `__root.tsx`).
 - The Toaster is styled via inline `toastOptions.style` in `__root.tsx`.
 
@@ -85,14 +86,14 @@ Theming: `:root` holds the light values and `:root[data-theme='dark']` overrides
 - **Focus:** there's a global `:focus-visible { outline: 2px solid var(--accent-400); outline-offset: 2px }` in `tokens.css`. `outline: none` appears 13× in `<STYLES>`; each one needs a replacement ring (for example, `.glass-input:focus` uses a 3px `--accent-soft` box-shadow).
 - **Reduced motion:** a global block in `tokens.css` narrows `transition-property` to non-travelling properties at 140ms and stops animations. `setTheme` skips the wipe when motion is reduced. "Reduced, not none" is deliberate.
 - **Target floor:** `button { min-height: 2.5rem; min-width: 2.5rem }` in the base layer. **Any small control must declare an explicit height, or it inflates to 40px.**
-- **Hides problems:** `body { overflow-x: hidden }`. `.auth-shell` relies on it for its negative margins, so the overflow measurement in `verify.md` has to check `scrollWidth` directly.
+- **Overflow is not masked:** `body` has no `overflow-x: hidden` (removed; it once hid a clipped 360px layout). The landing root clips its own hero art. A page that overflows scrolls, and the harness flags it via `scrollWidth`.
 - Full-height shells use `dvh` (fixed 2026-09-30, TK-08).
 - **No route-level error or 404 UI.** No `notFoundComponent`/`errorComponent` exists anywhere, and `_authenticated.tsx` hand-rolls its loading/signed-out states.
 
 ## Where logic belongs
 
 - `src/lib/`: API transport (`api.ts`, `communityApi.ts`), auth context, formatting (`format.ts`: `formatDate`, `relativeTime`), validation, theme, `documentUrl`, `newDocument`, `html`, `hue`.
-- `src/hooks/`: `useDismiss` (popover outside-click), `useDialogDismiss` (modal Escape + scroll lock; **not** duplicates), `useMediaQuery`/`useCompactEditor`, `useYjsCollab`.
+- `src/hooks/`: `useDismiss` (popover outside-click), `useMediaQuery`/`useCompactEditor`, `useYjsCollab`.
 - `src/features/editor/{hooks,lib}`: editor logic.
 - **Components touching storage/transport directly:**
   - `localStorage` in `CommandPalette.tsx`, `projects/TopicStarter.tsx`, `home/TopicHero.tsx` (`topical_pending_topic`)
