@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
  * it this is a `<button>`, for text-weight actions ("Discard", "Add URL").
  */
 export interface TextLinkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "quiet" | "underline"
+  variant?: "quiet" | "underline" | "accent"
   size?: "2xs" | "xs" | "inherit"
   asChild?: boolean
 }

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { useAuth } from '@/lib/auth-context';
 import { AuthCard, AuthField, AuthPasswordField, AuthPitch, AuthSubmit } from '@/components/auth/AuthCard';
+import { TextLink } from '@/components/ui';
 
 /**
  * Sign in.
@@ -62,7 +63,7 @@ function LoginPage() {
       }
       footer={
         <>
-          No account yet? <Link to="/register">Create one</Link>
+          No account yet? <TextLink asChild variant="accent"><Link to="/register">Create one</Link></TextLink>
         </>
       }
       onSubmit={submit}

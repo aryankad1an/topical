@@ -576,6 +576,8 @@
 .link--quiet:hover:not(:disabled) { color: var(--ink-2); }
 .link--underline { color: var(--ink-muted); border-bottom: 1px solid var(--line); }
 .link--underline:hover { color: var(--accent-600); border-color: var(--accent-line); }
+.link--accent { color: var(--accent-500); font-weight: 600; }
+.link--accent:hover { text-decoration: underline; }
 .link:disabled { opacity: 0.4; cursor: not-allowed; }
 .link--2xs { font-size: 10.5px; gap: 4px; }
 .link--xs { font-size: var(--text-xs); gap: 0.375rem; }

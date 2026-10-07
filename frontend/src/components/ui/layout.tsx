@@ -25,7 +25,7 @@ const JUSTIFY = { start: "justify-start", center: "justify-center", end: "justif
 
 type Tag = "div" | "span" | "section" | "ul" | "ol" | "li" | "nav" | "header" | "footer" | "form" | "label"
 
-interface FlexProps extends React.HTMLAttributes<HTMLElement> {
+interface FlexProps extends React.HTMLAttributes<HTMLElement>, Pick<React.FormHTMLAttributes<HTMLFormElement>, "noValidate"> {
   as?: Tag
   gap?: Space
   gapX?: Space

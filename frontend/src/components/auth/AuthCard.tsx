@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { Button, Field, IconButton, Input, Notice } from '@/components/ui';
+import { Button, Field, IconButton, Input, Notice, Stack } from '@/components/ui';
 import { BrandMark } from '@/components/BrandMark';
 
 import { passwordStrength } from '@/lib/validation';
@@ -48,13 +48,13 @@ export function AuthCard({
           <h1 className="auth-title">{title}</h1>
           {subtitle && <p className="auth-sub">{subtitle}</p>}
 
-          <form onSubmit={onSubmit} className="auth-form" noValidate>
+          <Stack as="form" gap={4} onSubmit={onSubmit} className="auth-form" noValidate>
             {children}
 
             {error && (
               <Notice icon={<AlertCircle className="h-4 w-4" />}>{error}</Notice>
             )}
-          </form>
+          </Stack>
 
           {footer && <p className="auth-foot">{footer}</p>}
         </div>

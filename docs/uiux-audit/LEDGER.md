@@ -225,3 +225,13 @@ Account coverage 27.9% → 65.6%.
 | MK-03 | — | features/home/TopicHero.tsx | the performed hero: title, ghost text and caret, and the topic bar shared with the workspace's `TopicStarter` | one owner; its controls are already `Button`/`ChipButton`/`TextLink` | wontfix (documented) |
 
 Marketing coverage 0.7% → 40.0%. Most of the remaining raw count is MK-02.
+
+### Batch 9 — auth (P2–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| AU-01 | P2 | login.tsx:65, register.tsx:70, auth.css `.auth-foot a` | look-alike of `TextLink`: the "Create one" / "Sign in" links were bare router links restyled by a descendant selector | `TextLink` gained an `accent` variant at the same `--accent-500` (contrast is A-03) — pixel-identical | fix |
+| AU-02 | P3 | AuthCard:51 | the form restated a flex column in CSS | `Stack as="form" gap={4}`; `.auth-form` keeps only its offset. `Row`/`Stack` accept `noValidate` — pixel-identical | fix |
+| AU-03 | — | AuthCard (`auth-shell`/`auth-layout`/`auth-panel`, pitch column, strength meter) | the auth shell is already the one shared component for both screens. The strength meter is four discrete segments coloured per score, not a `Progress` | single owner | wontfix (documented) |
+
+Auth coverage 0.0% → 36.7%.

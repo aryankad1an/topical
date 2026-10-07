@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { passwordProblem } from '@/lib/validation';
 import { AuthCard, AuthField, AuthPasswordField, AuthPitch, AuthSubmit } from '@/components/auth/AuthCard';
-import { Grid } from '@/components/ui';
+import { Grid, TextLink } from '@/components/ui';
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
@@ -67,7 +67,7 @@ function RegisterPage() {
       }
       footer={
         <>
-          Already have one? <Link to="/login">Sign in</Link>
+          Already have one? <TextLink asChild variant="accent"><Link to="/login">Sign in</Link></TextLink>
         </>
       }
       onSubmit={submit}
