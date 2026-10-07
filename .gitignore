@@ -28,5 +28,14 @@ __pycache__/
 .vercel
 uploads/
 
-.claude
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Claude Code: personal settings and scratch stay local. The dev-server launch
+# config and the project's own uiux skill (with its regression harness) are shared.
+.claude/*
+!.claude/launch.json
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/uiux/
 .agents

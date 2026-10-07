@@ -8,22 +8,24 @@ The measure is a proxy defined in `audit.md`: P ÷ (P + R).
 - **P** = JSX instances of exports from `components/ui`.
 - **R** = host elements carrying `className=`/`style=`.
 
+What R still counts after the audit is mostly documented domain geometry, each piece with a single owner (DC-09, WS-05, CM-07, AC-08, MK-02, MK-03, AU-03). Examples are the editor's panes and rail, the forum card, the provider setup stepper, and the hero's `aria-hidden` illustration of the editor (34 elements on its own). The 13px titles that remain wait on A-11.
+
 | area | before | after |
 |---|---|---|
-| shell | 20.4% (11 / 43) | — |
-| document | 12.0% (37 / 271) | — |
-| workspace | 27.1% (19 / 51) | — |
-| community | 5.1% (7 / 130) | — |
-| marketing | 0.7% (1 / 134) | — |
-| account | 27.9% (48 / 124) | — |
-| auth | 0.0% (0 / 33) | — |
-| **all** | **13.5% (123 / 786)** | — |
+| shell | 20.4% (11 / 43) | 68.5% (37 / 54) |
+| document | 12.0% (37 / 271) | 54.3% (163 / 300) |
+| workspace | 27.1% (19 / 51) | 71.4% (45 / 63) |
+| community | 5.1% (7 / 130) | 64.8% (83 / 128) |
+| marketing | 0.7% (1 / 134) | 40.0% (36 / 90) |
+| account | 27.9% (48 / 124) | 65.6% (107 / 163) |
+| auth | 0.0% (0 / 33) | 36.7% (11 / 30) |
+| **all** | **13.5% (123 / 786)** | **58.2% (482 / 828)** |
 
 ## How every batch was verified
 
-- **Pixel harness.** A Playwright capture runs the real app against fixture API responses with a frozen clock and reduced motion, in the scratchpad (not in the repo). It covers 28 route states × 360/1280 × light/dark, which is 110 full-page screenshots plus computed-style fingerprints per element. Each batch is diffed against the baseline taken at `25562bd`. A capture that differs is re-captured once, and only a diff that persists counts. "0 differing" means pixel-identical at a threshold of 8/255 per channel.
+- **Pixel harness.** A Playwright capture runs the real app against fixture API responses with a frozen clock and reduced motion, from `.claude/skills/uiux/harness/` (its output goes to a scratch directory). It covers 36 route states (28 at the start, plus six editor overlays and two empty-document states added during the audit) × 360/1280 × light/dark, which is 126 full-page screenshots plus computed-style fingerprints per element. Each batch is diffed against a baseline captured from a worktree at the previous batch's commit. A capture that differs is re-captured once, and only a diff that persists counts. "0 differing" means pixel-identical at a threshold of 8/255 per channel.
 - **CSS gate.** The build's `dist/assets/*.css` is diffed rule-by-rule, with comments stripped, against the HEAD build.
-- **Lint and typecheck.** `npm run lint` must stay at the baseline of 0 errors / 6 pre-existing warnings, and `npx tsc --noEmit` must stay clean.
+- **Lint and typecheck.** `npm run lint` must stay at the baseline of 0 errors and no new warnings (6 pre-existing at the start, 5 at the end), and `npx tsc --noEmit` must stay clean.
 
 ## Findings
 
@@ -240,4 +242,37 @@ Auth coverage 0.0% → 36.7%.
 
 | id | sev | path:line | defect | fix | status |
 |---|---|---|---|---|---|
-| CM-01 | P0 | community.tsx:150, :261, :273 | every community screen was 8–15px wider than a 360px phone. `body { overflow-x: hidden }` (A-05) hid the scrollbar, so the overflow was **clipped**: the People tab, the right edge of every person card and the end of each bio were cut off. Two causes: the tab switch could not fit "Public Lessons" plus three icons in 296px, and the People grid had no base column count, so its implicit column sized to the longest unbroken line | the tab reads "Lessons" (the line under it already says "N public lessons"); the People grid is `cols={{ base: 1, sm: 2 }}`, so bios truncate. Now 0 of 128 captures overflow | fix |
+| CM-01 | P0 | community.tsx:150, :261, :273 | every community screen was 8–15px wider than a 360px phone. `body { overflow-x: hidden }` (A-05) hid the scrollbar, so the overflow was **clipped**: the People tab, the right edge of every person card and the end of each bio were cut off. Two causes: the tab switch could not fit "Public Lessons" plus three icons in 296px, and the People grid had no base column count, so its implicit column sized to the longest unbroken line | the tab reads "Lessons" (the line under it already says "N public lessons"); the People grid is `cols={{ base: 1, sm: 2 }}`, so bios truncate. No capture overflows any more | fix |
+
+## Totals
+
+100 findings across 13 commits (`6bd0eff` … `51ee359`).
+
+| | P0 | P1 | P2 | P3 | — | total |
+|---|---|---|---|---|---|---|
+| fixed | 5 | 17 | 42 | 10 | — | 74 |
+| ask | 2 | 6 | 4 | 2 | — | 14 rows → 12 asks |
+| wontfix (documented exception) | — | — | — | 1 | 9 | 10 |
+| other (informational) | — | — | — | 1 | 1 | 2 |
+
+Remaining unfixed by severity: P0 2 (A-01, A-02) · P1 6 (A-03, A-04, A-10 ×3 rows, A-12) · P2 4 · P3 2, all of them asks.
+
+## Asks — ordered by impact
+
+Each of these changes behaviour, a token value or name, a visible design decision, or the dependencies, so each needs your call.
+
+| # | id | impact | what is asked | rows |
+|---|---|---|---|---|
+| 1 | A-01 | P0 · every primary button | raise `--accent-ink` on `--accent-400` from 4.24:1 to ≥ 4.5:1 (darken the fill or the label) | TK-12 |
+| 2 | A-02 | P0 · ~150 text uses | `--ink-faint` (3.42:1) and `--ink-ghost` (2.24:1) are used as text: darken faint to ≥ 4.5:1 and keep ghost for non-text only | TK-13 |
+| 3 | A-10 | P1 · 6 overlays | move the hand-rolled overlays (new post, post detail, export PDF, ⌘K palette, mobile menu) onto Radix `Dialog`: focus trap, `aria-modal`, Escape, focus return. The mobile menu has no Escape at all | PR-19, SH-04, CM-08 |
+| 4 | A-12 | P1 · every bad URL or crash | add `defaultNotFoundComponent` / `defaultErrorComponent` built from `EmptyState`; today an unknown URL is TanStack's bare "Not Found" with no way back | SH-03 |
+| 5 | A-04 | P1 · every control | control borders (`--line` 1.39:1, `--line-strong` 1.77:1) are under the 3:1 non-text floor | TK-15 |
+| 6 | A-03 | P1 · accent text | `--accent-400` as text is 4.03:1: switch accent text to `--accent-500`/`-600`. Some (AC-05) already moved | TK-14 |
+| 7 | A-05 | P2 · hides layout bugs | drop `body { overflow-x: hidden }` and clip only `.auth-shell`. It hid CM-01, a clipped 360px layout | TK-16 |
+| 8 | A-08 | P2 · one primary per view | Save/Edit (editor) and Open (document card) are written as primary but render secondary. Pick one | PR-21 |
+| 9 | A-11 | P3 · blocks the last type migrations | unify Tailwind's `text-sm` (14px) with `--text-sm` (13px); the remaining raw `text-[13px]` titles wait on this | PR-36, AC-08 |
+| 10 | A-07 | P2 · two buttons | "Start a discussion" and the comment "Post" render hero type (17px) in a 40px box: make them `lg` | PR-20 |
+| 11 | A-09 | P3 · two avatars | the nav avatar and the photo picker use a fixed accent/grey instead of the person's seeded hue | PR-22 |
+| 12 | A-06 | P2 · developer clarity | rename the shadcn bridge `--accent` (a neutral fill) so it stops colliding with the brand accent | TK-17 |
+| 13 | A-13 | dependency | `@radix-ui/react-avatar` is in `package.json` but imported nowhere (`Avatar` is our own): remove it | — |
