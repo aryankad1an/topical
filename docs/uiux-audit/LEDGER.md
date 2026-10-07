@@ -308,3 +308,9 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 | — | the mobile menu closes itself if the window widens past 768px | without this it would vanish (`md:hidden`) while still holding the focus trap |
 | PC-01 (P0) | a post could only be opened by a pointer: the card was a `<div onClick>`. The title is now a real button (`community-card-open`, same type and colour, its own focus ring) | Enter on a focused title opens the post, and closing it returns focus there. Pointer behaviour is unchanged |
 | PC-02 (P3) | a score of 0 was drawn at `--ink-a12` (about 1.3:1) | 0 and negative scores use `--ink-ghost` (≥ 4.5:1) |
+
+### Batch 14 — no more silent clipping (A-05, P2)
+
+| ask | change | result |
+|---|---|---|
+| A-05 | `body { overflow-x: hidden }` removed. The auth shell never needed it: its −1rem side margins cancel `<main>`'s padding exactly, and it keeps its own `overflow: hidden` for its decoration. The comment that claimed it relied on `body` is corrected | every route state at **360 / 768 / 1280 / 1920** reports `scrollWidth ≤ clientWidth`. Sign-in, sign-up and the landing page are pixel-identical. A future overflow now scrolls and is flagged instead of being cut off |

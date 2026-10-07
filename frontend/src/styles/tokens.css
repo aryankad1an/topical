@@ -506,7 +506,9 @@
     @apply bg-background text-foreground;
     font-size: 1rem;
     line-height: 1.65;
-    overflow-x: hidden;
+    /* No `overflow-x: hidden` here. It clipped anything too wide for a phone
+       instead of letting it show up (it hid LEDGER CM-01 that way), so a page
+       that overflows now scrolls, and the harness flags it. */
     background: var(--bg);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;

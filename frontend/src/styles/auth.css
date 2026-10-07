@@ -24,9 +24,10 @@
   /* `<main>` in the root shell adds `px-4 py-6 mt-20` (`md:mt-24`) so ordinary
      pages clear the floating nav. This screen centres its panel in the whole
      viewport rather than in what is left below the nav, so it takes those
-     back. Safe to do with negative margins because `body` already
-     sets `overflow-x: hidden`; the padding above restores the clearance under
-     the nav that `mt-20` was providing. */
+     back. The side margins cancel `<main>`'s 1rem padding exactly, so the
+     shell is precisely viewport-wide and needs no clipping from `body`; its
+     own `overflow: hidden` keeps the decoration inside it. The padding above
+     restores the clearance under the nav that `mt-20` was providing. */
   margin: calc(-5rem - 1.5rem) -1rem -1.5rem;
 }
 
