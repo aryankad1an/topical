@@ -1667,6 +1667,7 @@ a:active > .brand-lockup {
   flex-shrink: 0;
 }
 
+.provider-name { font-size: 13px; font-weight: 600; color: var(--ink); }
 .provider-model {
   font-family: var(--font-mono);
   font-size: 11px;

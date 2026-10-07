@@ -200,3 +200,18 @@ Workspace coverage 27.1% → 71.4%.
 | CM-08 | P1 | NewPostDialog:52, PostDetail:108 | hand-rolled fixed overlays beside Radix `Dialog` | part of A-10 | **ask A-10** |
 
 Community coverage 5.1% → 64.8%.
+
+### Batch 7 — account (P1–P3)
+
+| id | sev | path:line | defect | fix | status |
+|---|---|---|---|---|---|
+| AC-01 | P2 | profile.tsx:150, providers.tsx:224 | the connected-provider tile (brand mark, name, Default chip, model) was hand-built twice, with the name as a raw `text-[13px]` utility string | `components/ProviderTile.tsx` (a domain component, with an `actions` slot) used by both screens; the name moved to `.provider-name` — pixel-identical | fix |
+| AC-02 | P1 | providers.tsx:104, :137, :148 | the provider picker and the model picker were `<button>`s whose selection lived only in `data-selected`, so a screen reader announced nine identical buttons and never which one was chosen | `aria-pressed` on every option (the contract `ChipButton` and `Segmented` already use) — no visual change | fix |
+| AC-03 | P2 | providers.tsx:141 | RECOMMENDED was a private 9.5px tag with an inline-style hue and the word typed in capitals | `Chip size="xs" tone="accent" caps`. Visible: a pill with a hairline | fix |
+| AC-04 | P1 | providers.tsx:199 | look-alike of `TextLink`: the "Get a key" link restated the quiet link's colours and hover in utilities | `TextLink asChild size="xs"`. Visible: 4px taller at 360, because the link now takes the body's line-height instead of Tailwind's 16px | fix |
+| AC-05 | P3 | providers.tsx:243 | "default" was coloured with an inline `--accent-500` (4.0:1, A-03) | `Text tone="accent"` (`--accent-600`) | fix |
+| AC-06 | P2 | profile.tsx:29 | the profile's load-failure path was an unstyled `text-2xl font-bold` "Authentication Error" block | `EmptyState` in a narrow `Page`, with the sign-in action and a plain-language title | fix |
+| AC-07 | P3 | profile.tsx, providers.tsx, ProfileEditorFields, ChangePasswordCard | `space-y-*` wrappers | `Stack` — pixel-identical | fix |
+| AC-08 | — | providers.tsx (`setup-step` rail, `brand-card`, `model-option`, `key-note`), profile.tsx (`account-identity`), u.$username (`pub-row`), ProfileEditorFields (`avatar-busy`), profile_.edit (username feedback row) | the setup stepper, the two pickers, the identity block and the published-document row each have one owner. The remaining raw `text-[13px]` titles wait on A-11, the two type scales | domain geometry; type blocked by A-11 | wontfix (documented) |
+
+Account coverage 27.9% → 65.6%.

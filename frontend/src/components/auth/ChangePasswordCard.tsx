@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 import { changePassword } from '@/lib/api';
 import { passwordProblem } from '@/lib/validation';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Notice } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Field, Input, Notice, Stack } from '@/components/ui';
 
 /**
  * Change your password.
@@ -51,7 +51,7 @@ export function ChangePasswordCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="space-y-4">
+        <Stack as="form" gap={4} onSubmit={submit}>
           <Field id="current-password" label="Current password">
             <Input
               id="current-password"
@@ -80,7 +80,7 @@ export function ChangePasswordCard() {
           <Button type="submit" variant="secondary" size="lg" width="full" loading={pending}>
             {!pending && 'Change password'}
           </Button>
-        </form>
+        </Stack>
       </CardContent>
     </Card>
   );

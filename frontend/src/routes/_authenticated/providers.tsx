@@ -5,8 +5,9 @@ import {
   Key, Plus, Star, Trash2, ExternalLink, Check,
   ShieldCheck, Sparkles,
 } from "lucide-react";
-import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page, Text, Row, Heading } from '@/components/ui';
+import { Button, IconButton, Input, PageHeader, Surface, EmptyState, Chip, BackLink, Page, Text, Row, Heading, Stack, TextLink } from '@/components/ui';
 import { errorMessage } from "@/lib/utils";
+import { ProviderTile } from "@/components/ProviderTile";
 import {
   type AiCredential, type AiProvider, PROVIDER_PRESETS,
   getCredentials, saveCredential, deleteCredential, setDefaultCredential, presetFor,
@@ -104,6 +105,7 @@ function ProvidersPage() {
                   <button key={p.provider}
                     className="brand-card"
                     data-selected={provider === p.provider}
+                    aria-pressed={provider === p.provider}
                     style={{ ["--brand" as string]: p.color }}
                     onClick={() => pickProvider(p.provider)}
                   >
@@ -134,18 +136,15 @@ function ProvidersPage() {
               <p className="setup-hint">Not sure? The first one is a good default.</p>
               <div className="model-list">
                 {preset.models.map(m => (
-                  <button key={m} className="model-option" data-selected={model === m} onClick={() => setModel(m)}>
+                  <button key={m} className="model-option" data-selected={model === m} aria-pressed={model === m} onClick={() => setModel(m)}>
                     <span className="model-radio" />
                     <span className="model-name flex-1">{m}</span>
                     {preset.models[0] === m && (
-                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: "var(--accent-soft)", color: "var(--accent-500)" }}>
-                        RECOMMENDED
-                      </span>
+                      <Chip size="xs" tone="accent" caps>Recommended</Chip>
                     )}
                   </button>
                 ))}
-                <button className="model-option" data-selected={model === CUSTOM} onClick={() => setModel(CUSTOM)}>
+                <button className="model-option" data-selected={model === CUSTOM} aria-pressed={model === CUSTOM} onClick={() => setModel(CUSTOM)}>
                   <span className="model-radio" />
                   <span className="flex-1">Custom model…</span>
                 </button>
@@ -196,10 +195,11 @@ function ProvidersPage() {
                     ? 'Verifying…'
                     : <><Plus className="h-4 w-4" /> Connect {preset.name}</>}
                 </Button>
-                <a href={preset.getKeyUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-2)] flex items-center gap-1.5 transition-colors">
-                  <ExternalLink className="h-3 w-3" /> Get a {preset.name} key
-                </a>
+                <TextLink asChild size="xs">
+                  <a href={preset.getKeyUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3" /> Get a {preset.name} key
+                  </a>
+                </TextLink>
               </Row>
             </div>
           </div>
@@ -217,20 +217,11 @@ function ProvidersPage() {
               description="Generation stays disabled until you add a key." />
           ) : (
             <>
-              <div className="space-y-2">
+              <Stack gap={2}>
                 {credentials.map(cred => {
                   const p = presetFor(cred.provider);
                   return (
-                    <div key={cred.id} className="provider-tile" data-default={cred.isDefault}
-                      style={{ ["--brand" as string]: p.color }}>
-                      <span className="provider-mark">{p.name[0]}</span>
-                      <div className="min-w-0 flex-1">
-                        <Row align="center" gap={1.5}>
-                          <span className="text-[13px] font-semibold text-[var(--ink)]">{p.name}</span>
-                          {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
-                        </Row>
-                        <p className="provider-model truncate">{cred.model}</p>
-                      </div>
+                    <ProviderTile key={cred.id} credential={cred} actions={<>
                       {!cred.isDefault && (
                         <IconButton size="sm"
                           onClick={() => setCredentials(setDefaultCredential(cred.id))}
@@ -243,13 +234,13 @@ function ProvidersPage() {
                         title="Remove" aria-label={`Remove ${p.name} key`}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </IconButton>
-                    </div>
+                    </>} />
                   );
                 })}
-              </div>
+              </Stack>
 
               <Text size="2xs" tone="ghost" leading="relaxed" className="mt-3.5">
-                The <span style={{ color: "var(--accent-500)" }}>default</span> provider is used for every
+                The <Text as="span" tone="accent">default</Text> provider is used for every
                 generation. Star another to switch.
               </Text>
 

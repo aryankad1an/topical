@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState, Page, DetailRow, DetailEmpty, Text, Row } from '@/components/ui';
-import { User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye } from 'lucide-react';
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Avatar, EmptyState, PageHeader, Chip, LoadingState, Page, DetailRow, DetailEmpty, Row, Stack } from '@/components/ui';
+import { User, Shield, Key, LogOut, SlidersHorizontal, Pencil, Eye, AlertCircle } from 'lucide-react';
+import { ProviderTile } from "@/components/ProviderTile";
 import { useState, useEffect } from "react";
-import { type AiCredential, getCredentials, presetFor } from "@/lib/aiCredentials";
+import { type AiCredential, getCredentials } from "@/lib/aiCredentials";
 import { ChangePasswordCard } from "@/components/auth/ChangePasswordCard";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -26,11 +27,15 @@ function Profile() {
 
   if (!user) {
     return (
-      <div className="text-center p-8">
-        <h2 className="text-2xl font-bold mb-2">Authentication Error</h2>
-        <Text tone="muted" className="mb-4">Unable to load user profile</Text>
-        <Button asChild variant="primary" size="lg"><Link to="/login">Sign in again</Link></Button>
-      </div>
+      <Page width="narrow">
+        <EmptyState
+          icon={AlertCircle}
+          tone="muted"
+          title="Your profile could not be loaded"
+          description="Your session may have ended. Sign in again to continue."
+          action={<Button asChild variant="primary" size="lg"><Link to="/login">Sign in again</Link></Button>}
+        />
+      </Page>
     );
   }
 
@@ -132,7 +137,7 @@ function Profile() {
         </Card>
 
         {/* AI Provider Settings */}
-        <div className="space-y-6">
+        <Stack gap={6}>
         <Card>
           <CardHeader>
             <CardTitle>AI providers</CardTitle>
@@ -143,24 +148,9 @@ function Profile() {
               <EmptyState icon={Key} title="No providers connected"
                 description="Generation is disabled until you add one." />
             ) : (
-              <div className="space-y-2">
-                {credentials.map((cred) => {
-                  const preset = presetFor(cred.provider);
-                  return (
-                    <div key={cred.id} className="provider-tile" data-default={cred.isDefault}
-                      style={{ ['--brand' as string]: preset.color }}>
-                      <span className="provider-mark">{preset.name[0]}</span>
-                      <div className="min-w-0 flex-1">
-                        <Row align="center" gap={1.5}>
-                          <span className="text-[13px] font-semibold text-[var(--ink)]">{preset.name}</span>
-                          {cred.isDefault && <Chip size="xs" caps tone="brand">Default</Chip>}
-                        </Row>
-                        <p className="provider-model truncate">{cred.model}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <Stack gap={2}>
+                {credentials.map(cred => <ProviderTile key={cred.id} credential={cred} />)}
+              </Stack>
             )}
 
             {/* Managing keys is its own task with its own screen. */}
@@ -174,7 +164,7 @@ function Profile() {
         </Card>
 
           <ChangePasswordCard />
-        </div>
+        </Stack>
       </div>
     </Page>
   );

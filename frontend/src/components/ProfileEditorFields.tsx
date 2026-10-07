@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
-import { Button, Input, Textarea, Avatar, Spinner, Field, Row, Text } from '@/components/ui';
+import { Button, Input, Textarea, Avatar, Spinner, Field, Row, Text, Stack } from '@/components/ui';
 import { uploadFile } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 // The same ceiling the server stores to, and the schema rejects past.
@@ -67,7 +67,7 @@ export function ProfileEditorFields({
   const displayedAvatar = previewUrl || avatarUrl || fallbackAvatar || undefined;
 
   return (
-    <div className="space-y-5">
+    <Stack gap={5}>
       <Row align="center" gap={4}>
         <div className="relative">
           <Avatar size="lg" shape="circle" tone="muted" src={displayedAvatar} name={fallbackInitial} alt="Avatar" />
@@ -113,6 +113,6 @@ export function ProfileEditorFields({
           disabled={disabled}
         />
       </Field>
-    </div>
+    </Stack>
   );
 }
