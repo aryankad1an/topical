@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FileDown } from 'lucide-react';
-import { Button, Checkbox, FieldGroup, ChipButton, Notice, PanelHeader } from '@/components/ui';
-import { useDialogDismiss } from '@/hooks/useDialogDismiss';
+import { Button, Checkbox, FieldGroup, ChipButton, Notice, PanelHeader, Modal } from '@/components/ui';
 import {
   PDF_DEFAULTS, exportPdf,
   type PdfOptions, type PdfTheme, type PdfAccent, type PdfPage, type PdfMargin, type PdfFace,
@@ -61,7 +60,6 @@ export function ExportPdfDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useDialogDismiss(onClose);
 
   const set = <K extends keyof PdfOptions>(key: K, value: PdfOptions[K]) =>
     setOptions(current => ({ ...current, [key]: value }));
@@ -86,8 +84,8 @@ export function ExportPdfDialog({
   };
 
   return (
-    <div className="post-detail-overlay" onClick={onClose}>
-      <form className="pdf-dialog" onClick={e => e.stopPropagation()} onSubmit={submit}>
+    <Modal label="Export PDF" onClose={onClose} overlayClassName="post-detail-overlay">
+      <form className="pdf-dialog" onSubmit={submit}>
         <PanelHeader size="md" icon={<FileDown className="h-4 w-4" />} title="Export PDF" onClose={onClose} />
 
         <div className="pdf-body">
@@ -173,6 +171,6 @@ export function ExportPdfDialog({
           </Button>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 }

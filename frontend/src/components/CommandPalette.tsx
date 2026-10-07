@@ -11,7 +11,7 @@ import {
   FilePlus2, FileCode2, BookOpen, CornerDownLeft, Info, KeyRound,
   LogIn, LogOut, UserPlus, FileText, Settings2, Moon, Keyboard,
 } from 'lucide-react';
-import { MenuSearch, Kbd, MenuEmpty, MenuItem, MenuLabel } from '@/components/ui';
+import { MenuSearch, Kbd, MenuEmpty, MenuItem, MenuLabel, Modal } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
 
 export interface Command {
@@ -174,7 +174,6 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setCursor(c => (results.length ? (c + 1) % results.length : 0));
@@ -202,8 +201,9 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
   let lastGroup = '';
 
   return (
-    <div className="cmdk-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Command palette">
-      <div className="cmdk-panel" onClick={e => e.stopPropagation()}>
+    // Escape, the scrim click, focus trapping and focus return are the Modal's.
+    <Modal label="Command palette" onClose={onClose} overlayClassName="cmdk-overlay">
+      <div className="cmdk-panel">
         <MenuSearch
           ref={inputRef}
           icon={<Search className="h-4 w-4" />}
@@ -252,6 +252,6 @@ export function CommandPalette({ open, onClose, isAuthenticated }: Props) {
           <span><Kbd>↵</Kbd> open</span>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

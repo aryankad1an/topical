@@ -636,6 +636,10 @@
 .progress-fill { height: 100%; border-radius: inherit; background: rgb(var(--accent-rgb) / 0.55); transition: width var(--dur-base) var(--ease-out); }
 .progress--md .progress-fill { background: linear-gradient(90deg, var(--accent-600), var(--accent-300)); transition-duration: var(--dur-slow); }
 
+/* The Modal's panel takes focus on open so the dialog is announced; it is not
+   a control, so it draws no ring. Its controls keep theirs. */
+.modal-panel:focus { outline: none; }
+
 .heading--label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-faint); }
 
 /* ── Keyboard focus ──

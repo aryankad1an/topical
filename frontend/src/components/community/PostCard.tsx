@@ -48,7 +48,7 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
         </IconButton>
         <span
           className="vote-score"
-          style={{ color: score > 0 ? 'var(--ink-muted)' : score < 0 ? 'var(--ink-ghost)' : 'var(--ink-a12)' }}
+          style={{ color: score > 0 ? 'var(--ink-muted)' : 'var(--ink-ghost)' }}
         >
           {score}
         </span>
@@ -67,7 +67,14 @@ export function PostCard({ post, onUpdate, onOpen, onDelete }: PostCardProps) {
       <div className="community-card-content">
         {/* Title */}
         <Row align="start" gap={2}>
-          <h3 className="community-card-title flex-1">{post.title}</h3>
+          {/* The card is clickable anywhere with a pointer; this button is the
+              same action for the keyboard and for assistive tech, which a
+              clickable <div> offered neither. */}
+          <h3 className="community-card-title flex-1">
+            <button type="button" className="community-card-open" onClick={e => { e.stopPropagation(); onOpen(post.id); }}>
+              {post.title}
+            </button>
+          </h3>
 
           {isAuthor && (
             /* Two-step delete: the second click confirms. A modal for a single

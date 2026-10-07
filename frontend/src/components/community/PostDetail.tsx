@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Send, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Post, Comment } from '@/lib/communityApi';
-import { useDialogDismiss } from '@/hooks/useDialogDismiss';
-import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text, PanelHeader, Heading } from '@/components/ui';
+import { Avatar, Button, IconButton, Textarea, LoadingState, Divider, Row, Stack, Text, PanelHeader, Heading, Modal } from '@/components/ui';
 import { fetchPostDetail, addComment, votePost, deleteComment } from '@/lib/communityApi';
 import { useAuth } from '@/lib/auth-context';
 import { errorMessage } from '@/lib/utils';
@@ -99,14 +98,13 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
     },
   });
 
-  useDialogDismiss(onClose);
 
   const comments = data?.comments ?? [];
   const score = (post?.upvotes ?? 0) - (post?.downvotes ?? 0);
 
   return (
-    <div className="post-detail-overlay" onClick={onClose}>
-      <div className="post-detail-panel" onClick={e => e.stopPropagation()}>
+    <Modal label={post?.title ?? 'Post'} onClose={onClose} overlayClassName="post-detail-overlay">
+      <div className="post-detail-panel">
         {/* Header */}
         <PanelHeader size="md" onClose={onClose} className="justify-end" />
 
@@ -221,6 +219,6 @@ export function PostDetail({ postId, onClose, onPostUpdate, onViewLesson }: Post
           <Text tone="faint" className="text-center py-12">Post not found.</Text>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }

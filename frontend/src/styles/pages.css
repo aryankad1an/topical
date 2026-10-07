@@ -120,6 +120,13 @@
   text-wrap: pretty;
 }
 .community-card:hover .community-card-title { color: var(--accent-600); }
+/* The title is the card's keyboard action. It inherits the title's type and
+   colour and drops the button chrome, including the global 2.5rem floor. */
+.community-card-open {
+  font: inherit; color: inherit; letter-spacing: inherit; text-align: left;
+  min-height: 0; min-width: 0; padding: 0; background: none; border: 0; cursor: pointer;
+}
+.community-card-open:focus-visible { outline: 2px solid var(--accent-400); outline-offset: 3px; border-radius: var(--radius-xs); }
 .community-card-body {
   font-size: 13px;
   color: var(--ink-faint);

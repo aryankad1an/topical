@@ -299,3 +299,12 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 | ask | change | result |
 |---|---|---|
 | A-12 | `components/RouteStates.tsx`: `NotFound` and `RouteError`, both built from `EmptyState` in a narrow `Page`, set as the router's `defaultNotFoundComponent` / `defaultErrorComponent` | an unknown URL shows "This page doesn't exist" with a way home, inside the normal shell (it was TanStack's bare "Not Found"). A route that throws shows "Something went wrong on this page" with **Try again** (resets the boundary and reloads the route's data) and **Go to the home page**. Verified by making `/api/posts` return malformed data |
+
+### Batch 13 — modals (A-10, P1) and the post card's keyboard path (P0)
+
+| ask/id | change | result |
+|---|---|---|
+| A-10 | new `Modal` primitive (`components/ui/modal.tsx`): the caller keeps its own scrim and panel, and Radix Dialog supplies the behaviour. Used by the new-post sheet, the post view, the PDF export sheet, the ⌘K palette and the mobile menu. `useDialogDismiss` (Escape + a hand-made scroll lock) is deleted | behaviour-tested on all five: `role=dialog` + `aria-modal` + a label; focus moves in (the panel itself, or an `autoFocus` field) and **25 Tabs never leave it**; Escape and a click on the scrim close it; the page is scroll-locked; focus returns to the opener when one still exists. Pixel-identical except that the floating nav now sits *under* the post sheets' scrim (it was above it and still clickable) |
+| — | the mobile menu closes itself if the window widens past 768px | without this it would vanish (`md:hidden`) while still holding the focus trap |
+| PC-01 (P0) | a post could only be opened by a pointer: the card was a `<div onClick>`. The title is now a real button (`community-card-open`, same type and colour, its own focus ring) | Enter on a focused title opens the post, and closing it returns focus there. Pointer behaviour is unchanged |
+| PC-02 (P3) | a score of 0 was drawn at `--ink-a12` (about 1.3:1) | 0 and negative scores use `--ink-ghost` (≥ 4.5:1) |

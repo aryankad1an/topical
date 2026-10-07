@@ -12,7 +12,7 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
-import { Avatar, Button, IconButton, Kbd, Toaster, Row, Stack, Divider } from '@/components/ui';
+import { Avatar, Button, IconButton, Kbd, Toaster, Row, Stack, Divider, Modal } from '@/components/ui';
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { GlassFilters } from "@/components/GlassFilters";
 import { type QueryClient } from "@tanstack/react-query";
@@ -34,6 +34,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
   const { isAuthenticated, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  /* The menu is `md:hidden`. Left open while the window widens past 768px it
+     would vanish but keep its focus trap and scroll lock, so it closes. */
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const wide = window.matchMedia('(min-width: 768px)');
+    const close = () => { if (wide.matches) setIsMobileMenuOpen(false); };
+    close();
+    wide.addEventListener('change', close);
+    return () => wide.removeEventListener('change', close);
+  }, [isMobileMenuOpen]);
   /* Selected, not the whole router state. A bare `useRouterState()` subscribes
      this component to every field of it — including the transition status,
      which changes several times per navigation — so the nav re-rendered, and
@@ -175,7 +185,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[var(--z-float)] md:hidden mobile-menu-overlay">
+        <Modal label="Menu" onClose={() => setIsMobileMenuOpen(false)} overlayClassName="fixed inset-0 z-[var(--z-float)] md:hidden mobile-menu-overlay">
           <Stack className="h-full">
             <div className="mobile-menu-head">
               <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
@@ -198,7 +208,7 @@ function NavBar({ onOpenCommand }: { onOpenCommand: () => void }) {
               )}
             </Stack>
           </Stack>
-        </div>
+        </Modal>
       )}
     </>
   );

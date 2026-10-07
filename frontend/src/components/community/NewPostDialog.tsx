@@ -5,8 +5,7 @@ import { createPost } from '@/lib/communityApi';
 import { getPublicLessonPlans } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { Button, Field, Input, Textarea, MenuEmpty, MenuItem, MenuPanel, Stack, PanelHeader } from '@/components/ui';
-import { useDialogDismiss } from '@/hooks/useDialogDismiss';
+import { Button, Field, Input, Textarea, MenuEmpty, MenuItem, MenuPanel, Stack, PanelHeader, Modal } from '@/components/ui';
 
 interface NewPostDialogProps {
   onClose: () => void;
@@ -22,7 +21,6 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
   const [showLessons, setShowLessons] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  useDialogDismiss(onClose);
 
   const { data: plansData } = useQuery({
     queryKey: ['public-lesson-plans'],
@@ -49,13 +47,12 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
   }
 
   return (
-    <div className="post-detail-overlay" onClick={onClose}>
+    <Modal label="New post" onClose={onClose} overlayClassName="post-detail-overlay">
       {/* A real form, so Enter in the title submits and the browser knows what
           this is. It was a `<div>` with a button at the bottom, which means the
           one key everybody presses to finish a short form did nothing. */}
       <form
         className="new-post-dialog"
-        onClick={e => e.stopPropagation()}
         onSubmit={e => { e.preventDefault(); handleSubmit(); }}
       >
         <PanelHeader size="md" icon={<PenLine className="h-4 w-4" />} title="New post" onClose={onClose} />
@@ -134,6 +131,6 @@ export function NewPostDialog({ onClose, onCreated }: NewPostDialogProps) {
           </Button>
         </Stack>
       </form>
-    </div>
+    </Modal>
   );
 }
