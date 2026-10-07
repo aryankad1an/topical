@@ -322,3 +322,9 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 | A-07 | "Start a discussion" (empty forum) and the comment "Post" button: `size="hero"` with a height override → `size="lg"` | 13px in a 40px button, like every other in-app action |
 | A-08 | decided per view: **Edit** (reading mode) → primary, the only action on that screen. **Save** (writing mode) stays secondary: the outline rail's "Write sections" is that view's primary and the document autosaves. **Open** on a document card stays secondary: the projects page's primary is Start | one primary per view, and the code says what renders |
 | A-09 | the nav avatar and the profile photo picker are seeded with the person's id; Avatar's `accent`/`muted` tones and their CSS are deleted | a person is one colour everywhere: nav, people list, comments, profile |
+
+### Batch 16 — naming and dependencies (A-06, A-13)
+
+| ask | change | result |
+|---|---|---|
+| A-06 | the shadcn bridge's neutral hover fill `--accent` / `--accent-foreground` → `--shadcn-accent` / `--shadcn-accent-foreground`, with the Tailwind key `shadcn-accent`. The dialog close button (its only user) is updated. The bridge's `--primary` and `--ring` still held the pre-A-01 terracotta, so they now follow it | `accent` in this codebase means the brand ramp only. Compiled-CSS gate: one class renamed, the variable blocks changed, nothing else |

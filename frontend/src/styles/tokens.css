@@ -295,7 +295,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 38 15% 11%;
 
-    --primary: 17 55% 49%;
+    --primary: 17 55% 47%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 45 31% 95%;
@@ -304,15 +304,17 @@
     --muted: 45 31% 95%;
     --muted-foreground: 37 9% 38%;
 
-    --accent: 45 31% 95%;
-    --accent-foreground: 38 15% 11%;
+    /* Renamed from shadcn's `--accent`: here it is a *neutral* hover fill, and
+       the name collided with the brand accent ramp (`--accent-400`…). */
+    --shadcn-accent: 45 31% 95%;
+    --shadcn-accent-foreground: 38 15% 11%;
 
     --destructive: 353 51% 46%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 42 21% 84%;
     --input: 42 21% 84%;
-    --ring: 17 55% 49%;
+    --ring: 17 55% 47%;
 
     /* ── Glass ────────────────────────────────────────────────────────
        Glass is an *overlay* material, and in this system it appears on
@@ -458,8 +460,8 @@
     --secondary-foreground: 40 31% 94%;
     --muted: 34 9% 16%;
     --muted-foreground: 39 10% 60%;
-    --accent: 34 9% 16%;
-    --accent-foreground: 40 31% 94%;
+    --shadcn-accent: 34 9% 16%;
+    --shadcn-accent-foreground: 40 31% 94%;
     --destructive: 353 68% 67%;
     --destructive-foreground: 23 29% 11%;
     --border: 36 10% 19%;
