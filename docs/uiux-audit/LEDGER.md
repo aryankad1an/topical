@@ -328,3 +328,4 @@ Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures 
 | ask | change | result |
 |---|---|---|
 | A-06 | the shadcn bridge's neutral hover fill `--accent` / `--accent-foreground` → `--shadcn-accent` / `--shadcn-accent-foreground`, with the Tailwind key `shadcn-accent`. The dialog close button (its only user) is updated. The bridge's `--primary` and `--ring` still held the pre-A-01 terracotta, so they now follow it | `accent` in this codebase means the brand ramp only. Compiled-CSS gate: one class renamed, the variable blocks changed, nothing else |
+| A-13 | `npm uninstall @radix-ui/react-avatar`: nothing imported it (`Avatar` is our own primitive) | `package.json` −1, `package-lock.json` −84 lines (the package and its two private copies of Radix internals, plus `react-use-is-hydrated`) |
