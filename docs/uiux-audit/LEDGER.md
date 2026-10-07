@@ -293,3 +293,9 @@ You approved every ask with "do it your way", and A-12 with "add it". Each one b
 | — | decorative "·" separators and the providers' logo initials are `aria-hidden`; the active menu row's hint, the outline word counts and the selected provider's model count moved one ink step darker | |
 
 Text elements under 4.5:1 (3:1 when large): **1,221 → 0** across all captures in both themes. The only exclusions are heading anchors at opacity 0 and the editor textarea, whose text is drawn by an overlay.
+
+### Batch 12 — not-found and error screens (A-12, P1)
+
+| ask | change | result |
+|---|---|---|
+| A-12 | `components/RouteStates.tsx`: `NotFound` and `RouteError`, both built from `EmptyState` in a narrow `Page`, set as the router's `defaultNotFoundComponent` / `defaultErrorComponent` | an unknown URL shows "This page doesn't exist" with a way home, inside the normal shell (it was TanStack's bare "Not Found"). A route that throws shows "Something went wrong on this page" with **Try again** (resets the boundary and reloads the route's data) and **Go to the home page**. Verified by making `/api/posts` return malformed data |

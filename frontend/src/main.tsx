@@ -8,6 +8,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 // Import the auth provider
 import { AuthProvider } from "./lib/auth-context";
+import { NotFound, RouteError } from "./components/RouteStates";
 
 // Create a client. Auth state is intentionally NOT persisted to localStorage:
 // the session lives in an httpOnly cookie the server controls, so every reload
@@ -22,7 +23,13 @@ const queryClient = new QueryClient({
 });
 
 // Create a new router instance
-const router = createRouter({ routeTree, context: {queryClient} });
+// Every unknown address and every thrown route lands on a designed screen.
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultNotFoundComponent: NotFound,
+  defaultErrorComponent: RouteError,
+});
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
